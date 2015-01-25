@@ -1,0 +1,29 @@
+.field-item ul,
+#footer ul {
+  padding-left: 2rem;
+}
+
+.promo {
+  background-color: #547f1f;
+  color: #FFFFFF;
+}
+
+.promo-orange {
+  background-color: #e2630b;
+  color: #FFFFFF;
+}
+
+#block-block-26 {
+}
+
+#block-block-26 .content li {
+  font-size: 130px;
+  list-style: none;
+  list-style-image: none;
+  list-style-type: none;
+  display: inline;
+}
+
+table th, table td {
+  text-align: center;
+}

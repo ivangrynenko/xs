@@ -7,6 +7,7 @@ stylesheets[all][] = bootstrap/css/bootstrap.css
 stylesheets[all][] = js/flexslider/flexslider.css
 stylesheets[all][] = js/rs-plugin/css/settings.css
 stylesheets[all][] = style.css
+stylesheets[all][] = rh_typography.css
 
 scripts[] = js/flexslider/jquery.flexslider.js
 scripts[] = js/rs-plugin/js/jquery.themepunch.plugins.min.js
