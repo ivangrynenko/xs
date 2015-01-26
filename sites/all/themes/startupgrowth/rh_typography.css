@@ -27,3 +27,34 @@
 table th, table td {
   text-align: center;
 }
+
+.client-login {
+  float: right;
+}
+
+#header-inside {
+  padding: 5px 0 30px;
+}
+
+
+a.more-square, .more-link-square a {
+  font-size: 12px;
+  text-transform: uppercase;
+  padding: 10px;
+  background-color: #961300;
+  color: #ffffff;
+  display: inline-block;
+  line-height: 1;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  min-width: 100px;
+  border: none;
+  -webkit-transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -ms-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  margin: 10px 0;
+  text-align: center;
+}
