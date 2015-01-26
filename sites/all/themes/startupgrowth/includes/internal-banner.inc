@@ -18,7 +18,7 @@ if (arg(0) == "node" && is_numeric(arg(1))) {
     <div id="page-intro" class="clearfix">
 
       <?php if (!empty($node->field_teaser_image) && (isset($node->field_internal_banner) && $node->field_internal_banner[$lang][0]["value"] == "1")):
-        $image = image_style_url("slideshow", $node->field_teaser_image[$lang][0]["uri"]); ?>
+        $image = image_style_url("hero", $node->field_teaser_image[$lang][0]["uri"]); ?>
 
         <div class="internal-banner-image">
           <img src="<?php print $image; ?>" alt="<?php print $node->field_teaser_image[$lang][0]["alt"]; ?>"

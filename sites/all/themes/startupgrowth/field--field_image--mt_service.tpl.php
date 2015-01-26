@@ -9,7 +9,7 @@ if ($element['#view_mode'] == 'teaser') : ?>
   <?php return; endif; ?>
 
 <?php $node = $element['#object'];
-$lang = "und"; ?>
+$lang = LANGUAGE_NONE; ?>
 
 <?php $numberOfImages = 0;
 foreach ($node->field_image[$lang] as $key => $file) {
@@ -17,74 +17,74 @@ foreach ($node->field_image[$lang] as $key => $file) {
 } ?>
 
 <!--<div class="images-container clearfix">-->
-  <?php if ($numberOfImages > 100) { ?>
+<?php if ($numberOfImages > 100) { ?>
 
-    <!-- #service-slider -->
-    <div id="service-slider" class="flexslider">
-      <ul class="slides">
-        <?php $i = 0;
-        foreach ($node->field_image[$lang] as $key => $file) {
-          $i++; ?>
-          <li>
-            <!--                <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[$lang][$key]['uri']); ?><!--" title="--><?php //print $node->field_image[$lang][$key]['title']; ?><!--">-->
-            <img src="<?php print image_style_url('large', $node->field_image[$lang][$key]['uri']); ?>" alt="<?php print $node->field_image[$lang][$key]['alt']; ?>" title="<?php print $node->field_image[$lang][$key]['title']; ?>"/>
-            <!--                <span class="overlay large"><i class="fa fa-plus"></i></span>-->
-            <!--                </a>-->
+  <!-- #service-slider -->
+  <div id="service-slider" class="flexslider">
+    <ul class="slides">
+      <?php $i = 0;
+      foreach ($node->field_image[$lang] as $key => $file) {
+        $i++; ?>
+        <li>
+          <!--                <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[$lang][$key]['uri']); ?><!--" title="--><?php //print $node->field_image[$lang][$key]['title']; ?><!--">-->
+          <img src="<?php print image_style_url('large', $node->field_image[$lang][$key]['uri']); ?>" alt="<?php print $node->field_image[$lang][$key]['alt']; ?>" title="<?php print $node->field_image[$lang][$key]['title']; ?>"/>
+          <!--                <span class="overlay large"><i class="fa fa-plus"></i></span>-->
+          <!--                </a>-->
 
-            <?php if ($node->field_image[$lang][$key]['title'] || $node->field_image[$lang][$key]['alt']) : ?>
-              <!--                <div class="image-caption hidden-xs">-->
-              <!--                    --><?php //if ($node->field_image[$lang][$key]['title']) :?>
-              <!--                    <h4>--><?php //print $node->field_image[$lang][$key]['title']; ?><!--</h4>-->
-              <!--                    --><?php //endif; ?>
-              <!--                    --><?php //if ($node->field_image[$lang][$key]['alt']) :?>
-              <!--                    <p>--><?php //print $node->field_image[$lang][$key]['alt']; ?><!--</p>-->
-              <!--                    --><?php //endif; ?>
-              <!--                </div>-->
-            <?php endif; ?>
-          </li>
-        <?php } ?>
-      </ul>
-    </div>
-    <!-- EOF:#service-slider -->
-
-    <!-- #service-slider-carousel -->
-    <div id="service-slider-carousel" class="flexslider">
-      <ul class="slides">
-        <?php $i = 0;
-        foreach ($node->field_image[$lang] as $key => $file) {
-          $i++; ?>
-          <li>
-            <img src="<?php print image_style_url('medium', $node->field_image[$lang][$key]['uri']); ?>" alt="<?php print $node->field_image[$lang][$key]['alt']; ?>" title="<?php print $node->field_image[$lang][$key]['title']; ?>"/>
-          </li>
-        <?php } ?>
-      </ul>
-    </div>
-    <!-- EOF:#service-slider-carousel -->
-
-  <?php }
-  elseif ($numberOfImages > 100) { ?>
-
-    <div class="image-preview">
-
-      <!--    <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[$lang][0]['uri']); ?><!--" title="--><?php //print $node->field_image[$lang][0]['title']; ?><!--">-->
-      <img src="<?php print image_style_url('large', $node->field_image[$lang][0]['uri']); ?>" alt="<?php print $node->field_image[$lang][0]['alt']; ?>" title="<?php print $node->field_image[$lang][0]['title']; ?>"/>
-      <!--    <span class="overlay large"><i class="fa fa-plus"></i></span>-->
-      <!--    </a>-->
-
-      <?php if ($node->field_image[$lang][0]['title'] || $node->field_image[$lang][0]['alt']) : ?>
-        <div class="image-caption hidden-xs">
-          <?php if ($node->field_image[$lang][0]['title']) : ?>
-            <h4><?php print $node->field_image[$lang][0]['title']; ?></h4>
+          <?php if ($node->field_image[$lang][$key]['title'] || $node->field_image[$lang][$key]['alt']) : ?>
+            <!--                <div class="image-caption hidden-xs">-->
+            <!--                    --><?php //if ($node->field_image[$lang][$key]['title']) :?>
+            <!--                    <h4>--><?php //print $node->field_image[$lang][$key]['title']; ?><!--</h4>-->
+            <!--                    --><?php //endif; ?>
+            <!--                    --><?php //if ($node->field_image[$lang][$key]['alt']) :?>
+            <!--                    <p>--><?php //print $node->field_image[$lang][$key]['alt']; ?><!--</p>-->
+            <!--                    --><?php //endif; ?>
+            <!--                </div>-->
           <?php endif; ?>
-          <?php if ($node->field_image[$lang][0]['alt']) : ?>
-            <p><?php print $node->field_image[$lang][0]['alt']; ?></p>
-          <?php endif; ?>
-        </div>
-      <?php endif; ?>
+        </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <!-- EOF:#service-slider -->
 
-    </div>
+  <!-- #service-slider-carousel -->
+  <div id="service-slider-carousel" class="flexslider">
+    <ul class="slides">
+      <?php $i = 0;
+      foreach ($node->field_image[$lang] as $key => $file) {
+        $i++; ?>
+        <li>
+          <img src="<?php print image_style_url('medium', $node->field_image[$lang][$key]['uri']); ?>" alt="<?php print $node->field_image[$lang][$key]['alt']; ?>" title="<?php print $node->field_image[$lang][$key]['title']; ?>"/>
+        </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <!-- EOF:#service-slider-carousel -->
 
-  <?php } ?>
+<?php }
+elseif ($numberOfImages > 100) { ?>
+
+  <div class="image-preview">
+
+    <!--    <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[$lang][0]['uri']); ?><!--" title="--><?php //print $node->field_image[$lang][0]['title']; ?><!--">-->
+    <img src="<?php print image_style_url('large', $node->field_image[$lang][0]['uri']); ?>" alt="<?php print $node->field_image[$lang][0]['alt']; ?>" title="<?php print $node->field_image[$lang][0]['title']; ?>"/>
+    <!--    <span class="overlay large"><i class="fa fa-plus"></i></span>-->
+    <!--    </a>-->
+
+    <?php if ($node->field_image[$lang][0]['title'] || $node->field_image[$lang][0]['alt']) : ?>
+      <div class="image-caption hidden-xs">
+        <?php if ($node->field_image[$lang][0]['title']) : ?>
+          <h4><?php print $node->field_image[$lang][0]['title']; ?></h4>
+        <?php endif; ?>
+        <?php if ($node->field_image[$lang][0]['alt']) : ?>
+          <p><?php print $node->field_image[$lang][0]['alt']; ?></p>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
+  </div>
+
+<?php } ?>
 <!--</div>-->
 
 <?php
