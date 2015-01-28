@@ -1,6 +1,9 @@
 # Ignore configuration files that may contain sensitive information.
 sites/*/settings*.php
-
+cc/configuration.php
+cc/configuration.php*
+cc/templates_c
+cc/templates_c/*
 # Ignore paths that contain user-generated content.
 sites/*/files
 sites/*/private
