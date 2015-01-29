@@ -1,4 +1,4 @@
-<div id="slideshow" class="fullwidthbanner-container main-slider">
+<div id="slideshow" class="fullwidthbanner-container main-slider hidden-xs">
     <?php $rs_effect=theme_get_setting('rs_slideshow_full_effect'); ?>
     <div class="fullwidthbanner">
         <ul>

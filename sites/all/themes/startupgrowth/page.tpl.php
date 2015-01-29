@@ -10,12 +10,6 @@
     <div id="header-inside" class="clearfix">
       <div class="row">
 
-        <div class="col-md-12">
-          <div class="client-login">
-            <a href="/cc/clientarea.php" class="more-square">Login here</a>
-          </div>
-        </div>
-
         <div class="col-md-4">
           <!-- #header-inside-left -->
           <div id="header-inside-left" class="clearfix">
