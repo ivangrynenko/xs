@@ -488,80 +488,6 @@ function startupgrowth_preprocess_html(&$variables) {
   }
   //EOF:Javascript
 
-  /**
-   * Add Javascript for Google Map
-   */
-  if (theme_get_setting('google_map_js', 'startupgrowth')) {
-
-    drupal_add_js('jQuery(document).ready(function($) {
-
-	    var map;
-	    var myLatlng;
-	    var myZoom;
-	    var marker;
-
-		});',
-      array('type' => 'inline', 'scope' => 'header')
-    );
-
-    drupal_add_js('https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false', array(
-      'type' => 'external',
-      'scope' => 'header',
-      'group' => 'JS_THEME'
-    ));
-
-    $google_map_latitude = theme_get_setting('google_map_latitude', 'startupgrowth');
-    drupal_add_js(array('startupgrowth' => array('google_map_latitude' => $google_map_latitude)), 'setting');
-    $google_map_longitude = theme_get_setting('google_map_longitude', 'startupgrowth');
-    drupal_add_js(array('startupgrowth' => array('google_map_longitude' => $google_map_longitude)), 'setting');
-    $google_map_zoom = (int) theme_get_setting('google_map_zoom', 'startupgrowth');
-    $google_map_canvas = theme_get_setting('google_map_canvas', 'startupgrowth');
-    drupal_add_js(array('startupgrowth' => array('google_map_canvas' => $google_map_canvas)), 'setting');
-
-    drupal_add_js('jQuery(document).ready(function($) {
-
-		if ($("#' . $google_map_canvas . '").length) {
-
-			myLatlng = new google.maps.LatLng(Drupal.settings.startupgrowth[\'google_map_latitude\'], Drupal.settings.startupgrowth[\'google_map_longitude\']);
-			myZoom = ' . $google_map_zoom . ';
-
-			function initialize() {
-
-				var mapOptions = {
-				zoom: myZoom,
-				mapTypeId: google.maps.MapTypeId.ROADMAP,
-				center: myLatlng,
-				scrollwheel: false
-				};
-
-				map = new google.maps.Map(document.getElementById(Drupal.settings.startupgrowth[\'google_map_canvas\']),mapOptions);
-
-                marker = new google.maps.Marker({
-                map:map,
-                draggable:true,
-                position: myLatlng,
-                url: "https://www.google.com/maps/dir//' . $google_map_latitude . ',' . $google_map_longitude . '/@' . $google_map_latitude . ',' . $google_map_longitude . '"
-                });
-
-                google.maps.event.addListener(marker, "click", function() {
-                window.open(this.url, "_blank");
-                });
-
-                google.maps.event.addDomListener(window, "resize", function() {
-                map.setCenter(myLatlng);
-                });
-
-			}
-
-			google.maps.event.addDomListener(window, "load", initialize);
-
-		}
-
-		});',
-      array('type' => 'inline', 'scope' => 'header')
-    );
-  }
-
   $fixed_header = theme_get_setting('fixed_header');
   if ($fixed_header) {
 
@@ -715,6 +641,7 @@ function startupgrowth_preprocess_maintenance_page(&$variables) {
 
   $color_scheme = theme_get_setting('color_scheme');
   if ($color_scheme != 'default') {
+    $color_scheme = $color_scheme == 'grey' ? 'gray' : $color_scheme;
     drupal_add_css(drupal_get_path('theme', 'startupgrowth') . '/style-' . $color_scheme . '.css', array(
       'group' => CSS_THEME,
       'type' => 'file'
