@@ -13,8 +13,8 @@ files[] = includes/MediaInternetValidationException.inc
 files[] = tests/media_internet.test
 
 ; Information added by Drupal.org packaging script on 2015-01-28
-version = "7.x-2.0-alpha4+23-dev"
+version = "7.x-2.0-alpha4+24-dev"
 core = "7.x"
 project = "media"
-datestamp = "1422434285"
+datestamp = "1422469684"
 
