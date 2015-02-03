@@ -10,7 +10,7 @@
     <div id="header-inside" class="clearfix">
       <div class="row">
 
-        <div class="col-md-4">
+        <div class="section col-md-4">
           <!-- #header-inside-left -->
           <div id="header-inside-left" class="clearfix">
 
@@ -94,7 +94,7 @@
 
 <?php if ($page['banner']) : ?>
   <!-- #banner -->
-  <div id="banner" class="clearfix">
+  <div id="banner" class="clearfix section">
 
     <!-- #banner-inside -->
     <div id="banner-inside" class="clearfix">
@@ -111,7 +111,7 @@
 <?php include 'includes/internal-banner.inc'; ?>
 
 <!-- #page -->
-<div id="page" class="clearfix">
+<div id="page" class="clearfix section">
 
   <!-- #messages-console -->
   <?php if ($messages): ?>
@@ -296,7 +296,7 @@
 
 <?php if ($page['footer_top']): ?>
   <!-- #footer-top -->
-  <div id="footer-top" class="clearfix">
+  <div id="footer-top" class="clearfix section">
     <div class="container">
 
       <!-- #footer-top-inside -->
@@ -316,7 +316,7 @@
 
 <?php if ($page['footer_first'] || $page['footer_second'] || $page['footer_third'] || $page['footer_fourth']): ?>
   <!-- #footer -->
-  <footer id="footer" class="clearfix">
+  <footer id="footer" class="clearfix section">
     <div class="container">
 
       <div class="row">

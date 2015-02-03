@@ -32,7 +32,6 @@ function startupgrowth_preprocess_block(&$variables) {
  * Override or insert variables into the html template.
  */
 function startupgrowth_preprocess_html(&$variables) {
-
   if (empty($variables['page']['banner'])) {
     $variables['classes_array'][] = 'no-banner';
   }
