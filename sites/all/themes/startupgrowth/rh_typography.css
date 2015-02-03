@@ -58,3 +58,40 @@ a.more-square, .more-link-square a {
   margin: 10px 0;
   text-align: center;
 }
+
+* { 
+  font-family: "Lato", Sans Serif, Helvetica Neue; 
+  font-weight: 400;
+}
+h1, 
+h2, 
+h3, 
+h4, 
+h5, 
+h6, 
+h1 *, 
+h2 *, 
+h3 *, 
+h4 *, 
+h5 *, 
+h6 *, 
+nav *, 
+strong, 
+b,
+.title,
+.title * { 
+  font-family: "Oswald", Sans Serif, Helvetica Neue; 
+}
+
+#site-slogan {
+  margin-top: 25px;
+}
+
+#header-inside-right {
+  margin: 0px;
+  padding: 0px;
+}
+
+#header-inside {
+  padding: 5px 0 10px;
+}
