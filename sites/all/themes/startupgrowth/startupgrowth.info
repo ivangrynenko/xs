@@ -13,6 +13,9 @@ scripts[] = js/flexslider/jquery.flexslider.js
 scripts[] = js/rs-plugin/js/jquery.themepunch.plugins.min.js
 scripts[] = js/rs-plugin/js/jquery.themepunch.revolution.min.js
 scripts[] = js/jquery.browser.min.js
+;scripts[] = js/onepage-scroll.js
+;scripts[] = js/onepage-scroll/jquery.onepage-scroll.min.js
+;scripts[] = js/onepage-scroll/onepage-scroll.css
 
 regions[header] = Header
 regions[navigation] = Navigation
