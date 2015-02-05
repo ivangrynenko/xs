@@ -59,28 +59,31 @@ a.more-square, .more-link-square a {
   text-align: center;
 }
 
-* { 
-  font-family: "Lato", Sans Serif, Helvetica Neue; 
+* {
+  font-family: "Lato", Sans Serif, Helvetica Neue;
   font-weight: 400;
 }
-h1, 
-h2, 
-h3, 
-h4, 
-h5, 
-h6, 
-h1 *, 
-h2 *, 
-h3 *, 
-h4 *, 
-h5 *, 
-h6 *, 
-nav *, 
-strong, 
+
+#site-name,
+#site-name *,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+h1 *,
+h2 *,
+h3 *,
+h4 *,
+h5 *,
+h6 *,
+nav *,
+strong,
 b,
 .title,
-.title * { 
-  font-family: "Oswald", Sans Serif, Helvetica Neue; 
+.title * {
+  font-family: "Oswald", Sans Serif, Helvetica Neue;
 }
 
 #site-slogan {
@@ -111,4 +114,15 @@ b,
 .page-node-176 #main-content #main #page-title,
 .page-node-175 #main-content #main #block-system-main .right {
   padding: 4em;
+}
+
+#site-name {
+  margin: 0;
+}
+
+#site-slogan {
+  margin: 0px 0px 0px 50px;
+}
+#site-name a {
+  line-height: 1.5;
 }
