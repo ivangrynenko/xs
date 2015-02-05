@@ -582,10 +582,22 @@ function startupgrowth_process_html(&$vars) {
  * Preprocess variables for page template.
  */
 function startupgrowth_preprocess_page(&$variables) {
+  if (!empty($variables['node'])) {
+    $numberOfImages = 0;
+    if (!empty($variables['node']->field_image[LANGUAGE_NONE])) {
+      $numberOfImages = count($variables['node']->field_image[LANGUAGE_NONE]);
+    }
 
-  /**
-   * Insert variables into the page template.
-   */
+    if ($numberOfImages > 100) {
+      drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/flexslider/rh.flexslider.js', array(
+          'scope' => 'footer',
+          'weight' => 4
+        )
+      );
+    }
+  }
+
+  // Insert variables into the page template.
   if (isset($variables['node']) && $variables['node']->type != 'page') {
     if ($variables['page']['sidebar_first'] && $variables['page']['sidebar_second']) {
       $variables['main_grid_class'] = 'col-md-6';

@@ -61,25 +61,3 @@ endif;
     <?php } ?>
 
   </div>
-
-<?php
-drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/magnific-popup/jquery.magnific-popup.js', array('preprocess' => FALSE));
-drupal_add_css(drupal_get_path('theme', 'startupgrowth') . '/js/magnific-popup/magnific-popup.css');
-
-drupal_add_js('
-    jQuery(document).ready(function($) {
-        $(window).load(function() {
-
-			$(".image-popup").magnificPopup({
-			type:"image",
-			removalDelay: 300,
-			mainClass: "mfp-fade",
-			gallery: {
-			enabled: true, // set to true to enable gallery
-			}
-			});
-
-        });
-    });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 3)
-);
-?>
