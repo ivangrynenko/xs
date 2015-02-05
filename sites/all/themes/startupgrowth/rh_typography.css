@@ -95,3 +95,20 @@ b,
 #header-inside {
   padding: 5px 0 10px;
 }
+
+/** CUSTOM ERROR PAGES */
+.custom-error-code, .custom-error-code * {
+  font-family: "Oswald";
+  font-size: 18em;
+  font-weight: 700;
+}
+
+.page-node-176 #main-content #main #page-title,
+.page-node-175 #main-content #main #page-title {
+  display: none;
+}
+
+.page-node-176 #main-content #main #page-title,
+.page-node-175 #main-content #main #block-system-main .right {
+  padding: 4em;
+}

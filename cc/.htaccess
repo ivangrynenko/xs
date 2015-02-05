@@ -3,16 +3,19 @@ DirectoryIndex index.php index.shtml index.html
 ErrorDocument 401 /401.html
 RewriteEngine On
 
-RewriteCond %{HTTPS} !=on
-RewriteRule ^/(cc|clientarea|whcms) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+#RewriteCond %{SERVER_PORT} !=443
+#RewriteRule ^ https://www.redy.host%{REQUEST_URI} [R,L]
+
+#RewriteCond %{HTTPS} !=on
+#RewriteRule ^/(cc|clientarea|whcms) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
 # Announcements
-RewriteRule ^announcements/([0-9]+)/[a-z0-9_-]+\.html$ ./announcements.php?id=$1 [L,NC]
-RewriteRule ^announcements$ ./announcements.php [L,NC]
+#RewriteRule ^announcements/([0-9]+)/[a-z0-9_-]+\.html$ ./announcements.php?id=$1 [L,NC]
+#RewriteRule ^announcements$ ./announcements.php [L,NC]
 
 # Downloads
-RewriteRule ^downloads/([0-9]+)/([^/]*)$ ./downloads.php?action=displaycat&catid=$1 [L,NC]
-RewriteRule ^downloads$ ./downloads.php [L,NC]
+#RewriteRule ^downloads/([0-9]+)/([^/]*)$ ./downloads.php?action=displaycat&catid=$1 [L,NC]
+#RewriteRule ^downloads$ ./downloads.php [L,NC]
 
 # Knowledgebase
 #RewriteRule ^knowledgebase/([0-9]+)/[a-z0-9_-]+\.html$ ./knowledgebase.php?action=displayarticle&id=$1 [L,NC]
@@ -21,10 +24,10 @@ RewriteRule ^downloads$ ./downloads.php [L,NC]
 #RewriteRule ^knowledgebase$ ../knowledgebase [L,NC]
 #RewriteRule ^knowledgebase/([0-9]+)/([^/]*)$ ../knowledgebase [L,NC]
 #RewriteRule ^knowledgebase$ ../knowledgebase [L,NC]
-RewriteRule ^knowledgebase.php ../knowledgebase [L,NC]
+#RewriteRule ^(/cc+)?knowledgebase.php http://www.redy.host/knowledgebase [L,NC]
 
 <Files ~ "\.tpl$">
 Order allow,deny
-Deny from all
+Require all denied
 </Files>
 
