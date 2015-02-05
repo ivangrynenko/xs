@@ -5,12 +5,12 @@
 
 .promo {
   background-color: #547f1f;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .promo-orange {
   background-color: #e2630b;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 #block-block-26 {
@@ -35,7 +35,6 @@ table th, table td {
 #header-inside {
   padding: 5px 0 30px;
 }
-
 
 a.more-square, .more-link-square a {
   font-size: 12px;
@@ -123,6 +122,7 @@ b,
 #site-slogan {
   margin: 0px 0px 0px 50px;
 }
+
 #site-name a {
   line-height: 1.5;
 }
