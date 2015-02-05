@@ -8,12 +8,11 @@ if ($element['#view_mode'] == 'teaser') : ?>
   <div class="field-item field-type-image even"<?php print $item_attributes[0]; ?>><?php print render($items[0]); ?></div>
   <?php return; endif; ?>
 
-<?php $node = $element['#object'];
-$lang = LANGUAGE_NONE; ?>
+<?php $node = $element['#object'];?>
 
 <?php $numberOfImages = 0;
-foreach ($node->field_image[$lang] as $key => $file) {
-  $numberOfImages++;
+if (!empty($node->field_image[LANGUAGE_NONE])) {
+  $numberOfImages = count($node->field_image[LANGUAGE_NONE]);
 } ?>
 
 <!--<div class="images-container clearfix">-->
@@ -23,23 +22,20 @@ foreach ($node->field_image[$lang] as $key => $file) {
   <div id="service-slider" class="flexslider">
     <ul class="slides">
       <?php $i = 0;
-      foreach ($node->field_image[$lang] as $key => $file) {
+      foreach ($node->field_image[LANGUAGE_NONE] as $key => $file) {
         $i++; ?>
         <li>
-          <!--                <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[$lang][$key]['uri']); ?><!--" title="--><?php //print $node->field_image[$lang][$key]['title']; ?><!--">-->
-          <img src="<?php print image_style_url('large', $node->field_image[$lang][$key]['uri']); ?>" alt="<?php print $node->field_image[$lang][$key]['alt']; ?>" title="<?php print $node->field_image[$lang][$key]['title']; ?>"/>
-          <!--                <span class="overlay large"><i class="fa fa-plus"></i></span>-->
-          <!--                </a>-->
+          <img src="<?php print image_style_url('large', $node->field_image[LANGUAGE_NONE][$key]['uri']); ?>" alt="<?php print $node->field_image[LANGUAGE_NONE][$key]['alt']; ?>" title="<?php print $node->field_image[LANGUAGE_NONE][$key]['title']; ?>"/>
 
-          <?php if ($node->field_image[$lang][$key]['title'] || $node->field_image[$lang][$key]['alt']) : ?>
-            <!--                <div class="image-caption hidden-xs">-->
-            <!--                    --><?php //if ($node->field_image[$lang][$key]['title']) :?>
-            <!--                    <h4>--><?php //print $node->field_image[$lang][$key]['title']; ?><!--</h4>-->
-            <!--                    --><?php //endif; ?>
-            <!--                    --><?php //if ($node->field_image[$lang][$key]['alt']) :?>
-            <!--                    <p>--><?php //print $node->field_image[$lang][$key]['alt']; ?><!--</p>-->
-            <!--                    --><?php //endif; ?>
-            <!--                </div>-->
+          <?php if ($node->field_image[LANGUAGE_NONE][$key]['title'] || $node->field_image[LANGUAGE_NONE][$key]['alt']) : ?>
+                            <div class="image-caption hidden-xs">
+                                <?php if ($node->field_image[LANGUAGE_NONE][$key]['title']) :?>
+                                <h4><?php print $node->field_image[LANGUAGE_NONE][$key]['title']; ?></h4>
+                                <?php endif; ?>
+                                <?php if ($node->field_image[LANGUAGE_NONE][$key]['alt']) :?>
+                                <p><?php print $node->field_image[LANGUAGE_NONE][$key]['alt']; ?></p>
+                                <?php endif; ?>
+                            </div>
           <?php endif; ?>
         </li>
       <?php } ?>
@@ -51,10 +47,10 @@ foreach ($node->field_image[$lang] as $key => $file) {
   <div id="service-slider-carousel" class="flexslider">
     <ul class="slides">
       <?php $i = 0;
-      foreach ($node->field_image[$lang] as $key => $file) {
+      foreach ($node->field_image[LANGUAGE_NONE] as $key => $file) {
         $i++; ?>
         <li>
-          <img src="<?php print image_style_url('medium', $node->field_image[$lang][$key]['uri']); ?>" alt="<?php print $node->field_image[$lang][$key]['alt']; ?>" title="<?php print $node->field_image[$lang][$key]['title']; ?>"/>
+          <img src="<?php print image_style_url('medium', $node->field_image[LANGUAGE_NONE][$key]['uri']); ?>" alt="<?php print $node->field_image[LANGUAGE_NONE][$key]['alt']; ?>" title="<?php print $node->field_image[LANGUAGE_NONE][$key]['title']; ?>"/>
         </li>
       <?php } ?>
     </ul>
@@ -62,22 +58,19 @@ foreach ($node->field_image[$lang] as $key => $file) {
   <!-- EOF:#service-slider-carousel -->
 
 <?php }
-elseif ($numberOfImages > 100) { ?>
+elseif ($numberOfImages == 2) { ?>
 
   <div class="image-preview">
 
-    <!--    <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[$lang][0]['uri']); ?><!--" title="--><?php //print $node->field_image[$lang][0]['title']; ?><!--">-->
-    <img src="<?php print image_style_url('large', $node->field_image[$lang][0]['uri']); ?>" alt="<?php print $node->field_image[$lang][0]['alt']; ?>" title="<?php print $node->field_image[$lang][0]['title']; ?>"/>
-    <!--    <span class="overlay large"><i class="fa fa-plus"></i></span>-->
-    <!--    </a>-->
+    <img src="<?php print image_style_url('large', $node->field_image[LANGUAGE_NONE][1]['uri']); ?>" alt="<?php print $node->field_image[LANGUAGE_NONE][1]['alt']; ?>" title="<?php print $node->field_image[LANGUAGE_NONE][1]['title']; ?>"/>
 
-    <?php if ($node->field_image[$lang][0]['title'] || $node->field_image[$lang][0]['alt']) : ?>
+    <?php if ($node->field_image[LANGUAGE_NONE][1]['title'] || $node->field_image[LANGUAGE_NONE][1]['alt']) : ?>
       <div class="image-caption hidden-xs">
-        <?php if ($node->field_image[$lang][0]['title']) : ?>
-          <h4><?php print $node->field_image[$lang][0]['title']; ?></h4>
+        <?php if ($node->field_image[LANGUAGE_NONE][1]['title']) : ?>
+          <h4><?php print $node->field_image[LANGUAGE_NONE][1]['title']; ?></h4>
         <?php endif; ?>
-        <?php if ($node->field_image[$lang][0]['alt']) : ?>
-          <p><?php print $node->field_image[$lang][0]['alt']; ?></p>
+        <?php if ($node->field_image[LANGUAGE_NONE][1]['alt']) : ?>
+          <p><?php print $node->field_image[LANGUAGE_NONE][1]['alt']; ?></p>
         <?php endif; ?>
       </div>
     <?php endif; ?>
@@ -85,83 +78,3 @@ elseif ($numberOfImages > 100) { ?>
   </div>
 
 <?php } ?>
-<!--</div>-->
-
-<?php
-drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/magnific-popup/jquery.magnific-popup.js', array('preprocess' => FALSE));
-drupal_add_css(drupal_get_path('theme', 'startupgrowth') . '/js/magnific-popup/magnific-popup.css');
-
-drupal_add_js('
-    jQuery(document).ready(function($) {
-        $(window).load(function() {
-
-			$(".image-popup").magnificPopup({
-			type:"image",
-			removalDelay: 300,
-			mainClass: "mfp-fade",
-			gallery: {
-			enabled: true, // set to true to enable gallery
-			}
-			});
-
-        });
-    });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 3)
-);
-if ($numberOfImages > 1) {
-  drupal_add_js('
-    jQuery(document).ready(function($) {
-        // store the slider in a local variable
-        var $window = $(window),
-        flexslider;
-
-        // tiny helper function to add breakpoints
-        function getGridSize() {
-        return (window.innerWidth < 768) ? 2 : 4;
-        }
-
-        $(window).load(function() {
-
-        $("#service-slider").fadeIn("slow");
-        $("#service-slider-carousel").fadeIn("slow");
-
-        // The slider being synced must be initialized first
-        $("#service-slider-carousel").flexslider({
-        animation: "slide",
-        controlNav: false,
-        animationLoop: false,
-        slideshow: false,
-        itemWidth: 172.5,
-        itemMargin: 20,
-        prevText: "",
-        nextText: "",
-        asNavFor: "#service-slider",
-        minItems: getGridSize(), // use function to pull in initial value
-        maxItems: getGridSize(), // use function to pull in initial value
-        start: function(slider){
-        flexslider = slider;
-        }
-        });
-
-        $("#service-slider").flexslider({
-        useCSS: false,
-        animation: "slide",
-        controlNav: false,
-        directionNav: false,
-        animationLoop: false,
-        slideshow: false,
-        sync: "#service-slider-carousel"
-        });
-
-        });
-
-        // check grid size on resize event
-        $window.resize(function() {
-        var gridSize = getGridSize();
-        flexslider.vars.minItems = gridSize;
-        flexslider.vars.maxItems = gridSize;
-        });
-
-    });', array('type' => 'inline', 'scope' => 'footer', 'weight' => 4)
-  );
-}
-?>
