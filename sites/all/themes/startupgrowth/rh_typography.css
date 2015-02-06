@@ -85,6 +85,13 @@ b,
   font-family: "Oswald", Sans Serif, Helvetica Neue;
 }
 
+h1,
+h2,
+h1 a,
+h2 a {
+  font-weight: 700;
+}
+
 #site-slogan {
   margin-top: 25px;
 }
