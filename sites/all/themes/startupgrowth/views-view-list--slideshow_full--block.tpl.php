@@ -28,8 +28,8 @@
           <div class="tp-caption title-teaser-text sft fadeout"
                data-x="left"
                data-y="bottom"
-               data-speed="500"
-               data-start="1200"
+               data-speed="100"
+               data-start="10"
                data-voffset="-30"
                data-easing="Power0.easeIn">
             <div class="title">
@@ -51,8 +51,8 @@
           <div class="tp-caption caption-link sft fadeout"
                data-x="right"
                data-y="bottom"
-               data-speed="500"
-               data-start="1200"
+               data-speed="100"
+               data-start="10"
                data-voffset="-30"
                data-easing="Power0.easeIn">
             <?php if ($node->field_slideshow_entry_path): ?>

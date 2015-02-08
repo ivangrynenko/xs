@@ -146,3 +146,14 @@ h2 a {
 #site-name a {
   margin-right: 10%;
 }
+
+.mean-container .mean-nav {
+  right: 0px;
+  width: 60vw;
+}
+
+.submitted-user,
+.user-picture {
+  display: inline;
+  margin-right: 20px;
+}
