@@ -8,6 +8,7 @@ stylesheets[all][] = js/flexslider/flexslider.css
 stylesheets[all][] = js/rs-plugin/css/settings.css
 stylesheets[all][] = js/magnific-popup/magnific-popup.css
 stylesheets[all][] = style.css
+stylesheets[all][] = fonts/lato-font.css
 stylesheets[all][] = rh_typography.css
 
 scripts[] = js/jquery.browser.min.js
@@ -15,7 +16,8 @@ scripts[] = js/flexslider/jquery.flexslider.js
 scripts[] = js/flexslider/rh.flexslider_1.js
 scripts[] = js/rs-plugin/js/jquery.themepunch.plugins.min.js
 scripts[] = js/rs-plugin/js/jquery.themepunch.revolution.min.js
-scripts[] = js/magnific-popup/jquery.magnific-popup.js
+;scripts[] = js/magnific-popup/jquery.magnific-popup.js
+scripts[] = js/magnific-popup/jquery.magnific-popup.min.js
 scripts[] = js/rh.slideshow.js
 ;scripts[] = js/onepage-scroll.js
 ;scripts[] = js/onepage-scroll/jquery.onepage-scroll.min.js
