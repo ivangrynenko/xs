@@ -1,3 +1,26 @@
+@import url(//fonts.googleapis.com/css?family=Oswald:400,300,700&subset=latin,latin-ext);
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 300;
+  src: local('Oswald Light'), local('Oswald-Light'), url(//fonts.gstatic.com/s/oswald/v10/l1cOQ90roY9yC7voEhngDJBw1xU1rKptJj_0jans920.woff2) format('woff2'), url(//fonts.gstatic.com/s/oswald/v10/l1cOQ90roY9yC7voEhngDLO3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Oswald Regular'), local('Oswald-Regular'), url(//fonts.gstatic.com/s/oswald/v10/Qw6_9HvXRQGg5mMbFR3PhuvvDin1pK8aKteLpeZ5c0A.woff2) format('woff2'), url(//fonts.gstatic.com/s/oswald/v10/qs_6LdoYjCitupC9judWT-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Oswald Bold'), local('Oswald-Bold'), url(//fonts.gstatic.com/s/oswald/v10/dI-qzxlKVQA6TUC5RKSb35Bw1xU1rKptJj_0jans920.woff2) format('woff2'), url(//fonts.gstatic.com/s/oswald/v10/dI-qzxlKVQA6TUC5RKSb37O3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
+}
+
 .field-item ul,
 #footer ul {
   padding-left: 2rem;
@@ -59,7 +82,7 @@ a.more-square, .more-link-square a {
 }
 
 * {
-  font-family: "Lato", Sans Serif, Helvetica Neue;
+  font-family: "Lato", "Helvetica Neue", Sans Serif, Arial;
   font-weight: 400;
 }
 
@@ -82,7 +105,7 @@ strong,
 b,
 .title,
 .title * {
-  font-family: "Oswald", Sans Serif, Helvetica Neue;
+  font-family: "Oswald", Sans Serif, "Helvetica Neue", Arial;
 }
 
 h1,
