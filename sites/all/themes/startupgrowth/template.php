@@ -713,4 +713,22 @@ function startupgrowth_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-?>
+/**
+ * Implements hook_node_view().
+ */
+function startupgrowth_node_view($node, $view_mode) {
+  if ($view_mode != 'rss') {
+    if ($node->type == 'blog' && (arg(0) != 'blog' || arg(1) != $node->uid)) {
+      // This goes to l(), which escapes !username in both title and attributes.
+      $links['blog_usernames_blog'] = array();
+      $node->content['links']['blog'] = array(
+        '#theme' => 'links__node__blog',
+        '#links' => $links,
+        '#attributes' => array('class' => array('links', 'inline')),
+      );
+
+      // Breadcrumb navigation.  l() escapes title, so we should not escape !name.
+      drupal_set_breadcrumb(array(l(t('Home'), NULL), l(t('Blog'), 'blog')));
+    }
+  }
+}
