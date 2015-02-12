@@ -22,14 +22,14 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'css' => array(drupal_get_path('theme', 'startupgrowth') . '/startupgrowth.settings.form.css'),
     ),
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Basic Settings'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings']['breadcrumb'] = array(
     '#type' => 'item',
     '#markup' => t('<div class="theme-settings-title">Breadcrumb</div>'),
@@ -48,7 +48,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
    '#type' => 'item',
    '#markup' => t('<div class="theme-settings-title">Header positioning</div>'),
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings']['fixed_header'] = array(
     '#type' => 'checkbox',
     '#title' => t('Fixed position'),
@@ -56,13 +56,13 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#default_value' => theme_get_setting('fixed_header', 'startupgrowth'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
-  ); 
-  
+  );
+
   $form['mtt_settings']['tabs']['basic_settings']['scrolltop'] = array(
     '#type' => 'item',
     '#markup' => t('<div class="theme-settings-title">Scroll to top</div>'),
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings']['scrolltop_display'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show scroll-to-top button'),
@@ -71,12 +71,12 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings']['frontpage_content'] = array(
     '#type' => 'item',
     '#markup' => t('<div class="theme-settings-title">Front Page Behavior</div>'),
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings']['frontpage_content_print'] = array(
     '#type' => 'checkbox',
     '#title' => t('Drupal frontpage content'),
@@ -90,7 +90,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#type' => 'item',
     '#markup' => t('<div class="theme-settings-title">Bootstrap 3 Framework Javascript file</div>'),
   );
-  
+
   $form['mtt_settings']['tabs']['basic_settings']['bootstrap_js_include'] = array(
     '#type' => 'checkbox',
     '#title' => t('Include Bootstrap 3 Framework Javascript file'),
@@ -106,7 +106,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['mtt_settings']['tabs']['looknfeel']['color_scheme'] = array(
     '#type' => 'select',
     '#title' => t('Color Schemes'),
@@ -121,9 +121,9 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     'gray-purple' => t('Gray Purple'),
     'blue' => t('Blue'),
     'green' => t('Green'),
-    'orange' => t('Orange'),    
-    'red' => t('Red'),    
-    'pink' => t('Pink'),    
+    'orange' => t('Orange'),
+    'red' => t('Red'),
+    'pink' => t('Pink'),
     'purple' => t('Purple'),
     ),
   );
@@ -145,12 +145,12 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['mtt_settings']['tabs']['font']['font_title'] = array(
     '#type' => 'item',
     '#markup' => 'For every region pick the <strong>font-family</strong> that corresponds to your needs.',
   );
-  
+
   $form['mtt_settings']['tabs']['font']['sitename_font_family'] = array(
     '#type' => 'select',
     '#title' => t('Site name'),
@@ -171,8 +171,8 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'sff-13' => t('Georgia, Times, Serif'),
       'sff-14' => t('Playfair Display, Times, Serif'),
       'sff-15' => t('Philosopher, Georgia, Times, Serif'),
-      'sff-16' => t('Cinzel, Georgia, Times, Serif'),               
-      'sff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),    
+      'sff-16' => t('Cinzel, Georgia, Times, Serif'),
+      'sff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),
       'sff-18' => t('Playfair Display SC, Georgia, Times, Serif'),
       'sff-19' => t('Cabin, Helvetica Neue, Arial, Sans-serif'),
       'sff-20' => t('Noto Sans, Arial, Helvetica Neue, Sans-serif;'),
@@ -189,7 +189,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'sff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),
     ),
   );
-  
+
   $form['mtt_settings']['tabs']['font']['slogan_font_family'] = array(
     '#type' => 'select',
     '#title' => t('Slogan'),
@@ -210,8 +210,8 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'slff-13' => t('Georgia, Times, Serif'),
       'slff-14' => t('Playfair Display, Times, Serif'),
       'slff-15' => t('Philosopher, Georgia, Times, Serif'),
-      'slff-16' => t('Cinzel, Georgia, Times, Serif'),               
-      'slff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),    
+      'slff-16' => t('Cinzel, Georgia, Times, Serif'),
+      'slff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),
       'slff-18' => t('Playfair Display SC, Georgia, Times, Serif'),
       'slff-19' => t('Cabin, Helvetica Neue, Arial, Sans-serif'),
       'slff-20' => t('Noto Sans, Arial, Helvetica Neue, Sans-serif;'),
@@ -225,10 +225,10 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'slff-28' => t('Gentium Book Basic, Georgia, Times, Times New Roman, Serif'),
       'slff-29' => t('Volkhov, Georgia, Times, Times New Roman, Serif'),
       'slff-30' => t('Times, Times New Roman, Serif'),
-      'slff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),      
+      'slff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),
     ),
   );
-  
+
   $form['mtt_settings']['tabs']['font']['headings_font_family'] = array(
     '#type' => 'select',
     '#title' => t('Headings'),
@@ -249,8 +249,8 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'hff-13' => t('Georgia, Times, Serif'),
       'hff-14' => t('Playfair Display, Times, Serif'),
       'hff-15' => t('Philosopher, Georgia, Times, Serif'),
-      'hff-16' => t('Cinzel, Georgia, Times, Serif'),               
-      'hff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),    
+      'hff-16' => t('Cinzel, Georgia, Times, Serif'),
+      'hff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),
       'hff-18' => t('Playfair Display SC, Georgia, Times, Serif'),
       'hff-19' => t('Cabin, Helvetica Neue, Arial, Sans-serif'),
       'hff-20' => t('Noto Sans, Arial, Helvetica Neue, Sans-serif;'),
@@ -264,10 +264,10 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'hff-28' => t('Gentium Book Basic, Georgia, Times, Times New Roman, Serif'),
       'hff-29' => t('Volkhov, Georgia, Times, Times New Roman, Serif'),
       'hff-30' => t('Times, Times New Roman, Serif'),
-      'hff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),         
+      'hff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),
     ),
   );
-  
+
   $form['mtt_settings']['tabs']['font']['paragraph_font_family'] = array(
     '#type' => 'select',
     '#title' => t('Paragraph'),
@@ -289,7 +289,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'pff-14' => t('Playfair Display, Times, Serif'),
       'pff-15' => t('Philosopher, Georgia, Times, Serif'),
       'pff-16' => t('Cinzel, Georgia, Times, Serif'),
-      'pff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),    
+      'pff-17' => t('Oswald, Helvetica Neue, Arial, Sans-serif'),
       'pff-18' => t('Playfair Display SC, Georgia, Times, Serif'),
       'pff-19' => t('Cabin, Helvetica Neue, Arial, Sans-serif'),
       'pff-20' => t('Noto Sans, Arial, Helvetica Neue, Sans-serif;'),
@@ -303,7 +303,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
       'pff-28' => t('Gentium Book Basic, Georgia, Times, Times New Roman, Serif'),
       'pff-29' => t('Volkhov, Georgia, Times, Times New Roman, Serif'),
       'pff-30' => t('Times, Times New Roman, Serif'),
-      'pff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),          
+      'pff-31' => t('Alegreya SC, Georgia, Times, Times New Roman, Serif'),
     ),
   );
   $form['mtt_settings']['tabs']['slideshow'] = array(
@@ -373,11 +373,11 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     'papercut' => t('Paper Cut'),
     'flyin' => t('Fly In'),
     'random-static' => t('Random Flat'),
-    'random-premium' => t('Random Premium'),    
+    'random-premium' => t('Random Premium'),
     'random' => t('Random Flat and Premium/Default'),
     ),
   );
-  
+
   $form['mtt_settings']['tabs']['slideshow']['revolution_slider_full']['rs_slideshow_full_effect_time'] = array(
     '#type' => 'textfield',
     '#title' => t('Effect duration (sec)'),
@@ -446,18 +446,18 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     'papercut' => t('Paper Cut'),
     'flyin' => t('Fly In'),
     'random-static' => t('Random Flat'),
-    'random-premium' => t('Random Premium'),    
+    'random-premium' => t('Random Premium'),
     'random' => t('Random Flat and Premium/Default'),
     ),
   );
-  
+
   $form['mtt_settings']['tabs']['slideshow']['revolution_slider_boxed']['rs_slideshow_boxed_effect_time'] = array(
     '#type' => 'textfield',
     '#title' => t('Effect duration (sec)'),
     '#default_value' => theme_get_setting('rs_slideshow_boxed_effect_time', 'startupgrowth'),
     '#description'   => t('Set the speed of animations, in seconds.'),
   );
-  
+
  $form['mtt_settings']['tabs']['responsive_menu'] = array(
     '#type' => 'fieldset',
     '#title' => t('Responsive menu'),
@@ -478,7 +478,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#description'   => t('Use the checkbox to enable the plugin which transforms the Main menu of your site to a responsive multilevel menu when your browser is at mobile widths.'),
     '#default_value' => theme_get_setting('responsive_multilevelmenu_state', 'startupgrowth'),
   );
-    
+
 
  $form['mtt_settings']['tabs']['responsive_menu']['responsive_select_menu'] = array(
     '#type' => 'fieldset',
@@ -486,35 +486,35 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
  $form['mtt_settings']['tabs']['responsive_menu']['responsive_select_menu']['responsive_menu_state'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable responsive menu'),
     '#description'   => t('Use the checkbox to enable the plugin which transforms the Main menu of your site to a dropdown select list when your browser is at mobile widths.'),
     '#default_value' => theme_get_setting('responsive_menu_state', 'startupgrowth'),
   );
-  
+
  $form['mtt_settings']['tabs']['responsive_menu']['responsive_select_menu']['responsive_menu_switchwidth'] = array(
     '#type' => 'textfield',
     '#title' => t('Switch width (px)'),
     '#description'   => t('Set the width (in pixels) at which the Main menu of the site will change to a dropdown select list.'),
     '#default_value' => theme_get_setting('responsive_menu_switchwidth', 'startupgrowth'),
   );
-  
+
   $form['mtt_settings']['tabs']['responsive_menu']['responsive_select_menu']['responsive_menu_topoptiontext'] = array(
     '#type' => 'textfield',
     '#title' => t('Top option text'),
     '#description'   => t('Set the very first option display text.'),
     '#default_value' => theme_get_setting('responsive_menu_topoptiontext', 'startupgrowth'),
   );
-  
+
   $form['mtt_settings']['tabs']['responsive_menu']['responsive_select_menu']['responsive_menu_optgroups'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable responsive menu with optgroups'),
     '#description'   => t('Use the checkbox to enable a dropdown select list with optgroups support.'),
     '#default_value' => theme_get_setting('responsive_menu_optgroups', 'startupgrowth'),
   );
-  
+
   $form['mtt_settings']['tabs']['responsive_menu']['responsive_select_menu']['responsive_menu_nested'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable nested responsive menu'),
@@ -548,7 +548,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['mtt_settings']['tabs']['google_map']['google_map_js'] = array(
     '#type' => 'checkbox',
     '#title' => t('Include Google Map javascript code'),
@@ -562,7 +562,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#default_value' => theme_get_setting('google_map_latitude','startupgrowth'),
     '#size' => 5,
     '#maxlength' => 10,
-  );  
+  );
 
   $form['mtt_settings']['tabs']['google_map']['google_map_longitude'] = array(
     '#type' => 'textfield',
@@ -571,8 +571,8 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#default_value' => theme_get_setting('google_map_longitude','startupgrowth'),
     '#size' => 5,
     '#maxlength' => 10,
-  ); 
-  
+  );
+
   $form['mtt_settings']['tabs']['google_map']['google_map_zoom'] = array(
     '#type' => 'textfield',
     '#title' => t('Google Map Zoom'),
@@ -580,22 +580,22 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#default_value' => theme_get_setting('google_map_zoom','startupgrowth'),
     '#size' => 5,
     '#maxlength' => 10,
-  ); 
-  
+  );
+
   $form['mtt_settings']['tabs']['google_map']['google_map_canvas'] = array(
     '#type' => 'textfield',
     '#title' => t('Google Map Canvas Id'),
     '#description'   => t('Set the Google Map Canvas Id. For example: map-canvas'),
     '#default_value' => theme_get_setting('google_map_canvas','startupgrowth'),
-  ); 
-    
+  );
+
   $form['mtt_settings']['tabs']['isotope'] = array(
     '#type' => 'fieldset',
     '#title' => t('Isotope'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-    
+
   $form['mtt_settings']['tabs']['isotope']['isotope_js'] = array(
     '#type' => 'item',
     '#markup' => t('<div class="theme-settings-title">Isotope Javascript file</div>'),
@@ -609,7 +609,7 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  
+
   $form['mtt_settings']['tabs']['isotope']['isotope_layout'] = array(
     '#type' => 'select',
     '#title' => t('Layout modes'),
@@ -626,5 +626,4 @@ function startupgrowth_form_system_theme_settings_alter(&$form, &$form_state) {
     'horizontal' => t('horizontal'),
     ),
   );
-  
 }

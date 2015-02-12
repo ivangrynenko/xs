@@ -16,27 +16,24 @@
  * - $form['submitted']: The main content of the user-created form.
  * - $form['details']: Internal information stored by Webform.
  */
-?>
 
-<?php
 foreach ($form["submitted"] as $key => $value) {
-	if( (is_array($value) && array_key_exists('#type', $value) && $value['#type']) == "webform_email") {
-		if (!empty($value['#title'])) {
-			if ($form["submitted"][$key]['#required']) {
-			$form["submitted"][$key]['#attributes']["placeholder"] = t($value["#title"] . '*');
-			} else {
-			$form["submitted"][$key]['#attributes']["placeholder"] = t($value["#title"]);
-			}
-		}
-	}
+  if ((is_array($value) && array_key_exists('#type', $value) && $value['#type']) == "webform_email") {
+    if (!empty($value['#title'])) {
+      if ($form["submitted"][$key]['#required']) {
+        $form["submitted"][$key]['#attributes']["placeholder"] = t($value["#title"] . '*');
+      }
+      else {
+        $form["submitted"][$key]['#attributes']["placeholder"] = t($value["#title"]);
+      }
+    }
+  }
 }
-?>
 
-<?php
-  // Print out the main part of the form.
-  // Feel free to break this up and move the pieces within the array.
-  print drupal_render($form['submitted']);
+// Print out the main part of the form.
+// Feel free to break this up and move the pieces within the array.
+print drupal_render($form['submitted']);
 
-  // Always print out the entire $form. This renders the remaining pieces of the
-  // form that haven't yet been rendered above.
-  print drupal_render_children($form); ?>
+// Always print out the entire $form. This renders the remaining pieces of the
+// form that haven't yet been rendered above.
+print drupal_render_children($form); ?>
