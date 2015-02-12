@@ -54,9 +54,9 @@
     </div>
 
     <?php if ($links = render($content['links'])): ?>
-    <footer>
-    <?php print render($content['links']); ?>
-    </footer>
+    <!--<footer>
+    <?php // print render($content['links']); ?>
+    </footer> -->
     <?php endif; ?>
 
     <?php print render($content['comments']); ?>

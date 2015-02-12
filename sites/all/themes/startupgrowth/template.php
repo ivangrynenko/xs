@@ -520,8 +520,8 @@ function startupgrowth_preprocess_html(&$variables) {
 
   if ($responsive_meanmenu) {
 
-    drupal_add_css(drupal_get_path('theme', 'startupgrowth') . '/js/meanmenu/meanmenu.css');
-    drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/meanmenu/jquery.meanmenu.min.js', array('preprocess' => FALSE));
+    drupal_add_css(drupal_get_path('theme', 'startupgrowth') . '/js/meanmenu/meanmenu.min.css');
+    drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/meanmenu/jquery.meanmenu.min.js');
 
     /**
      * Add Javascript
