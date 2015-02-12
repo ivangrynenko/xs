@@ -448,7 +448,7 @@ function startupgrowth_preprocess_html(&$variables) {
    */
   if (theme_get_setting('isotope_js_include', 'startupgrowth')) {
 
-    drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/isotope/isotope.pkgd.js', array('preprocess' => FALSE));
+    drupal_add_js(drupal_get_path('theme', 'startupgrowth') . '/js/isotope/isotope.pkgd.js');
 
     drupal_add_js('
 		jQuery(document).ready(function($) {
