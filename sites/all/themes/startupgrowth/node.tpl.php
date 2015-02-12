@@ -50,14 +50,16 @@
 
       <?php if ($links = render($content['links'])): ?>
         <footer>
-          <?php print render($content['links']); ?>
-          <?php if ($display_submitted): ?>
+          <?php if ($display_submitted && $page): ?>
             <div class="submitted-user">
               <?php print t('By !username', array('!username' => $name)); ?>
             </div>
+            <?php print $user_picture; ?>
           <?php endif; ?>
 
-          <?php print $user_picture; ?>
+
+          <?php print render($content['links']); ?>
+
         </footer>
       <?php endif; ?>
 
