@@ -17,10 +17,10 @@
         if ($node->type == 'mt_slideshow_entry') { ?>
           <?php if ($node->field_slideshow_entry_path) { ?>
             <?php $path = $node->field_slideshow_entry_path[$lang][0]['value']; ?>
-            <li data-link="<?php print url($path); ?>" data-transition="<?php print $rs_effect ?>" data-masterspeed="800">
+            <li data-link="<?php print url($path); ?>" data-transition="<?php print $rs_effect ?>" data-masterspeed="400">
           <?php }
           else { ?>
-            <li data-transition="<?php print $rs_effect ?>" data-masterspeed="800">
+            <li data-transition="<?php print $rs_effect ?>" data-masterspeed="400">
           <?php } ?>
 
           <img data-bgposition="center top" src="<?php print $image; ?>" title="<?php print $title; ?>" alt="<?php print $alt; ?>"/>
@@ -28,8 +28,8 @@
           <div class="tp-caption title-teaser-text sft fadeout"
                data-x="left"
                data-y="bottom"
-               data-speed="100"
-               data-start="10"
+               data-speed="8000"
+               data-start="800"
                data-voffset="-30"
                data-easing="Power0.easeIn">
             <div class="title">
@@ -51,8 +51,8 @@
           <div class="tp-caption caption-link sft fadeout"
                data-x="right"
                data-y="bottom"
-               data-speed="100"
-               data-start="10"
+               data-speed="800"
+               data-start="800"
                data-voffset="-30"
                data-easing="Power0.easeIn">
             <?php if ($node->field_slideshow_entry_path): ?>
@@ -64,7 +64,7 @@
           </li>
         <?php }
         else { ?>
-          <li data-transition="<?php print $rs_effect ?>" data-link="<?php print $nodeurl ?>" data-masterspeed="800">
+          <li data-transition="<?php print $rs_effect ?>" data-link="<?php print $nodeurl ?>" data-masterspeed="400">
             <img data-bgposition="center top" src="<?php print $image; ?>" title="<?php print $title; ?>" alt="<?php print $alt; ?>"/>
             <?php print $row; ?>
           </li>
