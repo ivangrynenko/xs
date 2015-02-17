@@ -17,10 +17,10 @@ endif;
 
   <div class="image-preview">
 
-    <!--      <a class="image-popup overlayed" href="--><?php //print file_create_url($node->field_image[LANGUAGE_NONE][0]['uri']); ?><!--" title="--><?php //print $node->field_image[LANGUAGE_NONE][0]['title']; ?><!--">-->
-    <img src="<?php print image_style_url('large', $node->field_image[LANGUAGE_NONE][0]['uri']); ?>" alt="<?php print $node->field_image[LANGUAGE_NONE][0]['alt']; ?>" title="<?php print $node->field_image[LANGUAGE_NONE][0]['title']; ?>"/>
-    <!--        <span class="overlay large"><i class="fa fa-plus"></i></span>-->
-    <!--      </a>-->
+    <a class="image-popup overlayed" href="<?php print file_create_url($node->field_image[LANGUAGE_NONE][0]['uri']); ?>" title="<?php print $node->field_image[LANGUAGE_NONE][0]['title']; ?>">
+      <img src="<?php print image_style_url('large', $node->field_image[LANGUAGE_NONE][0]['uri']); ?>" alt="<?php print $node->field_image[LANGUAGE_NONE][0]['alt']; ?>" title="<?php print $node->field_image[LANGUAGE_NONE][0]['title']; ?>"/>
+      <span class="overlay large"><i class="fa fa-plus"></i></span>
+    </a>
 
     <?php if ($node->field_image[LANGUAGE_NONE][0]['title'] || $node->field_image[LANGUAGE_NONE][0]['alt']) : ?>
       <div class="image-caption hidden-xs">
