@@ -180,3 +180,11 @@ h2 a {
   display: inline;
   margin-right: 20px;
 }
+
+.col-md-offset-2 {
+  margin-left: 5%;
+}
+
+.col-md-8.col-md-offset-2 {
+  width: 90%;
+}
