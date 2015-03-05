@@ -188,3 +188,11 @@ h2 a {
 .col-md-8.col-md-offset-2 {
   width: 90%;
 }
+
+pre,
+body pre,
+div pre,
+p pre,
+#page pre {
+  max-height: 1000px;
+}
