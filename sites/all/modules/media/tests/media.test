@@ -499,10 +499,6 @@ class MediaHooksTestCase extends MediaFileFieldTestCase {
     // implementation and ensure it is working as designed.
     variable_set('media_module_test_media_browser_plugin_info_alter', TRUE);
 
-    // Clear the media browser plugin info cache so the alter is picked up.
-    $cid = 'media:browser:plugin:info:' . $GLOBALS['language']->language;
-    cache_clear_all($cid, 'cache');
-
     $this->drupalGet('media/browser');
     $this->assertRaw(t('Altered plugin title'), 'Custom browser plugin was successfully altered.');
 

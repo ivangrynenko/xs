@@ -582,6 +582,8 @@ function startupgrowth_process_html(&$vars) {
  * Preprocess variables for page template.
  */
 function startupgrowth_preprocess_page(&$variables) {
+  #drupal_add_js('//rum.monitis.com/get/jsbenchmark.min.js?id=9017', 'external');
+
   if (!empty($variables['node'])) {
     $numberOfImages = 0;
     if (!empty($variables['node']->field_image[LANGUAGE_NONE])) {
