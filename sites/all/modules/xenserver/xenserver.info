@@ -1,0 +1,8 @@
+; $Id: $
+name = Xenserver
+description = Enables Drupal integration with Xenserver poos of servers.
+core = 7.x
+package = Xenserver
+configure = admin/config/services/xenserver
+
+; Files that contain classes:

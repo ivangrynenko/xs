@@ -1,0 +1,51 @@
+<?php
+/**
+ * @file
+ * xenserver.module
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function xenserver_permission() {
+  return array(
+    'administer xenserver pool' => array(
+      'title' => t('Administer Xenserver Pool'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function xenserver_menu() {
+  $items['admin/config/services/xenserver'] = array(
+    'title' => 'Xenserver',
+    'description' => 'Xenserver pool configurationand settings.',
+    'page callback' => 'xenserver_settings',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'xenserver.pages.inc',
+  );
+
+  $items['admin/config/services/xenserver/default'] = array(
+    'title' => 'Xenserver',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xenserver/settings'] = array(
+    'title' => 'Xenserver Pool',
+    'description' => 'Xenserver Pools settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xenserver_admin_form'),
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'xenserver.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+}
+
+/**
+ * Implements hook_boot().
+ */
+function xenserver_boot() {
+  require DRUPAL_ROOT . '/sites/all/libraries/Xenapi/src/Sircamp/Xenapi/Xen.php';
+}
