@@ -66,7 +66,6 @@
   <?php print $page; ?>
   <?php print $page_bottom; ?>
   </div>
-<script src='//rum.monitis.com/get/jsbenchmark.min.js?id=9017' type='text/javascript' async='async'></script>
 <script type="text/javascript">
 (function() {
 var hm = document.createElement('script'); hm.type ='text/javascript'; hm.async = true;
