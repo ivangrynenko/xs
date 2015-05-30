@@ -1,8 +1,10 @@
 ; $Id: $
-name = Xenserver
+name = Xenserver API
 description = Enables Drupal integration with Xenserver poos of servers.
 core = 7.x
 package = Xenserver
-configure = admin/config/services/xenserver
+configure = admin/config/services/xs
+dependencies[] = entityreference
+dependencies[] = password_field
 
 ; Files that contain classes:

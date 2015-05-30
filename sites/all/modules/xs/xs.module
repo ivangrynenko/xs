@@ -1,0 +1,109 @@
+<?php
+/**
+ * @file
+ * xs.module
+ */
+
+require_once __DIR__ . '/includes/xs.constants.inc';
+require_once __DIR__ . '/includes/xs.api.inc';
+
+spl_autoload_register('xs_autoloader', TRUE, TRUE);
+
+/**
+ * Implements hook_permission().
+ */
+function xs_permission() {
+  return array(
+    'administer xenserver pool' => array(
+      'title' => t('Administer Xenserver Pool'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function xs_menu() {
+  $items['admin/config/services/xs'] = array(
+    'title' => 'Xenserver',
+    'description' => 'Xenserver pool configurationand settings.',
+    'page callback' => 'xs_settings',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+  );
+
+  $items['admin/config/services/xs/default'] = array(
+    'title' => 'Xenserver',
+    'description' => 'Xenserver pool configurationand settings.',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xs/settings'] = array(
+    'title' => 'Xenserver Pool',
+    'description' => 'Xenserver Pools settings.',
+    'page callback' => 'xs_admin_pool_configuration',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xs/vms'] = array(
+    'title' => 'VMs',
+    'description' => 'VMs available',
+    'page callback' => 'xs_admin_pool_vms',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+    'weight' => 50,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xs/templates'] = array(
+    'title' => 'Templates',
+    'description' => 'Templates available',
+    'page callback' => 'xs_admin_pool_templates',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+    'weight' => 50,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * SPL autoloader.
+ *
+ * @param string $class
+ *   Class name.
+ */
+function xs_autoloader($class) {
+  $filepath = DRUPAL_ROOT . '/sites/all/modules/xs/classes/xenapi.php';
+  if ($class == 'XenApi' && file_exists($filepath)) {
+    require_once $filepath;
+  }
+}
+
+/**
+ * Implements hook_node_load().
+ */
+function xs_node_load($nodes, $types) {
+  module_load_include('inc', 'xs', 'includes/xs.api');
+  module_load_include('inc', 'xs', 'includes/xs.pages');
+
+  foreach ($nodes as $node) {
+    if ($node->type != variable_get('xs_server_content_type')) {
+      continue;
+    }
+
+    $ip_address = $node->field_xs_ip_address[LANGUAGE_NONE][0]['value'];
+    $vms = xs_get_all_vms($node);
+    foreach ($vms as $vm) {
+      if (!xs_is_a_template($vm) && !xs_is_domain_controller($vm)) {
+        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "Name: " . $vm['name_label'] . "\n";
+        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "UUID: " . $vm['uuid'] . "\n";
+        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "Power State: " . $vm['power_state'] . "\n";
+        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "\n";
+      }
+    }
+  }
+}
