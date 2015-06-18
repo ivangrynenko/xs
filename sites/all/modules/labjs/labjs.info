@@ -6,9 +6,9 @@ package = Javascript Utilities
 tags[] = javascript
 configure = admin/config/development/labjs
 
-; Information added by Drupal.org packaging script on 2014-09-22
-version = "7.x-1.6"
+; Information added by Drupal.org packaging script on 2015-06-17
+version = "7.x-1.7"
 core = "7.x"
 project = "labjs"
-datestamp = "1411372736"
+datestamp = "1434550684"
 
