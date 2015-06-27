@@ -10,15 +10,12 @@
  * Administrative for for default tab.
  */
 function xs_settings() {
-  $output['header']['#markup'] = l('Add XS pool', 'node/add/' . variable_get('xs_pool_content_type'), array(
-    'query' => array('destination' => 'admin/config/services/xs'),
-    'attributes' => array('class' => 'more'),
-  ));
+  $output = array();
   $output['header']['#markup'] .= '<p>Available XenServer pools</p>';
 
   // Run pre-checks and display messages if pre-checks failed.
   $types = node_type_get_types();
-  $xs_pools = xs_get_pool_nodes();
+  $xs_pools = xs_get_pools();
   if (empty($types[variable_get('xs_pool_content_type')])) {
     drupal_set_message(t('No XenServer Pool entity type is configured. Refer tot he README file'), 'error');
   }
@@ -76,7 +73,7 @@ function xs_admin_pool_vms() {
 
 function xs_admin_pool_templates() {
   drupal_set_title('Available templates');
-  $pools = xs_get_pool_nodes();
+  $pools = xs_get_pools();
   foreach ($pools as $pool) {
     $servers = xs_get_pool_servers($pool);
 //    $pool_master = xs_api_get_pool_master($servers);
@@ -100,7 +97,8 @@ function xs_admin_pool_templates() {
  * @return mixed
  *   Array of loaded entities or FALSE.
  */
-function xs_get_pool_nodes() {
+function xs_get_pools() {
+  $pools = variable_get('xs_pools', array());
   return entity_load('node', FALSE, array('type' => variable_get('xs_pool_content_type')));
 }
 

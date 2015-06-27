@@ -29,7 +29,7 @@ function xs_get_xs_api($server) {
 
 
 function xs_api_get_servers() {
-  $all_known_servers = xs_get_pool_nodes();
+  $all_known_servers = xs_get_pools();
   foreach ($all_known_servers as $server) {
     // Attempt to connect to each server to identify if they all are up.
     $xs = xs_get_xs_api($server);

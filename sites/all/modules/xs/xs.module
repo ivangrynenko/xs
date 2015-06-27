@@ -4,11 +4,6 @@
  * xs.module
  */
 
-require_once __DIR__ . '/includes/xs.constants.inc';
-require_once __DIR__ . '/includes/xs.api.inc';
-
-spl_autoload_register('xs_autoloader', TRUE, TRUE);
-
 /**
  * Implements hook_permission().
  */
