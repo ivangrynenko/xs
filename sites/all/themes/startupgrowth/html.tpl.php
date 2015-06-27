@@ -56,6 +56,7 @@
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
   <?php print $scripts; ?>
+  <!-- Facebook Conversion Code for Key Page Views - RedyHost Drupal promo -->
 </head>
 <body class="<?php print $classes; ?>" <?php print $attributes;?>>
   <div class="main-wrapper">
@@ -73,5 +74,38 @@ hm.src = ('++u-heatmap-it+log-js').replace(/[+]/g,'/').replace(/-/g,'.');
 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(hm, s);
 })();
 </script>
+<script>(function() {
+  var _fbq = window._fbq || (window._fbq = []);
+  if (!_fbq.loaded) {
+  var fbds = document.createElement('script');
+  fbds.async = true;
+  fbds.src = '//connect.facebook.net/en_US/fbds.js';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(fbds, s);
+  _fbq.loaded = true;
+  }
+  _fbq.push(['addPixelId', '1663096280592894']);
+  })();
+  window._fbq = window._fbq || [];
+  window._fbq.push(['track', 'PixelInitialized', {}]);
+</script>
+<noscript><img height="1" width="1" alt="" style="display:none" src="https://www.facebook.com/tr?id=1663096280592894&amp;ev=PixelInitialized" /></noscript>
+<!-- Facebook Conversion Code for Key Page Views - RedyHost Drupal promo -->
+<script>(function() {
+  var _fbq = window._fbq || (window._fbq = []);
+  if (!_fbq.loaded) {
+  var fbds = document.createElement('script');
+  fbds.async = true;
+  fbds.src = '//connect.facebook.net/en_US/fbds.js';
+ var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(fbds, s);
+  _fbq.loaded = true;
+  }
+  })();
+  window._fbq = window._fbq || [];
+  window._fbq.push(['track', '6025412818629', {'value':'0.01','currency':'AUD'}]);
+</script>
+<noscript><img height="1" width="1" alt="" style="display:none" src="https://www.facebook.com/tr?ev=6025412818629&amp;cd[value]=0.01&amp;cd[currency]=AUD&amp;noscript=1" /></noscript>
+
 </body>
 </html>
