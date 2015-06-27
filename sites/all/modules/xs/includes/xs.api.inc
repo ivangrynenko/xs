@@ -8,17 +8,14 @@
 /**
  * Initialises connection to the server and XenAPI class.
  *
- * @param object $server
- *   Server object created via Drupal.
+ * @param array $server
+ *   Server array defined by the module.
  *
  * @return \XenApi
  */
 function xs_get_xs_api($server) {
-  module_load_include('module', 'password_field', 'password_field');
-  $password = xs_get_server_password($server);
-  $username = xs_get_server_username($server);
   try {
-    $xs = new XenApi(xs_get_server_ip($server), $username, $password);
+    $xs = new XenApi('https://' . $server['ip'], $server['username'], $server['password']);
   }
   catch (Exception $e) {
     watchdog('XS', 'Error when connecting to XS: !error', array('!error' => $e->getMessage()), WATCHDOG_ERROR);
@@ -26,7 +23,6 @@ function xs_get_xs_api($server) {
 
   return $xs;
 }
-
 
 function xs_api_get_servers() {
   $all_known_servers = xs_get_pools();
@@ -51,7 +47,6 @@ function xs_api_get_pool_master($servers) {
     }
 
     foreach ($server_objects as $object) {
-
     }
   }
 }
@@ -121,7 +116,7 @@ function xs_get_all_templates($server) {
  *   TRUE if the $vm is a template or FALSE otherwise.
  */
 function xs_is_a_template($vm) {
-  return !empty($vm['is_a_template']);
+  return $vm['is_a_template'];
 }
 
 /**
@@ -134,5 +129,37 @@ function xs_is_a_template($vm) {
  *   TRUE if the VM is a Pool Master or FALSE otherwise.
  */
 function xs_is_domain_controller($vm) {
-  return !empty($vm['is_control_domain']);
+  return $vm['is_control_domain'];
+}
+
+function xs_check_server_status($host) {
+  return !empty($host['enabled']) && $host['enabled'] == TRUE;
+}
+
+function xs_get_host_by_uuid($xs_api, $uuid) {
+  $xs_host_ref = $xs_api->host_get_by_uuid($uuid);
+  $xs_host = $xs_api->host_get_record($xs_host_ref);
+
+  return $xs_host;
+}
+
+function xs_get_resident_vms($xs_api, $host) {
+  $all_vms = array();
+  $vms = array();
+  if (!empty($host['resident_VMs'])) {
+    foreach ($host['resident_VMs'] as $vm) {
+      $all_vms[] = $xs_api->VM_get_record($vm);
+    }
+  }
+
+  if (!empty($all_vms)) {
+    foreach ($all_vms as $vm) {
+      // Filter out control domain.
+      if (!xs_is_a_template($vm) && !xs_is_domain_controller($vm)) {
+        $vms[] = $vm;
+      }
+    }
+  }
+
+  return $vms;
 }

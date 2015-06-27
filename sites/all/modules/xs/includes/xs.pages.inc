@@ -14,22 +14,61 @@ function xs_settings() {
   $output['header']['#markup'] .= '<p>Available XenServer pools</p>';
 
   // Run pre-checks and display messages if pre-checks failed.
-  $types = node_type_get_types();
   $xs_pools = xs_get_pools();
-  if (empty($types[variable_get('xs_pool_content_type')])) {
-    drupal_set_message(t('No XenServer Pool entity type is configured. Refer tot he README file'), 'error');
-  }
-
   if (empty($xs_pools)) {
-    drupal_set_messag(t('You have no XS pools available. !create at least one XL pool to continue', array('!create' => l('Create', 'node/add/' . variable_get('xs_pool_content_type')))), 'error');
+    drupal_set_message('Configure XS pools and servers. Check the module README file for the details.', 'error');
   }
-  else {
-    foreach ($xs_pools as $pool) {
-      $output['content']['#markup'] .= $pool->title . '<br />';
+  $header = array(
+    t('#'),
+    t('SERVER'),
+    t('IP-ADDRESS'),
+    t('POOL'),
+    t('SERVER-UUID'),
+    t('STATUS'),
+    t('VMs')
+  );
+  $i = 0;
+  foreach ($xs_pools as $pool) {
+    // Get servers of the pools.
+    $xs_pool_servers = xs_get_pool_servers($pool);
+    if (empty($xs_pool_servers)) {
+      drupal_set_message(t('No XS pool servers are configured. Check the module README file for the details.', 'error'));
+      return '';
+    }
+
+    foreach ($xs_pool_servers as $xs_pool_server) {
+      // Connect to this server and check it's status.
+      $xs_api = xs_get_xs_api($xs_pool_server);
+      $xs_host = xs_get_host_by_uuid($xs_api, $xs_pool_server['uuid']);
+      $status = xs_check_server_status($xs_host);
+
+      $vms = xs_get_resident_vms($xs_api, $xs_host);
+      if (!empty($vms)) {
+        foreach ($vms as $vm) {
+          $vms_list[] = format_string('!name [!status]', array(
+            '!name' => $vm['name_label'],
+            '!status' => $vm['power_state'],
+          ));
+        }
+      }
+
+      $rows[] = array(
+        $i,
+        $xs_pool_server['name'],
+        $xs_pool_server['ip'],
+        $pool['name'],
+        $xs_pool_server['uuid'],
+        $server_status = $status ? t('Up') : t('Off'),
+        implode("<br />", $vms_list),
+      );
+      $i++;
     }
   }
-
-  //xs_connect();
+  $output['content']['#markup'] .= theme('table', array(
+    'header' => $header,
+    'rows' => $rows
+  ));
+//  xs_connect();
 
   return $output;
 }
@@ -95,28 +134,27 @@ function xs_admin_pool_templates() {
  * Loads all configured xenserver pools.
  *
  * @return mixed
- *   Array of loaded entities or FALSE.
+ *   Array of loaded pool definitions or an empty array.
  */
 function xs_get_pools() {
-  $pools = variable_get('xs_pools', array());
-  return entity_load('node', FALSE, array('type' => variable_get('xs_pool_content_type')));
+  return variable_get('xs_pools', array());
 }
 
 /**
  * Loads all servers in the $pool.
  *
  * @return mixed
- *   Array of loaded entities or emty array.
+ *   Array of XS pool members.
  */
 function xs_get_pool_servers($pool) {
-  $server = array();
-  if (!empty($pool->field_xs_pool_member[LANGUAGE_NONE][0]['target_id'])) {
-    foreach ($pool->field_xs_pool_member[LANGUAGE_NONE] as $server_target) {
-      $server[$server_target['target_id']] = reset(entity_load('node', array($server_target['target_id'])));
+  $servers = array();
+  if (!empty($pool['members'])) {
+    foreach ($pool['members'] as $uuid => $member) {
+      $servers[$uuid] = $member;
     }
   }
 
-  return $server;
+  return $servers;
 }
 
 /**

@@ -66,19 +66,6 @@ function xs_menu() {
 }
 
 /**
- * SPL autoloader.
- *
- * @param string $class
- *   Class name.
- */
-function xs_autoloader($class) {
-  $filepath = DRUPAL_ROOT . '/sites/all/modules/xs/classes/xenapi.php';
-  if ($class == 'XenApi' && file_exists($filepath)) {
-    require_once $filepath;
-  }
-}
-
-/**
  * Implements hook_node_load().
  */
 function xs_node_load($nodes, $types) {
