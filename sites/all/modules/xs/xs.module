@@ -20,7 +20,7 @@ function xs_permission() {
  */
 function xs_menu() {
   $items['admin/config/services/xs'] = array(
-    'title' => 'Xenserver',
+    'title' => 'Overview',
     'description' => 'Xenserver pool configurationand settings.',
     'page callback' => 'xs_settings',
     'access arguments' => array('administer xenserver pool'),
@@ -28,13 +28,13 @@ function xs_menu() {
   );
 
   $items['admin/config/services/xs/default'] = array(
-    'title' => 'Xenserver',
+    'title' => 'Overview',
     'description' => 'Xenserver pool configurationand settings.',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
 
   $items['admin/config/services/xs/settings'] = array(
-    'title' => 'Xenserver Pool',
+    'title' => 'Xenserver Pools',
     'description' => 'Xenserver Pools settings.',
     'page callback' => 'xs_admin_pool_configuration',
     'access arguments' => array('administer xenserver pool'),
@@ -66,26 +66,68 @@ function xs_menu() {
 }
 
 /**
- * Implements hook_node_load().
+ * Implements hook_theme().
  */
-function xs_node_load($nodes, $types) {
-  module_load_include('inc', 'xs', 'includes/xs.api');
-  module_load_include('inc', 'xs', 'includes/xs.pages');
+function xs_theme($existing, $type, $theme, $path) {
+  $theme = array();
+  $theme['node__xs_vps'] = array(
+    'render element' => 'content',
+    'base hook' => 'node',
+    'template' => 'node--xs_vps',
+    'path' => drupal_get_path('module', 'xs') . '/templates',
+  );
 
-  foreach ($nodes as $node) {
-    if ($node->type != variable_get('xs_server_content_type')) {
-      continue;
+  return $theme;
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function xs_preprocess_node(&$variables) {
+  if ($variables['node']->type == 'xs_vps') {
+    global $xs_api;
+
+    $xs_api = xs_get_xs_api();
+
+    $vm = xs_get_vm_by_uuid($variables['node']);
+
+    $variables['vm_name'] = $vm['name_label'];
+    $variables['vm_description'] = $vm['name_description'];
+    $variables['vm_last_shutdown_time'] = date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time']));
+    $variables['vm_nics'] = count($vm['VIFs']);
+
+    $vifs = xs_get_vifs($vm);
+    foreach ($vifs as $key => $vif) {
+      $variables['vm_vifs'][$key]['device'] = $vif['device'];
+      $variables['vm_vifs'][$key]['mac'] = $vif['MAC'];
     }
+    $variables['vm_power_state'] = $vm['power_state'];
+  }
 
-    $ip_address = $node->field_xs_ip_address[LANGUAGE_NONE][0]['value'];
-    $vms = xs_get_all_vms($node);
-    foreach ($vms as $vm) {
-      if (!xs_is_a_template($vm) && !xs_is_domain_controller($vm)) {
-        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "Name: " . $vm['name_label'] . "\n";
-        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "UUID: " . $vm['uuid'] . "\n";
-        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "Power State: " . $vm['power_state'] . "\n";
-        $node->field_xs_vms[LANGUAGE_NONE][0]['value'] .= "\n";
-      }
+  $vm_metrics = xs_get_vm_metrics($vm['metrics']);
+  $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
+  $variables['vm_memory'] = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
+
+  $variables['start_time'] = date("d/m/Y h:iA", $vm_metrics['start_time']->timestamp);
+
+  // Guest metrics.
+  $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
+
+}
+
+function xs_get_vifs($vm) {
+  $vifs = array();
+  if (!empty($vm['VIFs'])) {
+    foreach ($vm['VIFs'] as $vif_ref) {
+      $vifs[] = xs_api_get_vif($vif_ref);
     }
   }
+
+  return $vifs;
+}
+
+function xs_get_vm_metrics($uuid) {
+  global $xs_api;
+
+  return $xs_api->VM_metrics_get_record($uuid);
 }

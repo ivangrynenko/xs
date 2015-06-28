@@ -61,6 +61,14 @@ class XenApi {
       $args = array();
     }
     list($mod, $method) = explode('_', $name, 2);
+    if (substr($method, 0, 7) == 'metrics') {
+      $mod = $mod . '_metrics';
+      $method = substr($method, 8);
+    }
+    if (substr($method, 0, 13) == 'guest_metrics') {
+      $mod = $mod . '_guest_metrics';
+      $method = substr($method, 14);
+    }
     $ret = $this->xenrpc_parseresponse($this->xenrpc_request($this->_url,
       $this->xenrpc_method($mod . '.' . $method, array_merge(array($this->_session_id), $args))));
     return $ret;

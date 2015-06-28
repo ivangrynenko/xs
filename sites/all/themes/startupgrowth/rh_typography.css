@@ -196,3 +196,8 @@ p pre,
 #page pre {
   max-height: 1000px;
 }
+
+.display-inline,
+*.display-inline {
+  display: inline;
+}

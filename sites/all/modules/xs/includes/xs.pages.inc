@@ -10,14 +10,16 @@
  * Administrative for for default tab.
  */
 function xs_settings() {
+  global $xs_api;
+
+  $xs_api = xs_get_xs_api();
+
   $output = array();
   $output['header']['#markup'] .= '<p>Available XenServer pools</p>';
 
   // Run pre-checks and display messages if pre-checks failed.
   $xs_pools = xs_get_pools();
-  if (empty($xs_pools)) {
-    drupal_set_message('Configure XS pools and servers. Check the module README file for the details.', 'error');
-  }
+
   $header = array(
     t('#'),
     t('SERVER'),
@@ -38,11 +40,10 @@ function xs_settings() {
 
     foreach ($xs_pool_servers as $xs_pool_server) {
       // Connect to this server and check it's status.
-      $xs_api = xs_get_xs_api($xs_pool_server);
       $xs_host = xs_get_host_by_uuid($xs_api, $xs_pool_server['uuid']);
       $status = xs_check_server_status($xs_host);
 
-      $vms = xs_get_resident_vms($xs_api, $xs_host);
+      $vms = xs_get_all_vms($xs_api, $xs_host);
       if (!empty($vms)) {
         foreach ($vms as $vm) {
           $vms_list[] = format_string('!name [!status]', array(
@@ -103,6 +104,10 @@ function xs_settings_form_submit($form, &$form_state) {
 }
 
 function xs_admin_pool_vms() {
+  global $xs_api;
+
+  $xs_api = xs_get_xs_api();
+
   drupal_set_title('Available Virtual Servers');
   $view = views_get_view('xs_pools_servers');
   $output = $view->preview('block');
@@ -111,11 +116,12 @@ function xs_admin_pool_vms() {
 }
 
 function xs_admin_pool_templates() {
+  global $xs_api;
+
   drupal_set_title('Available templates');
   $pools = xs_get_pools();
   foreach ($pools as $pool) {
     $servers = xs_get_pool_servers($pool);
-//    $pool_master = xs_api_get_pool_master($servers);
     foreach ($servers as $server) {
       $templates = xs_get_all_templates($server);
       foreach ($templates as $template) {
@@ -128,33 +134,6 @@ function xs_admin_pool_templates() {
   }
 
   return $output;
-}
-
-/**
- * Loads all configured xenserver pools.
- *
- * @return mixed
- *   Array of loaded pool definitions or an empty array.
- */
-function xs_get_pools() {
-  return variable_get('xs_pools', array());
-}
-
-/**
- * Loads all servers in the $pool.
- *
- * @return mixed
- *   Array of XS pool members.
- */
-function xs_get_pool_servers($pool) {
-  $servers = array();
-  if (!empty($pool['members'])) {
-    foreach ($pool['members'] as $uuid => $member) {
-      $servers[$uuid] = $member;
-    }
-  }
-
-  return $servers;
 }
 
 /**
