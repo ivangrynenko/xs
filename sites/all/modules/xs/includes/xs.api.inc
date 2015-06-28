@@ -24,9 +24,6 @@ function xs_get_pools() {
 /**
  * Initialises connection to the server and XenAPI class.
  *
- * @param array $server
- *   Server array defined by the module.
- *
  * @return \XenApi
  */
 function xs_get_xs_api() {
@@ -85,16 +82,6 @@ function xs_api_connect($pool_member) {
   }
 
   return $xs_api;
-}
-
-function xs_api_get_servers() {
-  global $xs_api;
-
-  $all_known_servers = xs_get_pools();
-  foreach ($all_known_servers as $server) {
-    // Attempt to connect to each server to identify if they all are up.
-    $master = $xs_api->host_get_master();
-  }
 }
 
 /**
@@ -274,17 +261,37 @@ function xs_get_all_vms($host = NULL) {
   return $vms;
 }
 
-function xs_get_vm_by_uuid($node) {
-  if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
-    drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
-
-    return FALSE;
-  }
+/**
+ * Gets VM object via XAPI.
+ *
+ * @param string $uuid
+ *   VM's UUID, as stored against VM content type.
+ *
+ * @return mixed
+ */
+function xs_api_get_vm_by_uuid($uuid) {
   global $xs_api;
+  $return = array();
 
-  $vm_ref = $xs_api->VM_get_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+  try {
+    $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get VM_get_by_uuid for !uuid', array('!uuid' => $uuid), WATCHDOG_ERROR);
 
-  return $xs_api->VM_get_record($vm_ref);
+    return $return;
+  }
+
+  try {
+    $vm = $xs_api->VM_get_record($vm_ref);
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get VM_get_by_uuid for !uuid', array('!uuid' => $uuid), WATCHDOG_ERROR);
+
+    return $return;
+  }
+
+  return $vm;
 }
 
 /**
@@ -365,6 +372,35 @@ function xs_api_get_vm_guest_metrix($vm) {
 
   try {
     $return = $xs_api->VM_guest_metrics_get_record($vm_get_metrix_ref);
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get VM_guest_metrics_get_record for !vm', array('!vm' => $vm['name_label']), WATCHDOG_ERROR);
+  }
+
+  return $return;
+}
+
+
+/**
+ * Gets VM_metrics object via XAPI.
+ *
+ * @param string $uuid
+ *   VM_metrics UUID reference.
+ *
+ * @return mixed
+ *   VM_metrics array.
+ */
+function xs_api_get_vm_metrics($vm) {
+  global $xs_api;
+
+  $return = array();
+
+  if (empty($vm['metrics'])) {
+    return $return;
+  }
+
+  try {
+    $return = $xs_api->VM_metrics_get_record($vm['metrics']);
   }
   catch (Exception $e) {
     watchdog('XS', 'Unable to get VM_guest_metrics_get_record for !vm', array('!vm' => $vm['name_label']), WATCHDOG_ERROR);

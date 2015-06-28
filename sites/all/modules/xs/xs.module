@@ -104,7 +104,7 @@ function xs_preprocess_node(&$variables) {
     $variables['vm_power_state'] = $vm['power_state'];
   }
 
-  $vm_metrics = xs_get_vm_metrics($vm['metrics']);
+  $vm_metrics = xs_api_get_vm_metrics($vm);
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
   $variables['vm_memory'] = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
 
@@ -115,6 +115,25 @@ function xs_preprocess_node(&$variables) {
 
 }
 
+function xs_get_vm_by_uuid($node) {
+  if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
+    drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
+
+    return FALSE;
+  }
+
+  return xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+}
+
+/**
+ * Gets VIFs of a $vm via XAPI.
+ *
+ * @param array $vm
+ *   XAPI VM object.
+ *
+ * @return array
+ *   Array of XAPI VIFs arrays.
+ */
 function xs_get_vifs($vm) {
   $vifs = array();
   if (!empty($vm['VIFs'])) {
@@ -126,8 +145,3 @@ function xs_get_vifs($vm) {
   return $vifs;
 }
 
-function xs_get_vm_metrics($uuid) {
-  global $xs_api;
-
-  return $xs_api->VM_metrics_get_record($uuid);
-}
