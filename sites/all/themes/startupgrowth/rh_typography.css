@@ -196,3 +196,57 @@ p pre,
 #page pre {
   max-height: 1000px;
 }
+
+input[type="submit"],
+.region input[type="submit"],
+.region input[type="submit"]:hover,
+input[type="reset"],
+.region input[type="reset"],
+.region input[type="reset"]:hover,
+input[type="button"],
+.region input[type="button"],
+.region input[type="button"]:hover,
+.view-showcases .more-link a,
+a.more,
+a:hover.more,
+a:visited.more,
+.region a.more,
+.region a:visited.more,
+.region a:hover.more {
+  color: #961300;
+  background-color: #FFFFFF;
+  border-radius: 5px;
+  border: 2px solid;
+  border-color: #961300;
+}
+
+#search-block-form input[type="submit"],
+.region #search-block-form input[type="submit"],
+.region #search-block-form input[type="submit"]:hover,
+#search-block-form input[type="reset"],
+.region #search-block-form input[type="reset"],
+.region #search-block-form input[type="reset"]:hover,
+#search-block-form input[type="button"],
+.region input[type="button"],
+.region input[type="button"]:hover,
+.region #search-block-form input.form-submit,
+.region .block-search input.form-submit {
+  background-color: transparent;
+  min-width: 0;
+  color: #000000;
+  position: relative;
+  z-index: 1;
+  height: 40px;
+  margin: 0;
+  padding: 15px;
+  border: none;
+  border-color: transparent;
+}
+
+.region #search-block-form input.form-submit:focus,
+.region #search-block-form input.form-submit:hover,
+.region .block-search input.form-submit:focus,
+.region .block-search input.form-submit:hover {
+  outline: none;
+  background: transparent;
+}
