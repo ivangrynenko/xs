@@ -27,14 +27,24 @@ function xs_get_pools() {
  * @return \XenApi
  */
 function xs_get_xs_api() {
+  // Get all defined pools.
   $xs_pools = xs_get_pools();
   if (empty($xs_pools)) {
     return FALSE;
   }
 
+  // Loop through defined pools to get array of members (hosts).
   foreach ($xs_pools as $pool_uuid => $xs_pool) {
+    // Load members defined for this pool.
     $xs_pool_members = xs_get_pool_members($pool_uuid);
+    // Loop through every member and attempt to create a connection.
     foreach ($xs_pool_members as $pool_member) {
+      // In multi-server environment we attempt to connect to every server
+      // that is defined in the pool and to identify pool master. One pool
+      // master is identified, we connect to it and skip other servers.
+      if (!empty($xs_master_api[$pool_uuid])) {
+        continue;
+      }
 
       try {
         $xs_api[$pool_uuid] = xs_api_connect($pool_member);
