@@ -115,6 +115,16 @@ h2 a {
   font-weight: 700;
 }
 
+.content h4 {
+  border-bottom: 1px solid #efefef;
+  padding-bottom: 10px;
+}
+
+.content .node-unpublished {
+  background-color: #FFFFFF;
+  border: 2px solid #CCCCCC;
+}
+
 #site-slogan {
   margin-top: 25px;
 }
@@ -214,6 +224,7 @@ a:visited.more,
 .region a:visited.more,
 .region a:hover.more {
   color: #961300;
+  font-weight: 600;
   background-color: #FFFFFF;
   border-radius: 5px;
   border: 2px solid;
@@ -260,4 +271,40 @@ a:visited.more,
 .region .block-search input.form-submit:hover {
   outline: none;
   background: transparent;
+}
+
+.tag-green {
+  background-color: #82b74c;
+  color: #ecf5da;
+  border-radius: 2px;
+  padding: 4px 8px;
+  line-height: 32px;
+  border: 1px solid #3b6000;
+}
+
+.tag-red {
+  background-color: #dd1d00;
+  color: #ffdede;
+  border-radius: 2px;
+  padding: 4px 8px;
+  line-height: 32px;
+  border: 1px solid #961300;
+}
+
+.tag-blue {
+  background-color: #2a68af;
+  color: #e1e1e1;
+  border-radius: 2px;
+  padding: 4px 8px;
+  line-height: 32px;
+  border: 1px solid rgba(42,104,175,0.55);
+}
+
+.tag-white {
+  background-color: #FFFFFF;
+  color: #000000;
+  border-radius: 2px;
+  padding: 4px 8px;
+  line-height: 32px;
+  border: 1px solid #000000;
 }
