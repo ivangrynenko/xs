@@ -203,8 +203,25 @@ function xs_check_server_status($host) {
  *   Array of XS host loaded via XS API or FALSE.
  */
 function xs_get_host_by_uuid($xs_api, $uuid) {
-  $xs_host_ref = $xs_api->host_get_by_uuid($uuid);
-  $xs_host = $xs_api->host_get_record($xs_host_ref);
+  $xs_host = array();
+
+  if (!($xs_api instanceof XenApi)) {
+    return $xs_host;
+  }
+
+  try {
+    $xs_host_ref = $xs_api->host_get_by_uuid($uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  try {
+    $xs_host = $xs_api->host_get_record($xs_host_ref);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
 
   return $xs_host;
 }
@@ -283,11 +300,15 @@ function xs_api_get_vm_by_uuid($uuid) {
   global $xs_api;
   $return = array();
 
+  if (!($xs_api instanceof XenApi)) {
+    return $return;
+  }
+
   try {
     $vm_ref = $xs_api->VM_get_by_uuid($uuid);
   }
   catch (Exception $e) {
-    watchdog('XS', 'Unable to get VM_get_by_uuid for !uuid', array('!uuid' => $uuid), WATCHDOG_ERROR);
+    xs_log($e);
 
     return $return;
   }
@@ -296,7 +317,7 @@ function xs_api_get_vm_by_uuid($uuid) {
     $vm = $xs_api->VM_get_record($vm_ref);
   }
   catch (Exception $e) {
-    watchdog('XS', 'Unable to get VM_get_by_uuid for !uuid', array('!uuid' => $uuid), WATCHDOG_ERROR);
+    xs_log($e);
 
     return $return;
   }

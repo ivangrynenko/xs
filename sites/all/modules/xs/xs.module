@@ -1,8 +1,14 @@
 <?php
 /**
  * @file
- * xs.module
+ * Code for the XenServer API feature.
  */
+
+include_once 'xs.features.inc';
+
+define('XS_POWERSTATE_VM_DOWN', 'Down');
+define('XS_API_ERROR', 'API Error. Unable to get the status.');
+define('XS_API_VPS_CONTENT_TYPE', 'xs_vps');
 
 /**
  * Implements hook_permission().
@@ -66,6 +72,40 @@ function xs_menu() {
 }
 
 /**
+ * Implements hook_node_load().
+ */
+function xs_node_load($nodes, $types) {
+  foreach ($nodes as $node) {
+    if ($node->type == XS_API_VPS_CONTENT_TYPE) {
+      if (!empty($node->field_xs_vps_owner)) {
+
+      }
+    }
+  }
+}
+
+/**
+ * Logs errors into watchdog.
+ *
+ * @param Exception $e
+ *   An exception caught.
+ */
+function xs_log($e) {
+  if ($e instanceof Exception) {
+    watchdog('XS', 'Error when attempting to get host_get_by_uuid, error: !error, file: !file, line: !line', array(
+      '!error' => $e->getMessage(),
+      '!file' => $e->getFile(),
+      '!line' => $e->getLine(),
+    ), WATCHDOG_ERROR);
+  }
+  else {
+    watchdog('XS', 'Error when attempting to get host_get_by_uuid, error: !error', array(
+      '!error' => var_export($e, TRUE),
+    ), WATCHDOG_ERROR);
+  }
+}
+
+/**
  * Implements hook_theme().
  */
 function xs_theme($existing, $type, $theme, $path) {
@@ -91,17 +131,20 @@ function xs_preprocess_node(&$variables) {
 
     $vm = xs_get_vm_by_uuid($variables['node']);
 
-    $variables['vm_name'] = $vm['name_label'];
-    $variables['vm_description'] = $vm['name_description'];
-    $variables['vm_last_shutdown_time'] = date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time']));
-    $variables['vm_nics'] = count($vm['VIFs']);
+    $variables['vm_name'] = !empty($vm['name_label']) ?: XS_API_ERROR;
+    $variables['vm_description'] = !empty($vm['name_description']) ?: XS_API_ERROR;
+    $variables['vm_last_shutdown_time'] = !empty($vm['other_config']['last_shutdown_time']) ? date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time'])) : XS_API_ERROR;
+    $variables['vm_nics'] = !empty($vm['VIFs']) ? count($vm['VIFs']) : XS_API_ERROR;
 
     $vifs = xs_get_vifs($vm);
-    foreach ($vifs as $key => $vif) {
-      $variables['vm_vifs'][$key]['device'] = $vif['device'];
-      $variables['vm_vifs'][$key]['mac'] = $vif['MAC'];
+    if (!empty($vm)) {
+      foreach ($vifs as $key => $vif) {
+        $variables['vm_vifs'][$key]['device'] = $vif['device'];
+        $variables['vm_vifs'][$key]['mac'] = $vif['MAC'];
+      }
     }
-    $variables['vm_power_state'] = $vm['power_state'];
+
+    $variables['vm_power_state'] = !empty($vm['power_state']) ? $vm['power_state'] : XS_API_ERROR;
   }
 
   $vm_metrics = xs_api_get_vm_metrics($vm);
