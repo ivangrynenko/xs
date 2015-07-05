@@ -101,7 +101,7 @@ function imagecache_token_tokens($type, $tokens, array $data = array(), array $o
           elseif ($file = file_load($field['fid'])) {
             $uri = $file->uri;
           }
-          $output[] = !empty($uri) ? image_style_url($token, $uri) : '';
+          $output[] = !empty($uri) ? image_style_url($type, $uri) : '';
         }
       }
       $replacements[$original] = implode(', ', $output);

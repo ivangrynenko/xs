@@ -13,3 +13,5 @@ By DamienMcKenna: Updated README.txt file.
 #2064275 by jpstrikesback, MediaFormat: Don't assume the field attribute value
   exists.
 #2422881 by AndreyMaximov: Add support for for Media fields.
+#2064357 by jpstrikesback, DamienMcKenna: Incorrect value passed to
+  image_style_url().
