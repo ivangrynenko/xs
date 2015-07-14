@@ -195,7 +195,10 @@ function media_wysiwyg_token_to_markup($match, $wysiwyg = FALSE) {
   else {
     // Display the field elements.
     $element = array();
-    $element['content'] = file_view($file, $tag_info['view_mode']);
+    // Render the file entity, for sites using the file_entity rendering method.
+    if (variable_get('media_wysiwyg_default_render', 'file_entity') == 'file_entity') {
+      $element['content'] = file_view($file, $tag_info['view_mode']);
+    }
     $element['content']['file'] = media_wysiwyg_get_file_without_label($file, $tag_info['view_mode'], $settings);
     // Overwrite or set the file #alt attribute if it has been set in this
     // instance.
@@ -206,6 +209,12 @@ function media_wysiwyg_token_to_markup($match, $wysiwyg = FALSE) {
     // instance.
     if (!empty($element['content']['file']['#attributes']['title'])) {
       $element['content']['file']['#title'] = $element['content']['file']['#attributes']['title'];
+    }
+    // For sites using the legacy field_attach rendering method, attach fields.
+    if (variable_get('media_wysiwyg_default_render', 'file_entity') == 'field_attach') {
+      field_attach_prepare_view('file', array($file->fid => $file), $tag_info['view_mode']);
+      entity_prepare_view('file', array($file->fid => $file));
+      $element['content'] += field_attach_view('file', $file, $tag_info['view_mode']);
     }
     if (count(element_children($element['content'])) > 1) {
       // Add surrounding divs to group them together.
