@@ -227,6 +227,12 @@ function media_wysiwyg_token_to_markup($match, $wysiwyg = FALSE) {
         'media-' . $element['content']['file']['#view_mode']
       );
     }
+
+    // Conditionally add a pre-render if the media filter output is be cached.
+    $filters = filter_get_filters();
+    if (!isset($filters['media_filter']['cache']) || $filters['media_filter']['cache']) {
+      $element['#pre_render'][] = 'media_wysiwyg_pre_render_cached_filter';
+    }
   }
   drupal_alter('media_wysiwyg_token_to_markup', $element, $tag_info, $settings);
   $output = drupal_render($element);
@@ -350,4 +356,17 @@ function media_wysiwyg_get_wysiwyg_allowed_view_modes($file) {
   $view_modes = $enabled_view_modes[$file->type];
   drupal_alter('media_wysiwyg_wysiwyg_allowed_view_modes', $view_modes, $file);
   return $view_modes;
+}
+
+/**
+ * #pre_render callback: Modify the element if the render cache is filtered.
+ */
+function media_wysiwyg_pre_render_cached_filter($element) {
+  // Remove contextual links since they are not compatible with cached filtered
+  // text.
+  if (isset($element['content']['#contextual_links'])) {
+    unset($element['content']['#contextual_links']);
+  }
+
+  return $element;
 }

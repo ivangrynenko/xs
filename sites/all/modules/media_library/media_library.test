@@ -15,6 +15,26 @@ class MediaLibraryTestHelper extends DrupalWebTestCase {
     parent::setUp($modules);
   }
 
+  /**
+   * Retrieves a sample file of the specified type.
+   */
+  function getTestFile($type_name, $size = NULL) {
+    // Get a file to upload.
+    $file = current($this->drupalGetTestFiles($type_name, $size));
+
+    // Add a filesize property to files as would be read by file_load().
+    $file->filesize = filesize($file->uri);
+
+    return $file;
+  }
+
+  /**
+   * Retrieves the fid of the last inserted file.
+   */
+  function getLastFileId() {
+    return (int) db_query('SELECT MAX(fid) FROM {file_managed}')->fetchField();
+  }
+
   protected function createFileEntity($settings = array()) {
     // Populate defaults array.
     $settings += array(
@@ -110,5 +130,61 @@ class MediaLibraryAdminTestCase extends MediaLibraryTestHelper {
     $this->assertLinkByHref('file/' . $files['library_file']->fid);
     // Verify tableselect.
     $this->assertFieldByName('files[' . $file->fid . ']', '', t('Tableselect found.'));
+  }
+}
+
+/**
+ * Tests creating new file entities and adding them to the media library through the file upload wizard.
+ */
+class MediaLibraryUploadWizardTestCase extends MediaLibraryTestHelper {
+  public static function getInfo() {
+    return array(
+      'name' => 'Media Library upload wizard',
+      'description' => 'Upload a file and add it to the media library using the multi-step wizard.',
+      'group' => 'Media Library',
+    );
+  }
+
+  function setUp() {
+    parent::setUp();
+
+    $web_user = $this->drupalCreateUser(array('create files', 'media library add to library'));
+    $this->drupalLogin($web_user);
+
+    // Disable files from being added to the media library by default.
+    variable_set('media_library_file_add_default', FALSE);
+  }
+
+  /**
+   * Test the file upload wizard 'add to library' checkbox.
+   */
+  function testMediaLibraryUploadWizardCheckbox() {
+    $test_file = $this->getTestFile('image');
+
+    // Step 1: Upload a basic image file.
+    $edit = array();
+    $edit['files[upload]'] = drupal_realpath($test_file->uri);
+    $this->drupalPost('file/add', $edit, t('Next'));
+
+    // Step 3: Scheme selection.
+    $edit = array();
+    $edit['scheme'] = 'public';
+    $this->drupalPost(NULL, $edit, t('Next'));
+
+    // Step 4: Attached fields.
+    $edit = array();
+    $edit['library'] = TRUE;
+    $this->drupalPost(NULL, $edit, t('Save'));
+
+    // Check that the file exists in the database.
+    $fid = $this->getLastFileId();
+    $file = file_load($fid);
+    $this->assertTrue($file, t('File found in database.'));
+
+    // Check that the image file has been uploaded.
+    $this->assertRaw(t('!type %name was uploaded.', array('!type' => 'Image', '%name' => $file->filename)), t('Image file uploaded.'));
+
+    // Check that the image was included in the media library.
+    $this->assertEqual($file->library, INCLUDE_IN_LIBRARY, t('File was included in the media library.'));
   }
 }

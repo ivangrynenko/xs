@@ -12,16 +12,37 @@ define('EXCLUDE_FROM_LIBRARY', 0);
 define('INCLUDE_IN_LIBRARY', 1);
 
 /**
+ * Implements hook_permission().
+ */
+function media_library_permission() {
+  return array(
+    'media library add to library' => array(
+      'title' => t('Add files to the Media Library'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function media_library_menu() {
+  $items['admin/config/media/media-library'] = array(
+    'title' => 'Media library',
+    'description' => 'Show or hide library settings and configure default opt-in/opt-out behavior.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('media_library_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'media_library.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
  * Implements hook_menu_alter().
  */
 function media_library_menu_alter(&$items) {
   // Administrative screens for viewing the media library.
-  $items['admin/content/file/library'] = array(
-    'title' => 'Media Library',
-    'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('administer files'),
-    'weight' => 20,
-  );
   $items['admin/content/file/library'] = array(
     'title' => 'Media Library',
     'description' => 'Manage files in the media library.',
@@ -132,8 +153,9 @@ function media_library_form_file_entity_add_upload_alter(&$form, &$form_state, $
   if (!empty($form['#step']) && 4 === $form['#step']) {
     $form['library'] = array(
       '#type' => 'checkbox',
+      '#access' => user_access('media library add to library'),
       '#title' => t('Include in library'),
-      '#default_value' => EXCLUDE_FROM_LIBRARY,
+      '#default_value' => variable_get('media_library_file_add_default', FALSE),
       '#weight' => 50,
     );
   }
@@ -147,6 +169,7 @@ function media_library_form_file_entity_edit_alter(&$form, &$form_state, $form_i
 
   $form['library_settings'] = array(
     '#type' => 'fieldset',
+    '#access' => user_access('media library add to library'),
     '#title' => t('Library settings'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
