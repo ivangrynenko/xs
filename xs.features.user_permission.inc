@@ -10,10 +10,21 @@
 function xs_user_default_permissions() {
   $permissions = array();
 
+  // Exported permission: 'administer xenserver pool'.
+  $permissions['administer xenserver pool'] = array(
+    'name' => 'administer xenserver pool',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs',
+  );
+
   // Exported permission: 'create xs_vps content'.
   $permissions['create xs_vps content'] = array(
     'name' => 'create xs_vps content',
-    'roles' => array(),
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
     'module' => 'node',
   );
 
@@ -51,6 +62,25 @@ function xs_user_default_permissions() {
       'administrator' => 'administrator',
     ),
     'module' => 'node',
+  );
+
+  // Exported permission: 'perform any vm actions'.
+  $permissions['perform any vm actions'] = array(
+    'name' => 'perform any vm actions',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs',
+  );
+
+  // Exported permission: 'perform own vm actions'.
+  $permissions['perform own vm actions'] = array(
+    'name' => 'perform own vm actions',
+    'roles' => array(
+      'XS VPS Customer' => 'XS VPS Customer',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs',
   );
 
   return $permissions;

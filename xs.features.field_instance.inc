@@ -82,6 +82,42 @@ function xs_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-xs_vps-field_xs_vps_owner'
+  $field_instances['node-xs_vps-field_xs_vps_owner'] = array(
+    'bundle' => 'xs_vps',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'Select VPS owner.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 3,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_xs_vps_owner',
+    'label' => 'Owner',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => 8,
+    ),
+  );
+
   // Exported field_instance: 'node-xs_vps-field_xs_vps_uuid'
   $field_instances['node-xs_vps-field_xs_vps_uuid'] = array(
     'bundle' => 'xs_vps',
@@ -126,7 +162,9 @@ function xs_field_default_field_instances() {
   t('Comment');
   t('Enter UUID of the pool in which the VM is running.');
   t('Enter the UUID of the VPS.');
+  t('Owner');
   t('Pool UUID');
+  t('Select VPS owner.');
   t('VPS UUID');
 
   return $field_instances;
