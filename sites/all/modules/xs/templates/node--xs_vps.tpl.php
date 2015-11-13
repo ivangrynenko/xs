@@ -132,6 +132,11 @@
                   <ul>
                     <li><label class="display-inline">device</label>: <?php print $vif['device']; ?></li>
                     <li><label class="display-inline">MAC</label>: <?php print $vif['mac']; ?></li>
+                    <?php if (!empty($network['ips'])) : ?>
+                      <li>
+                        <label class="display-inline">IP Address</label>: <?php print $network['ips'][$delta]; ?>
+                      </li>
+                    <?php endif; ?>
                   </ul>
                 </li>
               <?php endforeach; ?>
@@ -140,6 +145,29 @@
         </li>
       </ul>
     </div>
-  </div>
+    <div>
+      <h3>Operating System</h3>
+      <ul>
+        <?php if (!empty($os['version'])) : ?>
+        <li><label class="display-inline">Operating System</label>: <?php print $os['version']; ?></li>
+        <?php endif; ?>
 
+        <?php if (!empty($os['kernel'])) : ?>
+          <li><label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?></li>
+        <?php endif; ?>
+
+        <?php if (!empty($os['distro'])) : ?>
+          <li><label class="display-inline">Distro</label>: <?php print $os['distro']; ?></li>
+        <?php endif; ?>
+
+        <?php if (!empty($os['major'])) : ?>
+          <li><label class="display-inline">OS Major version</label>: <?php print $os['major']; ?></li>
+        <?php endif; ?>
+
+        <?php if (!empty($os['minor'])) : ?>
+          <li><label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?></li>
+        <?php endif; ?>
+      </ul>
+    </div>
+  </div>
 </div>

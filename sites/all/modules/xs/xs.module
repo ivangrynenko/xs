@@ -133,15 +133,15 @@ function xs_preprocess_node(&$variables) {
 
     $vm = xs_get_vm_by_uuid($variables['node']);
 
-    $variables['vm_name'] = !empty($vm['name_label']) ?: XS_API_ERROR;
-    $variables['vm_description'] = !empty($vm['name_description']) ?: XS_API_ERROR;
+    $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
+    $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;
     $variables['vm_last_shutdown_time'] = !empty($vm['other_config']['last_shutdown_time']) ? date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time'])) : XS_API_ERROR;
     $variables['vm_nics'] = !empty($vm['VIFs']) ? count($vm['VIFs']) : XS_API_ERROR;
 
     $vifs = xs_get_vifs($vm);
     if (!empty($vm)) {
       foreach ($vifs as $key => $vif) {
-        $variables['vm_vifs'][$key]['device'] = $vif['device'];
+        $variables['vm_vifs'][$key]['device'] = 'eth' . $vif['device'];
         $variables['vm_vifs'][$key]['mac'] = $vif['MAC'];
       }
     }
@@ -158,8 +158,34 @@ function xs_preprocess_node(&$variables) {
   // Guest metrics.
   $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
 
+  // Operating System.
+  $variables['os']['version'] = !empty($vm_guest_metrix['os_version']['name']) ? $vm_guest_metrix['os_version']['name'] : 'N/A';
+  $variables['os']['kernel'] = !empty($vm_guest_metrix['os_version']['uname']) ? $vm_guest_metrix['os_version']['uname'] : 'N/A';
+  $variables['os']['distro'] = !empty($vm_guest_metrix['os_version']['distro']) ? $vm_guest_metrix['os_version']['distro'] : 'N/A';
+  $variables['os']['major'] = !empty($vm_guest_metrix['os_version']['major']) ? $vm_guest_metrix['os_version']['major'] : 'N/A';
+  $variables['os']['minor'] = !empty($vm_guest_metrix['os_version']['minor']) ? $vm_guest_metrix['os_version']['minor'] : 'N/A';
+
+  // Network/IP addresses.
+  if (!empty($vm_guest_metrix['networks'])) {
+    foreach ($vm_guest_metrix['networks'] as $interface => $ip_address) {
+      $interface_id = preg_replace('/[^0-9]/', '', $interface);
+      $variables['network']['ips'][$interface_id] = $ip_address;
+    }
+  }
+
+  // Adding buttons to reboot VM.
+
+
 }
 
+/**
+ * Get VM by UUID, stored against $node.
+ *
+ * @param object $node
+ *   Drupal node.
+ *
+ * @return bool|mixed
+ */
 function xs_get_vm_by_uuid($node) {
   if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
     drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));

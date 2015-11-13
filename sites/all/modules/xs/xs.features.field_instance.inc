@@ -51,10 +51,9 @@ function xs_field_default_field_instances() {
     'description' => 'Enter UUID of the pool in which the VM is running.',
     'display' => array(
       'default' => array(
-        'label' => 'inline',
-        'module' => 'text',
+        'label' => 'hidden',
         'settings' => array(),
-        'type' => 'text_default',
+        'type' => 'hidden',
         'weight' => 2,
       ),
       'teaser' => array(
@@ -91,10 +90,9 @@ function xs_field_default_field_instances() {
     'description' => 'Enter the UUID of the VPS.',
     'display' => array(
       'default' => array(
-        'label' => 'inline',
-        'module' => 'text',
+        'label' => 'hidden',
         'settings' => array(),
-        'type' => 'text_default',
+        'type' => 'hidden',
         'weight' => 1,
       ),
       'teaser' => array(
