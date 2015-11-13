@@ -102,6 +102,10 @@
     hide($content['links']);
     print render($content);
     ?>
+    <h3>Server Actions</h3>
+    <div>
+      <?php print render($actions_form); ?>
+    </div>
     <h3>VPS Configuration Parameters</h3>
 
     <div>
