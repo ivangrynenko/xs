@@ -125,6 +125,8 @@ function xs_theme($existing, $type, $theme, $path) {
  */
 function xs_preprocess_node(&$variables) {
   if ($variables['node']->type == 'xs_vps') {
+    // @todo: Add content_access API call to bypass the below if no acces
+    // is given to the node.
     global $xs_api;
 
     $xs_api = xs_get_xs_api();
