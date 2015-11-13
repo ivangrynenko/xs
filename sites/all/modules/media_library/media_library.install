@@ -39,4 +39,7 @@ function media_library_install() {
 function media_library_uninstall() {
   // Remove the added column to the core {file_managed} table.
   db_drop_field('file_managed', 'library');
+
+  // Remove variables.
+  variable_del('media_library_file_add_default');
 }
