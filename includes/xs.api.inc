@@ -302,6 +302,7 @@ function xs_get_all_vms($host = NULL) {
  */
 function xs_api_get_vm_by_uuid($uuid, $type = 'vm') {
   global $xs_api;
+
   $return = array();
 
   if (!($xs_api instanceof XenApi)) {
@@ -446,4 +447,34 @@ function xs_api_get_vm_metrics($vm) {
   }
 
   return $return;
+}
+
+function xs_api_vm_clean_reboot($vm_ref) {
+  global $xs_api;
+
+  $xs_api->VM_hard_reboot($vm_ref);
+}
+
+function xs_api_vm_hard_reboot($vm_ref) {
+  global $xs_api;
+
+  $xs_api->VM_hard_reboot($vm_ref);
+}
+
+function xs_api_vm_clean_shutdown($vm_ref) {
+  global $xs_api;
+
+  $xs_api->VM_clean_shutdown($vm_ref);
+}
+
+function xs_api_vm_hard_shutdown($vm_ref) {
+  global $xs_api;
+
+  $xs_api->VM_hard_shutdown($vm_ref);
+}
+
+function xs_api_vm_start($vm_ref) {
+  global $xs_api;
+
+  $xs_api->VM_start($vm_ref, FALSE, FALSE);
 }
