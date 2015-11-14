@@ -102,76 +102,109 @@
     hide($content['links']);
     print render($content);
     ?>
-    <h3>Server Actions</h3>
-    <div>
-      <?php print render($actions_form); ?>
+    <div class="row">
+
+      <div class="col-md-8">
+        <h3>Server Configuration</h3>
+
+        <section class="xs-vm-section">
+          <p>
+            <div>
+            <label class="display-inline">Power state</label>: <span class="vm-config-value"><?php print $vm_power_state; ?></span>
+              <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
+            </div>
+          <div>
+            <label class="display-inline">Start time</label>: <span class="vm-config-value"><?php print $start_time; ?></span>
+          </div>
+          <div>
+            <label class="display-inline">CPUs</label>: <span class="vm-config-value"><?php print $vm_cpu; ?></span>
+          </div>
+          <div>
+            <label class="display-inline">RAM</label>: <span class="vm-config-value"><?php print $vm_memory; ?></span>
+          </div>
+        </section>
+
+        <section class="xs-vm-section">
+          <div>
+            <label class="display-inline">Network cards</label>: <span class="vm-config-value"><?php print $vm_nics; ?></span>
+          </div>
+
+          <?php if (!empty($vm_vifs)) : ?>
+            <?php foreach ($vm_vifs as $delta => $vif) : ?>
+              <div>
+                <label class="display-inline">Network Card <?php print $delta; ?></label>
+                <ul>
+                  <li>
+                    <label class="display-inline">Device Name</label>: <?php print $vif['device']; ?>
+                  </li>
+                  <li>
+                    <label class="display-inline">MAC Address</label>: <?php print $vif['mac']; ?>
+                  </li>
+                  <?php if (!empty($network['ips'])) : ?>
+                    <li>
+                      <label class="display-inline">IP Address</label>: <?php print $network['ips'][$delta]; ?>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
+
+          <div>
+            <label class="display-inline">Server Name</label>: <span class="description"><?php print $vm_name; ?></span>
+          </div>
+          <div>
+            <label class="display-inline">Server Description</label>: <span class="description"><?php print $vm_description; ?></span>
+          </div>
+          </p>
+
+        </section>
+      </div>
+
+      <div class="col-md-4">
+        <h3>Server Actions</h3>
+
+        <div>
+          <?php print render($actions_form); ?>
+        </div>
+      </div>
+
     </div>
-    <h3>VPS Configuration Parameters</h3>
 
-    <div>
-      <p>Power state: <?php print $vm_power_state; ?></p>
-
-      <p>Start time: <?php print $start_time; ?></p>
-
-      <p>Last shutdown time: <?php print $vm_last_shutdown_time; ?></p>
-      <ul>
-        <li>
-          <label class="display-inline">machine name</label>: <?php print $vm_name; ?>
-        </li>
-        <li>
-          <label class="display-inline">Description</label>: <?php print $vm_description; ?>
-        </li>
-        <li><label class="display-inline">vCPU</label>: <?php print $vm_cpu; ?>
-        </li>
-        <li>
-          <label class="display-inline">RAM</label>: <?php print $vm_memory; ?> GB
-        </li>
-        <li>
-          <label class="display-inline">Network Interfaces</label>: <?php print $vm_nics; ?>
-          <ul>
-            <?php if (!empty($vm_vifs)) : ?>
-              <?php foreach ($vm_vifs as $delta => $vif) : ?>
-                <li>
-                  <label class="display-inline">NIC <?php print $delta; ?></label>
-                  <ul>
-                    <li><label class="display-inline">device</label>: <?php print $vif['device']; ?></li>
-                    <li><label class="display-inline">MAC</label>: <?php print $vif['mac']; ?></li>
-                    <?php if (!empty($network['ips'])) : ?>
-                      <li>
-                        <label class="display-inline">IP Address</label>: <?php print $network['ips'][$delta]; ?>
-                      </li>
-                    <?php endif; ?>
-                  </ul>
-                </li>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </ul>
-        </li>
-      </ul>
-    </div>
-    <div>
+    <div class="row xs-vm-section">
       <h3>Operating System</h3>
       <ul>
         <?php if (!empty($os['version'])) : ?>
-        <li><label class="display-inline">Operating System</label>: <?php print $os['version']; ?></li>
+          <li>
+            <label class="display-inline">Operating System</label>: <?php print $os['version']; ?>
+          </li>
         <?php endif; ?>
 
         <?php if (!empty($os['kernel'])) : ?>
-          <li><label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?></li>
+          <li>
+            <label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?>
+          </li>
         <?php endif; ?>
 
         <?php if (!empty($os['distro'])) : ?>
-          <li><label class="display-inline">Distro</label>: <?php print $os['distro']; ?></li>
+          <li>
+            <label class="display-inline">Distro</label>: <?php print $os['distro']; ?>
+          </li>
         <?php endif; ?>
 
         <?php if (!empty($os['major'])) : ?>
-          <li><label class="display-inline">OS Major version</label>: <?php print $os['major']; ?></li>
+          <li>
+            <label class="display-inline">OS Major version</label>: <?php print $os['major']; ?>
+          </li>
         <?php endif; ?>
 
         <?php if (!empty($os['minor'])) : ?>
-          <li><label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?></li>
+          <li>
+            <label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?>
+          </li>
         <?php endif; ?>
       </ul>
     </div>
+
   </div>
 </div>

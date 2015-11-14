@@ -155,8 +155,15 @@ function xs_theme($existing, $type, $theme, $path) {
  */
 function xs_preprocess_node(&$variables) {
   if ($variables['node']->type == 'xs_vps') {
+    drupal_page_is_cacheable(FALSE);
     // @todo: Add content_access API call to bypass the below if no acces
     // is given to the node.
+
+    // Add message about upcoming work.
+    drupal_set_message('We are currently working on snapshots, to give you ability to create and restore snapshots of your server via this interface', 'warning');
+
+    drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
+    drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
     // Add actions to the VM.
     module_load_include('inc', 'xs', 'includes/xs.actions');
@@ -182,6 +189,7 @@ function xs_preprocess_node(&$variables) {
     }
 
     $variables['vm_power_state'] = !empty($vm['power_state']) ? $vm['power_state'] : XS_API_ERROR;
+    $variables['vm_power_state_class'] = !empty($vm['power_state']) ? strtolower($vm['power_state']) : 'error';
   }
 
   $vm_metrics = xs_api_get_vm_metrics($vm);
