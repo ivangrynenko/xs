@@ -10,6 +10,14 @@ define('XS_POWERSTATE_VM_DOWN', 'Down');
 define('XS_API_ERROR', 'API Error. Unable to get the status.');
 define('XS_API_VPS_CONTENT_TYPE', 'xs_vps');
 
+// Define xs actions.
+define('XS_API_ACTION_NOACTION', 'noaction');
+define('XS_API_ACTION_START', 'start');
+define('XS_API_ACTION_REBOOT', 'clean_reboot');
+define('XS_API_ACTION_POWEROFF', 'clean_shutdown');
+define('XS_API_ACTION_REBOOT_FORCE', 'hard_reboot');
+define('XS_API_ACTION_POWEROFF_FORCE', 'hard_shutdown');
+
 /**
  * Implements hook_permission().
  */
@@ -76,7 +84,7 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['node/%node/xs-actions/%'] = array(
+  $items['node/%node/xs-action/%'] = array(
     'title' => 'Perform actions on virtual server',
     'description' => 'Use to reboot the VPS gracefully',
     'page callback' => 'xs_actions_action_callback',
@@ -97,8 +105,10 @@ function xs_menu() {
 function xs_node_load($nodes, $types) {
   foreach ($nodes as $node) {
     if ($node->type == XS_API_VPS_CONTENT_TYPE) {
-      if (!empty($node->field_xs_vps_owner)) {
-
+      module_load_include('inc', 'xs', 'includes/xs.actions');
+      $access = xs_actions_access_callback($node);
+      if (!$access) {
+        drupal_not_found();
       }
     }
   }
@@ -222,6 +232,23 @@ function xs_get_vm_by_uuid($node) {
 }
 
 /**
+ * Get VM UUID from $node object.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return string|bool
+ *   UUID of the VM or FALSE.
+ */
+function xs_get_vm_uuid_by_node($node) {
+  if (!empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
+    return $node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'];
+  }
+
+  return FALSE;
+}
+
+/**
  * Gets VIFs of a $vm via XAPI.
  *
  * @param array $vm
@@ -239,5 +266,252 @@ function xs_get_vifs($vm) {
   }
 
   return $vifs;
+}
+
+/**
+ * XS Actions form builder.
+ */
+function xs_actions_action_form($form, &$form_state, $nid) {
+  if (!empty($nid)) {
+    $node = node_load($nid);
+  }
+
+  $form['id'] = array(
+    '#type' => 'hidden',
+    '#value' => $nid,
+  );
+
+  $form['actions'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Cloud VPS Actions',
+  );
+
+  $form['actions']['action'] = array(
+    '#type' => 'select',
+    '#title' => t('Select Action'),
+    '#options' => array(
+      XS_API_ACTION_NOACTION => t('Select action'),
+      XS_API_ACTION_START => t('Start VPS'),
+      XS_API_ACTION_REBOOT => t('Reboot VPS'),
+      XS_API_ACTION_POWEROFF => t('Shut Down VPS'),
+      XS_API_ACTION_REBOOT_FORCE => t('Force Reboot VPS'),
+      XS_API_ACTION_POWEROFF_FORCE => t('Force Shutdown VPS'),
+    ),
+    '#access' => xs_actions_access_callback($node),
+  );
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Execute'),
+  );
+
+  $form['#validate'][] = 'xs_actions_action_form_validate';
+  $form['#submit'][] = 'xs_actions_action_form_submit';
+
+  return $form;
+}
+
+/**
+ * Form validate handler for xs_actions_action_form.
+ */
+function xs_actions_action_form_validate($form, &$form_state) {
+  // Extra access check.
+  $nid = arg(1);
+  $node = node_load($nid);
+  $access = xs_actions_access_callback($node);
+
+  if (!$access) {
+    form_set_error('action', t('Action validation failed, please contact support and quote error number FS-61'));
+  }
+  // End extra access check.
+
+  if ($form_state['values']['action'] == XS_API_ACTION_NOACTION) {
+    form_set_error('action', t('Select valid action, then press Execute button'));
+  }
+
+  $form_state['storage']['xs_vm_node'] = $node;
+}
+
+/**
+ * Form submit handler for xs_actions_action_form.
+ */
+function xs_actions_action_form_submit($form, &$form_state) {
+  // Extra access check.
+  if (empty($form_state['storage']['xs_vm_node'])) {
+    drupal_set_message('Action validation failed, please contact support and quote error number FS-72', 'error');
+    drupal_goto('node/' . arg(1));
+  }
+
+  $access = xs_actions_access_callback($form_state['storage']['xs_vm_node']);
+
+  if (!$access) {
+    drupal_set_message('Action validation failed, please contact support and quote error number FS-79', 'error');
+    drupal_goto('node/' . arg(1));
+  }
+  // End extra access check.
+
+  // Clear action string.
+  $action = filter_xss($form_state['values']['action']);
+  $action = check_plain($action);
+  $action = trim($action);
+
+  $form_state['redirect'] = url('node/' . $form_state['storage']['xs_vm_node']->nid . '/xs-action/' . $action);
+}
+
+/**
+ * Access callback to perform VM actions.
+ *
+ * @param object $node
+ *   VM Node object.
+ *
+ * @return bool
+ *   TRUE for access or FALSE for no access.
+ */
+function xs_actions_access_callback($node) {
+  global $user;
+  if (empty($node)) {
+    return FALSE;
+  }
+
+  if ($user->uid == 1 || user_access('perform any vm actions')) {
+    return TRUE;
+  }
+
+  if (user_access('perform own vm actions') && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+    return $user->uid == $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'];
+  }
+
+  return FALSE;
+}
+
+/**
+ * Callback for VM actions.
+ *
+ * @param object $node
+ *   VM node.
+ * @param string $action
+ *   Action to be performed on the $node VM. Supported actions are:
+ *   - reboot: graceful reboot of the VM,
+ *   - poweroff: graceful poweroff of the VM,
+ *   - start: start the VM,
+ *   - reboot-force: forceful reboot of the VM,
+ *   - poweroff-force: forceful poweroff of the VM.
+ *
+ * @return string
+ */
+function xs_actions_action_callback($node, $action) {
+  global $xs_api;
+  $xs_api = xs_get_xs_api();
+  $vm = xs_get_vm_by_uuid($node);
+
+  if (!in_array($action, $vm['allowed_operations'])) {
+    drupal_set_message('This action is not allowed', 'error');
+    drupal_goto('node/' . $node->nid);
+  }
+
+  switch ($action) {
+    case XS_API_ACTION_START:
+      xs_actions_action_vps_start($xs_api, $node);
+      drupal_set_message('The server has been started. Allow 1-2 minutes before attempting to connect.');
+      drupal_set_message('You may need to refresh this page in order to reflect server\'s power state or IP addresses.');
+      break;
+
+    case XS_API_ACTION_POWEROFF:
+      xs_actions_action_vps_shutdown($xs_api, $node);
+      drupal_set_message('The server is being shut down. Allow 1-2 minutes before it has shut down.');
+      drupal_set_message('You may need to refresh this page in order to reflect server\'s power state');
+      break;
+
+    case XS_API_ACTION_REBOOT:
+      xs_actions_action_vps_clean_reboot($xs_api, $node);
+      drupal_set_message('The server is being rebooted. Allow 1-2 minutes for the operation to complete.');
+      break;
+
+    case XS_API_ACTION_REBOOT_FORCE:
+      xs_actions_action_vps_hard_reboot($xs_api, $node);
+      drupal_set_message('The server has been forcefully rebooted. Allow 1-2 minutes for the operation to complete.');
+      break;
+
+    case XS_API_ACTION_POWEROFF_FORCE:
+      xs_actions_action_vps_hard_shutdown($xs_api, $node);
+      drupal_set_message('The server has been forcefully shut down. Allow 1-2 minutes for the operation to complete.');
+      break;
+
+    default:
+      drupal_set_message('This action is not recognised', 'error');
+      break;
+  }
+  drupal_goto('node/' . $node->nid);
+}
+
+/**
+ * Start a VPS action.
+ *
+ * @param XenApi $xs_api
+ *   Xenserver API.
+ * @param object $node
+ *   Drupal node object of VM type.
+ */
+function xs_actions_action_vps_start($xs_api, $node) {
+  $uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+  $xs_api->VM_start($vm_ref, FALSE, FALSE);
+}
+
+/**
+ * Shutdown/halt a VPS action.
+ *
+ * @param XenApi $xs_api
+ *   Xenserver API.
+ * @param object $node
+ *   Drupal node object of VM type.
+ */
+function xs_actions_action_vps_shutdown($xs_api, $node) {
+  $uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+  $xs_api->VM_clean_shutdown($vm_ref);
+}
+
+/**
+ * Clean reboot a VPS action.
+ *
+ * @param XenApi $xs_api
+ *   Xenserver API.
+ * @param object $node
+ *   Drupal node object of VM type.
+ */
+function xs_actions_action_vps_clean_reboot($xs_api, $node) {
+  $uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+  $xs_api->VM_clean_reboot($vm_ref);
+}
+
+/**
+ * Hard reboot a VPS action.
+ *
+ * @param XenApi $xs_api
+ *   Xenserver API.
+ * @param object $node
+ *   Drupal node object of VM type.
+ */
+function xs_actions_action_vps_hard_reboot($xs_api, $node) {
+  $uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+  $xs_api->VM_hard_reboot($vm_ref);
+}
+
+
+/**
+ * Hard shutdown a VPS action.
+ *
+ * @param XenApi $xs_api
+ *   Xenserver API.
+ * @param object $node
+ *   Drupal node object of VM type.
+ */
+function xs_actions_action_vps_hard_shutdown($xs_api, $node) {
+  $uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+  $xs_api->VM_hard_shutdown($vm_ref);
 }
 
