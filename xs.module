@@ -196,10 +196,12 @@ function xs_preprocess_node(&$variables) {
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
   $variables['vm_memory'] = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
 
-  $variables['start_time'] = date("d M Y h:iA", $vm_metrics['start_time']->timestamp);
+  $vm_is_running = preg_match('/running/i', $vm['power_state']);
+
+  $variables['start_time'] = $vm_is_running ? date("d M Y h:iA", $vm_metrics['start_time']->timestamp) : 'Halted';
   $time_delta = REQUEST_TIME - $vm_metrics['start_time']->timestamp;
   $server_running_time = xs_seconds2human($time_delta);
-  $variables['server_uptime'] = $server_running_time['days'] . ' days, ' . $server_running_time['hours'] . ' hours, ' . $server_running_time['minutes'] . ' minutes';
+  $variables['server_uptime'] = $vm_is_running ? $server_running_time['days'] . ' days, ' . $server_running_time['hours'] . ' hours, ' . $server_running_time['minutes'] . ' minutes' : 'Halted';
 
   // Guest metrics.
   $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
