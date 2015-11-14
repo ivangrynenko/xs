@@ -118,24 +118,25 @@
         <section class="xs-vm-section">
           <p>
 
-          <div>
+          <div class="xs-vm-row">
             <label class="display-inline">Power state</label>:
             <span class="vm-config-value"><?php print $vm_power_state; ?></span>
             <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
           </div>
 
-          <div>
+          <div class="xs-vm-row">
             <label class="display-inline">CPUs</label>
             <span class="vm-config-value xs-vm-tag"><?php print $vm_cpu; ?></span>
             <label class="display-inline">RAM</label>
             <span class="vm-config-value xs-vm-tag"><?php print $vm_memory; ?>GB</span>
           </div>
 
-          <div>
+          <div class="xs-vm-row">
             <label class="display-inline">Start time</label>:
             <span class="vm-config-value"><?php print $start_time; ?></span>
           </div>
-          <div>
+
+          <div class="xs-vm-row">
             <label class="display-inline">Server uptime</label>:
             <span class="vm-config-value"><?php print $server_uptime; ?></span>
           </div>
@@ -145,14 +146,14 @@
       <div class="col-md-12">
         <h3>Server Configuration</h3>
         <section class="xs-vm-section">
-          <div>
+          <div class="xs-vm-row">
             <label class="display-inline">Network cards</label>:
             <span class="vm-config-value"><?php print $vm_nics; ?></span>
           </div>
 
           <?php if (!empty($vm_vifs)) : ?>
             <?php foreach ($vm_vifs as $delta => $vif) : ?>
-              <div>
+              <div class="xs-vm-row">
                 <label class="display-inline">Network Card <?php print $delta; ?></label>
                 <ul>
                   <li>
@@ -171,11 +172,12 @@
             <?php endforeach; ?>
           <?php endif; ?>
 
-          <div>
+          <div class="xs-vm-row">
             <label class="display-inline">Server Name</label>:
             <span class="description"><?php print $vm_name; ?></span>
           </div>
-          <div>
+
+          <div class="xs-vm-row">
             <label class="display-inline">Server Description</label>:
             <span class="description"><?php print $vm_description; ?></span>
           </div>
