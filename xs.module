@@ -165,15 +165,15 @@ function xs_preprocess_node(&$variables) {
     drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
     drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
-    // Add actions to the VM.
-    module_load_include('inc', 'xs', 'includes/xs.actions');
-    $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid);
-
     global $xs_api;
 
     $xs_api = xs_get_xs_api();
 
     $vm = xs_get_vm_by_uuid($variables['node']);
+
+    // Add actions to the VM.
+    module_load_include('inc', 'xs', 'includes/xs.actions');
+    $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid, $vm['allowed_operations']);
 
     $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
     $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;
@@ -196,7 +196,10 @@ function xs_preprocess_node(&$variables) {
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
   $variables['vm_memory'] = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
 
-  $variables['start_time'] = date("d/m/Y h:iA", $vm_metrics['start_time']->timestamp);
+  $variables['start_time'] = date("d M Y h:iA", $vm_metrics['start_time']->timestamp);
+  $time_delta = REQUEST_TIME - $vm_metrics['start_time']->timestamp;
+  $server_running_time = xs_seconds2human($time_delta);
+  $variables['server_uptime'] = $server_running_time['days'] . ' days, ' . $server_running_time['hours'] . ' hours, ' . $server_running_time['minutes'] . ' minutes';
 
   // Guest metrics.
   $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
@@ -212,13 +215,26 @@ function xs_preprocess_node(&$variables) {
   if (!empty($vm_guest_metrix['networks'])) {
     foreach ($vm_guest_metrix['networks'] as $interface => $ip_address) {
       $interface_id = preg_replace('/[^0-9]/', '', $interface);
-      $variables['network']['ips'][$interface_id] = $ip_address;
+      $variables['network']['ips'][$interface_id] = $ip_address ? $ip_address : 'Unconfigured';
     }
   }
+}
 
-  // Adding buttons to reboot VM.
+/**
+ * Converts seconds into uptime-readable numbers.
+ *
+ * @param $seconds
+ *
+ * @return mixed
+ */
+function xs_seconds2human($seconds) {
+  $return['seconds'] = $seconds%60;
+  $return['minutes'] = floor(($seconds%3600)/60);
+  $return['hours'] = floor(($seconds%86400)/3600);
+  $return['days'] = floor(($seconds%2592000)/86400);
+  $return['months'] = floor($seconds/2592000);
 
-
+  return $return;
 }
 
 /**
@@ -279,7 +295,7 @@ function xs_get_vifs($vm) {
 /**
  * XS Actions form builder.
  */
-function xs_actions_action_form($form, &$form_state, $nid) {
+function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) {
   if (!empty($nid)) {
     $node = node_load($nid);
   }
@@ -289,14 +305,8 @@ function xs_actions_action_form($form, &$form_state, $nid) {
     '#value' => $nid,
   );
 
-  $form['actions'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Cloud VPS Actions',
-  );
-
-  $form['actions']['action'] = array(
+  $form['action'] = array(
     '#type' => 'select',
-    '#title' => t('Select Action'),
     '#options' => array(
       XS_API_ACTION_NOACTION => t('Select action'),
       XS_API_ACTION_START => t('Start VPS'),
@@ -308,7 +318,23 @@ function xs_actions_action_form($form, &$form_state, $nid) {
     '#access' => xs_actions_access_callback($node),
   );
 
-  $form['actions']['submit'] = array(
+  // Filter out VM operations that are not allowed. For example, remove 'start'
+  // operation for a VM that is in Running state.
+  foreach ($form['action']['#options'] as $key => $option) {
+    if (!in_array($key, $allowed_operations)) {
+      unset($form['action']['#options'][$key]);
+    }
+  }
+
+  array_unshift($form['action']['#options'], t('Select action'));
+
+  $form['help'] = array(
+    '#markup' => t('Only actions available for current power state of the server are listed.'),
+    '#prefix' => '<div class="description">',
+    '#suffix' => '</div>',
+  );
+
+  $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Execute'),
   );
@@ -333,8 +359,8 @@ function xs_actions_action_form_validate($form, &$form_state) {
   }
   // End extra access check.
 
-  if ($form_state['values']['action'] == XS_API_ACTION_NOACTION) {
-    form_set_error('action', t('Select valid action, then press Execute button'));
+  if ($form_state['values']['action'] == '0') {
+    return form_set_error('action', t('Select valid action, then press Execute button'));
   }
 
   $form_state['storage']['xs_vm_node'] = $node;
@@ -417,31 +443,34 @@ function xs_actions_action_callback($node, $action) {
     drupal_goto('node/' . $node->nid);
   }
 
+  $uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = xs_api_get_vm_by_uuid($uuid, 'vm_ref');
+
   switch ($action) {
     case XS_API_ACTION_START:
-      xs_actions_action_vps_start($xs_api, $node);
+      xs_actions_action_vps_start($xs_api, $vm_ref);
       drupal_set_message('The server has been started. Allow 1-2 minutes before attempting to connect.');
       drupal_set_message('You may need to refresh this page in order to reflect server\'s power state or IP addresses.');
       break;
 
     case XS_API_ACTION_POWEROFF:
-      xs_actions_action_vps_shutdown($xs_api, $node);
+      xs_actions_action_vps_shutdown($xs_api, $vm_ref);
       drupal_set_message('The server is being shut down. Allow 1-2 minutes before it has shut down.');
       drupal_set_message('You may need to refresh this page in order to reflect server\'s power state');
       break;
 
     case XS_API_ACTION_REBOOT:
-      xs_actions_action_vps_clean_reboot($xs_api, $node);
+      xs_actions_action_vps_clean_reboot($xs_api, $vm_ref);
       drupal_set_message('The server is being rebooted. Allow 1-2 minutes for the operation to complete.');
       break;
 
     case XS_API_ACTION_REBOOT_FORCE:
-      xs_actions_action_vps_hard_reboot($xs_api, $node);
+      xs_actions_action_vps_hard_reboot($xs_api, $vm_ref);
       drupal_set_message('The server has been forcefully rebooted. Allow 1-2 minutes for the operation to complete.');
       break;
 
     case XS_API_ACTION_POWEROFF_FORCE:
-      xs_actions_action_vps_hard_shutdown($xs_api, $node);
+      xs_actions_action_vps_hard_shutdown($xs_api, $vm_ref);
       drupal_set_message('The server has been forcefully shut down. Allow 1-2 minutes for the operation to complete.');
       break;
 
@@ -460,9 +489,7 @@ function xs_actions_action_callback($node, $action) {
  * @param object $node
  *   Drupal node object of VM type.
  */
-function xs_actions_action_vps_start($xs_api, $node) {
-  $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+function xs_actions_action_vps_start($xs_api, $vm_ref) {
   $xs_api->VM_start($vm_ref, FALSE, FALSE);
 }
 
@@ -474,9 +501,7 @@ function xs_actions_action_vps_start($xs_api, $node) {
  * @param object $node
  *   Drupal node object of VM type.
  */
-function xs_actions_action_vps_shutdown($xs_api, $node) {
-  $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+function xs_actions_action_vps_shutdown($xs_api, $vm_ref) {
   $xs_api->VM_clean_shutdown($vm_ref);
 }
 
@@ -488,9 +513,7 @@ function xs_actions_action_vps_shutdown($xs_api, $node) {
  * @param object $node
  *   Drupal node object of VM type.
  */
-function xs_actions_action_vps_clean_reboot($xs_api, $node) {
-  $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+function xs_actions_action_vps_clean_reboot($xs_api, $vm_ref) {
   $xs_api->VM_clean_reboot($vm_ref);
 }
 
@@ -502,9 +525,7 @@ function xs_actions_action_vps_clean_reboot($xs_api, $node) {
  * @param object $node
  *   Drupal node object of VM type.
  */
-function xs_actions_action_vps_hard_reboot($xs_api, $node) {
-  $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+function xs_actions_action_vps_hard_reboot($xs_api, $vm_ref) {
   $xs_api->VM_hard_reboot($vm_ref);
 }
 
@@ -517,9 +538,7 @@ function xs_actions_action_vps_hard_reboot($xs_api, $node) {
  * @param object $node
  *   Drupal node object of VM type.
  */
-function xs_actions_action_vps_hard_shutdown($xs_api, $node) {
-  $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = $xs_api->VM_get_by_uuid($uuid);
+function xs_actions_action_vps_hard_shutdown($xs_api, $vm_ref) {
   $xs_api->VM_hard_shutdown($vm_ref);
 }
 

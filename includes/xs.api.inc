@@ -293,10 +293,14 @@ function xs_get_all_vms($host = NULL) {
  *
  * @param string $uuid
  *   VM's UUID, as stored against VM content type.
+ * @param string $type
+ *   Return type. Supported values:
+ *   - 'vm_ref': Only return VM ref string.
+ *   - 'vm': (default) Return VM object.
  *
  * @return mixed
  */
-function xs_api_get_vm_by_uuid($uuid) {
+function xs_api_get_vm_by_uuid($uuid, $type = 'vm') {
   global $xs_api;
   $return = array();
 
@@ -311,6 +315,10 @@ function xs_api_get_vm_by_uuid($uuid) {
     xs_log($e);
 
     return $return;
+  }
+
+  if ($type == 'vm_ref') {
+    return $vm_ref;
   }
 
   try {

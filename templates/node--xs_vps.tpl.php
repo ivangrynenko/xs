@@ -104,29 +104,50 @@
     ?>
     <div class="row">
 
+      <div class="col-md-4">
+        <h3>Server Actions</h3>
+
+        <div>
+          <?php print render($actions_form); ?>
+        </div>
+      </div>
+
       <div class="col-md-8">
-        <h3>Server Configuration</h3>
+        <h3>Server Status</h3>
 
         <section class="xs-vm-section">
           <p>
-            <div>
-            <label class="display-inline">Power state</label>: <span class="vm-config-value"><?php print $vm_power_state; ?></span>
-              <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
-            </div>
-          <div>
-            <label class="display-inline">Start time</label>: <span class="vm-config-value"><?php print $start_time; ?></span>
-          </div>
-          <div>
-            <label class="display-inline">CPUs</label>: <span class="vm-config-value"><?php print $vm_cpu; ?></span>
-          </div>
-          <div>
-            <label class="display-inline">RAM</label>: <span class="vm-config-value"><?php print $vm_memory; ?></span>
-          </div>
-        </section>
 
+          <div>
+            <label class="display-inline">Power state</label>:
+            <span class="vm-config-value"><?php print $vm_power_state; ?></span>
+            <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
+          </div>
+
+          <div>
+            <label class="display-inline">CPUs</label>
+            <span class="vm-config-value xs-vm-tag"><?php print $vm_cpu; ?></span>
+            <label class="display-inline">RAM</label>
+            <span class="vm-config-value xs-vm-tag"><?php print $vm_memory; ?>GB</span>
+          </div>
+
+          <div>
+            <label class="display-inline">Start time</label>:
+            <span class="vm-config-value"><?php print $start_time; ?></span>
+          </div>
+          <div>
+            <label class="display-inline">Server uptime</label>:
+            <span class="vm-config-value"><?php print $server_uptime; ?></span>
+          </div>
+
+        </section>
+      </div>
+      <div class="col-md-12">
+        <h3>Server Configuration</h3>
         <section class="xs-vm-section">
           <div>
-            <label class="display-inline">Network cards</label>: <span class="vm-config-value"><?php print $vm_nics; ?></span>
+            <label class="display-inline">Network cards</label>:
+            <span class="vm-config-value"><?php print $vm_nics; ?></span>
           </div>
 
           <?php if (!empty($vm_vifs)) : ?>
@@ -142,7 +163,7 @@
                   </li>
                   <?php if (!empty($network['ips'])) : ?>
                     <li>
-                      <label class="display-inline">IP Address</label>: <?php print $network['ips'][$delta]; ?>
+                      <label class="display-inline">IP Address</label>: <?php print !empty($network['ips'][$delta]) ? $network['ips'][$delta] : 'Unconfigured'; ?>
                     </li>
                   <?php endif; ?>
                 </ul>
@@ -151,59 +172,55 @@
           <?php endif; ?>
 
           <div>
-            <label class="display-inline">Server Name</label>: <span class="description"><?php print $vm_name; ?></span>
+            <label class="display-inline">Server Name</label>:
+            <span class="description"><?php print $vm_name; ?></span>
           </div>
           <div>
-            <label class="display-inline">Server Description</label>: <span class="description"><?php print $vm_description; ?></span>
+            <label class="display-inline">Server Description</label>:
+            <span class="description"><?php print $vm_description; ?></span>
           </div>
           </p>
 
         </section>
       </div>
 
-      <div class="col-md-4">
-        <h3>Server Actions</h3>
+      <div class="col-md-12">
+        <h3>Operating System</h3>
+        <section class="xs-vm-section">
 
-        <div>
-          <?php print render($actions_form); ?>
-        </div>
+          <ul>
+            <?php if (!empty($os['version'])) : ?>
+              <li>
+                <label class="display-inline">Operating System</label>: <?php print $os['version']; ?>
+              </li>
+            <?php endif; ?>
+
+            <?php if (!empty($os['kernel'])) : ?>
+              <li>
+                <label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?>
+              </li>
+            <?php endif; ?>
+
+            <?php if (!empty($os['distro'])) : ?>
+              <li>
+                <label class="display-inline">Distro</label>: <?php print $os['distro']; ?>
+              </li>
+            <?php endif; ?>
+
+            <?php if (!empty($os['major'])) : ?>
+              <li>
+                <label class="display-inline">OS Major version</label>: <?php print $os['major']; ?>
+              </li>
+            <?php endif; ?>
+
+            <?php if (!empty($os['minor'])) : ?>
+              <li>
+                <label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?>
+              </li>
+            <?php endif; ?>
+          </ul>
+        </section>
       </div>
-
-    </div>
-
-    <div class="row xs-vm-section">
-      <h3>Operating System</h3>
-      <ul>
-        <?php if (!empty($os['version'])) : ?>
-          <li>
-            <label class="display-inline">Operating System</label>: <?php print $os['version']; ?>
-          </li>
-        <?php endif; ?>
-
-        <?php if (!empty($os['kernel'])) : ?>
-          <li>
-            <label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?>
-          </li>
-        <?php endif; ?>
-
-        <?php if (!empty($os['distro'])) : ?>
-          <li>
-            <label class="display-inline">Distro</label>: <?php print $os['distro']; ?>
-          </li>
-        <?php endif; ?>
-
-        <?php if (!empty($os['major'])) : ?>
-          <li>
-            <label class="display-inline">OS Major version</label>: <?php print $os['major']; ?>
-          </li>
-        <?php endif; ?>
-
-        <?php if (!empty($os['minor'])) : ?>
-          <li>
-            <label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?>
-          </li>
-        <?php endif; ?>
-      </ul>
     </div>
 
   </div>
