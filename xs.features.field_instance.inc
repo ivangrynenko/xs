@@ -114,7 +114,48 @@ function xs_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => 8,
+      'weight' => 3,
+    ),
+  );
+
+  // Exported field_instance: 'node-xs_vps-field_xs_vps_snapshots_limit'
+  $field_instances['node-xs_vps-field_xs_vps_snapshots_limit'] = array(
+    'bundle' => 'xs_vps',
+    'default_value' => array(
+      0 => array(
+        'value' => 10,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => 'Set the number of snapshots the user will be able to create.',
+    'display' => array(
+      'default' => array(
+        'label' => 'inline',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 4,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_xs_vps_snapshots_limit',
+    'label' => 'Max number of snapshots',
+    'required' => 1,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(),
+      'type' => 'options_select',
+      'weight' => 4,
     ),
   );
 
@@ -162,9 +203,11 @@ function xs_field_default_field_instances() {
   t('Comment');
   t('Enter UUID of the pool in which the VM is running.');
   t('Enter the UUID of the VPS.');
+  t('Max number of snapshots');
   t('Owner');
   t('Pool UUID');
   t('Select VPS owner.');
+  t('Set the number of snapshots the user will be able to create.');
   t('VPS UUID');
 
   return $field_instances;

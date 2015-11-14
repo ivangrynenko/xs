@@ -87,6 +87,40 @@ function xs_field_default_field_bases() {
     'type' => 'entityreference',
   );
 
+  // Exported field_base: 'field_xs_vps_snapshots_limit'
+  $field_bases['field_xs_vps_snapshots_limit'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_xs_vps_snapshots_limit',
+    'indexes' => array(
+      'value' => array(
+        0 => 'value',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'list',
+    'settings' => array(
+      'allowed_values' => array(
+        0 => 'Not allowed',
+        1 => '1 Snapshot',
+        2 => '2 Snapshot',
+        3 => '3 Snapshot',
+        4 => '4 Snapshot',
+        5 => '5 Snapshot',
+        6 => '6 Snapshot',
+        7 => '7 Snapshot',
+        8 => '8 Snapshot',
+        9 => '9 Snapshot',
+        10 => '10 Snapshot',
+      ),
+      'allowed_values_function' => '',
+    ),
+    'translatable' => 0,
+    'type' => 'list_integer',
+  );
+
   // Exported field_base: 'field_xs_vps_uuid'
   $field_bases['field_xs_vps_uuid'] = array(
     'active' => 1,
