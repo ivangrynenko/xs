@@ -449,32 +449,165 @@ function xs_api_get_vm_metrics($vm) {
   return $return;
 }
 
+/**
+ * Reboot a VM in a clean way.
+ *
+ * @param string $vm_ref
+ *   XenApi VM reference.
+ */
 function xs_api_vm_clean_reboot($vm_ref) {
   global $xs_api;
 
   $xs_api->VM_hard_reboot($vm_ref);
 }
 
+/**
+ * Reboot a VM forcefully.
+ *
+ * @param string $vm_ref
+ *   XenApi VM reference.
+ */
 function xs_api_vm_hard_reboot($vm_ref) {
   global $xs_api;
 
   $xs_api->VM_hard_reboot($vm_ref);
 }
 
+/**
+ * Shutdown a VM in a clean way.
+ *
+ * @param string $vm_ref
+ *   XenApi VM reference.
+ */
 function xs_api_vm_clean_shutdown($vm_ref) {
   global $xs_api;
 
   $xs_api->VM_clean_shutdown($vm_ref);
 }
 
+/**
+ * Shutdown a VM forcefully.
+ *
+ * @param string $vm_ref
+ *   XenApi VM reference.
+ */
 function xs_api_vm_hard_shutdown($vm_ref) {
   global $xs_api;
 
   $xs_api->VM_hard_shutdown($vm_ref);
 }
 
+/**
+ * Start a VM.
+ *
+ * @param string $vm_ref
+ *   XenApi VM reference.
+ */
 function xs_api_vm_start($vm_ref) {
   global $xs_api;
 
   $xs_api->VM_start($vm_ref, FALSE, FALSE);
+}
+
+/**
+ * Load full snapshot object, given the snapshot reference.
+ *
+ * @param string $snap_ref
+ *   Snapshot reference.
+ *
+ * @return void
+ */
+function xs_api_get_snapshot($snap_ref) {
+  global $xs_api;
+
+  return $xs_api->VM_get_record($snap_ref);
+}
+
+/**
+ * Destroys the snapshot.
+ *
+ * @param string $snap_ref
+ *   Snapshot reference.
+ *
+ * @return void
+ */
+function xs_api_destroy_snapshot($snap_ref) {
+  global $xs_api;
+
+  try {
+    $xs_api->VM_destroy($snap_ref);
+  }
+  catch (Exception $e) {
+    watchdog('XS_API', 'Exception thrown while in !function: !message', array('!function' => __FUNCTION__, '!message' => $e->getMessage()));
+  }
+}
+
+/**
+ * Reverts the snapshot.
+ *
+ * @param string $snap_ref
+ *   Snapshot reference.
+ *
+ * @return void
+ */
+function xs_api_revert_snapshot($snap_ref) {
+  global $xs_api;
+
+  $xs_api->VM_destroy($snap_ref);
+}
+
+/**
+ * Destroys a VBD by VBD reference.
+ *
+ * @param string $vbd_ref
+ *   Reference.
+ *
+ * @return void
+ */
+function xs_api_vbd_destory($vbd_ref) {
+  global $xs_api;
+
+  $xs_api->VBD_destroy($vbd_ref);
+}
+
+/**
+ * Load VBD via vbd reference.
+ *
+ * @param string $vbd_ref
+ *   VBD reference.
+ *
+ * @return bool|array
+ *   VBD array.
+ */
+function xs_api_get_vbd($vbd_ref) {
+  global $xs_api;
+
+  return $xs_api->VBD_get_record($vbd_ref);
+}
+
+/**
+ * Gets VDI by reference.
+ *
+ * @param string $vdi_ref
+ *   Reference.
+ *
+ * @return array
+ *   VDI representation.
+ */
+function xs_api_get_vdi($vdi_ref) {
+  global $xs_api;
+
+  return $xs_api->VDI_get_record($vdi_ref);
+}
+
+/**
+ * Destroys VDI by reference.
+ *
+ * @param string $vdi_ref
+ *   VDI reference.
+ */
+function xs_api_destroy_vdi($vdi_ref) {
+  global $xs_api;
+
+  $xs_api->VDI_destroy($vdi_ref);
 }
