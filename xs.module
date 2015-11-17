@@ -122,6 +122,19 @@ function xs_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['node/%node/xs-snapshots/create'] = array(
+    'title' => 'Create a Snapshot of the server',
+    'title callback' => 'xs_snapshots_create_snapshot_title_callback',
+    'title arguments' => array(1),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_snapshots_create_snapshot_form', 1),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1, TRUE),
+    'file' => 'includes/xs.snapshots.inc',
+    'weight' => 60,
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
 

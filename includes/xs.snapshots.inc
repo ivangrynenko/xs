@@ -108,6 +108,9 @@ function xs_actions_snapshots_output_render($snapshots, $node, $vm) {
   foreach ($snapshots as $snap_ref => $snapshot) {
     $is_current_state = $vm['parent'] == $snap_ref;
 
+    // Detect if any snapshot is the parent of current server state.
+    $current_active_snapshot = $vm['parent'] == $snap_ref ? $snapshot : FALSE;
+
     $rows[] = array(
       date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
       $snapshot['name_label'],
@@ -116,29 +119,82 @@ function xs_actions_snapshots_output_render($snapshots, $node, $vm) {
     );
   }
 
-  $table = theme('table', array('header' => $headers, 'rows' => $rows));
-  $form = drupal_get_form('xs_actions_snapshot_form', $snapshots, $node->nid);
+  // @todo: Move this into own theme with template file.
+  // Add create new snapshot link.
+  $link = l('Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $node->nid)));
+  $link = '<p>' . $link . '</p>';
+
+  $table = '<div class="col-md-12">' . theme('table', array(
+      'header' => $headers,
+      'rows' => $rows
+    )) . '</div>';
+  $form = drupal_get_form('xs_snapshots_action_snapshot_form', $snapshots, $node->nid, $current_active_snapshot);
+  $form = '<div class="col-md-4">' . render($form) . '</div>';
+
+  $snapshots_qty = count($snapshots);
+  $snapshots_qty = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');
 
   $header = '<h3>Available snapshots</h3>';
+  $header .= '<p>You have available ' . $snapshots_qty . ' out of the maximum ' . xs_get_snapshots_limit($node) . '</p>';
 
-  return $header . $table . render($form);
+  return '<div class="row">' . $header . $link . $table . $form . '</div>';
+}
+
+/**
+ * Title callback for the add new snapshot page.
+ *
+ * @param object $node
+ *   Drupal node.
+ *
+ * @return null|string
+ *   Title.
+ */
+function xs_snapshots_create_snapshot_title_callback($node) {
+  return t('Create a snapshot of "!node_title" server', array('!node_title' => $node->title));
+}
+
+/**
+ * Snapshot create form.
+ */
+function xs_snapshots_create_snapshot_form($form, &$form_state) {
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Snapshot name'),
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+
+  $form['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Short description'),
+    '#required' => FALSE,
+    '#cols' => 60,
+    '#rows' => 2,
+    '#description' => t('Give optional description to this snapshot'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create'),
+  );
+
+  return $form;
 }
 
 /**
  * Form builder for snapshot actions.
  */
-function xs_actions_snapshot_form($form, &$form_state, $snapshots, $nid) {
-  global $xs_api;
-
-  $xs_api = xs_get_xs_api();
-
+function xs_snapshots_action_snapshot_form($form, &$form_state, $snapshots, $nid, $current_active_snapshot) {
   $form['snapshot_uuid'] = array(
     '#type' => 'select',
-    '#options' => _xs_actions_snapshot_prepare_options($snapshots),
+    '#options' => _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot),
+    '#description' => t('Select a snapshot to perform an action, then select the action below'),
   );
 
   $form['snapshot_actions'] = array(
     '#type' => 'select',
+    '#description' => t('To destroy a snapshot, select Destroy. To revert your Server to the selected snapshot, select Revert'),
     '#options' => array(
       '' => t('Select Action'),
       'destroy' => t('Destroy'),
@@ -156,16 +212,16 @@ function xs_actions_snapshot_form($form, &$form_state, $snapshots, $nid) {
     '#value' => t('Execute'),
   );
 
-  $form['#validate'][] = 'xs_actions_snapshot_form_validate';
-  $form['#submit'][] = 'xs_actions_snapshot_form_submit';
+  $form['#validate'][] = 'xs_snapshots_action_snapshot_form_validate';
+  $form['#submit'][] = 'xs_snapshots_action_snapshot_form_submit';
 
   return $form;
 }
 
 /**
- * Validation handler for xs_actions_snapshot_form.
+ * Validation handler for xs_snapshots_action_snapshot_form.
  */
-function xs_actions_snapshot_form_validate($form, &$form_state) {
+function xs_snapshots_action_snapshot_form_validate($form, &$form_state) {
   if ($form_state['values']['nid'] != arg(1)) {
     return form_set_error('snapshot_actions', 'Validation error');
   }
@@ -180,9 +236,9 @@ function xs_actions_snapshot_form_validate($form, &$form_state) {
 }
 
 /**
- * Submit handler for xs_actions_snapshot_form.
+ * Submit handler for xs_snapshots_action_snapshot_form.
  */
-function xs_actions_snapshot_form_submit($form, &$form_state) {
+function xs_snapshots_action_snapshot_form_submit($form, &$form_state) {
   // Redirect to the confirmation page.
   drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots/' . $form_state['values']['snapshot_actions'] . '/' . $form_state['values']['snapshot_uuid']);
 }
@@ -349,11 +405,13 @@ function xs_actions_snapshot_revert($snapshot_ref) {
  *
  * @param array $snapshots
  *   All snapshots for the VM.
+ * @param array $current_active_snapshot
+ *   The snapshot that is currently active (if any).
  *
  * @return array
  *   Array of options, ref as the key and time as value.
  */
-function _xs_actions_snapshot_prepare_options($snapshots) {
+function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot) {
   $options = array();
   if (empty($snapshots)) {
     return $options;
@@ -362,7 +420,10 @@ function _xs_actions_snapshot_prepare_options($snapshots) {
   $options[''] = t('Select snapshot');
 
   foreach ($snapshots as $ref => $snapshot) {
-    $options[$ref] = date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp);
+    // Mark the snapshot that is currently active.
+    $active = !empty($current_active_snapshot['uuid']) && $snapshot['uuid'] == $current_active_snapshot['uuid'] ? t(' (Last reverted from)') : '';
+
+    $options[$ref] = date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . $active;
   }
 
   return $options;
