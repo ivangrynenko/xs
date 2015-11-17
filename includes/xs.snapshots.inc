@@ -11,24 +11,21 @@
  *
  * @param object $node
  *   Drupal node object.
+ *
+ * @return string
+ *   Rendered output.
  */
 function xs_actions_snapshots_callback($node) {
-  // @todo: Get available snapshots.
-  // @todo: For no snapshots, display message.
-  // @todo: Build form for available snapshots with actions.
-  // @todo: Set hard limit for the snapshots.
   global $xs_api;
 
-  $xs_api = xs_get_xs_api();
-  $vm = xs_get_vm_by_uuid($node);
-
-  $snapshots = xs_get_vm_snapshots($vm);
-
-  if (empty($snapshots)) {
-    return t('Your server does not have snapshots.');
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
   }
 
-  return xs_actions_snapshots_output_render($snapshots, $node, $vm);
+  return theme('xs_actions_snapshots_output', array('node' => $node));
 }
 
 /**
@@ -49,6 +46,36 @@ function xs_get_vm_snapshots($vm) {
   }
 
   return $full_snapshots;
+}
+
+/**
+ * Gets available snapshots for the server, loaded from drupal node.
+ *
+ * @param object $node
+ *   Drupal node.
+ *
+ * @return array
+ *   Array of available snapshots.
+ */
+function xs_get_vm_snapshots_from_node($node) {
+  $vm = xs_get_vm_by_uuid($node);
+
+  return xs_get_vm_snapshots($vm);
+}
+
+/**
+ * Loads the number of available snapshots of the VM, loaded via Drupal node.
+ *
+ * @param array $node
+ *   Drupal node
+ *
+ * @return bool|int
+ *   Number of available snapshots or FALSE.
+ */
+function xs_get_vm_snapshots_count_from_node($node) {
+  $vm = xs_get_vm_by_uuid($node);
+
+  return !empty($vm['snapshots']) ? count($vm['snapshots']) : FALSE;
 }
 
 /**
@@ -82,65 +109,6 @@ function xs_get_snapshots_limit($node) {
 }
 
 /**
- * Renders output for the snapshots page.
- *
- * @param array $snapshots
- *   Array of fully loaded snapshot objects.
- * @param object $node
- *   Drupal node object.
- *
- * @return string
- * @throws \Exception
- */
-function xs_actions_snapshots_output_render($snapshots, $node, $vm) {
-  if (empty($snapshots)) {
-    return '';
-  }
-
-  $headers = array(
-    'Snapshot date',
-    'Name',
-    'Description',
-    'Status',
-  );
-
-  $rows = array();
-  foreach ($snapshots as $snap_ref => $snapshot) {
-    $is_current_state = $vm['parent'] == $snap_ref;
-
-    // Detect if any snapshot is the parent of current server state.
-    $current_active_snapshot = $vm['parent'] == $snap_ref ? $snapshot : FALSE;
-
-    $rows[] = array(
-      date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
-      $snapshot['name_label'],
-      $snapshot['name_description'],
-      $is_current_state ? t('Last reverted from') : '',
-    );
-  }
-
-  // @todo: Move this into own theme with template file.
-  // Add create new snapshot link.
-  $link = l('Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $node->nid)));
-  $link = '<p>' . $link . '</p>';
-
-  $table = '<div class="col-md-12">' . theme('table', array(
-      'header' => $headers,
-      'rows' => $rows
-    )) . '</div>';
-  $form = drupal_get_form('xs_snapshots_action_snapshot_form', $snapshots, $node->nid, $current_active_snapshot);
-  $form = '<div class="col-md-4">' . render($form) . '</div>';
-
-  $snapshots_qty = count($snapshots);
-  $snapshots_qty = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');
-
-  $header = '<h3>Available snapshots</h3>';
-  $header .= '<p>You have available ' . $snapshots_qty . ' out of the maximum ' . xs_get_snapshots_limit($node) . '</p>';
-
-  return '<div class="row">' . $header . $link . $table . $form . '</div>';
-}
-
-/**
  * Title callback for the add new snapshot page.
  *
  * @param object $node
@@ -156,7 +124,11 @@ function xs_snapshots_create_snapshot_title_callback($node) {
 /**
  * Snapshot create form.
  */
-function xs_snapshots_create_snapshot_form($form, &$form_state) {
+function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
+  $form['link'] = array(
+    '#markup' => l('< Back to snapshots', 'node/' . $node->nid . '/xs-snapshots'),
+  );
+
   $form['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Snapshot name'),
@@ -180,6 +152,49 @@ function xs_snapshots_create_snapshot_form($form, &$form_state) {
   );
 
   return $form;
+}
+
+/**
+ * Validate handler for xs_snapshots_create_snapshot_form.
+ */
+function xs_snapshots_create_snapshot_form_validate($form, &$form_state) {
+  $nid = is_numeric(arg(1)) ? arg(1) : FALSE;
+  if (!$nid) {
+    return form_set_error(NULL, 'Validation error. This form must be submitted in server context');
+  }
+
+  $node = node_load($nid);
+  $form_state['storage']['xs_snapshot_create']['node'] = $node;
+  // Check if the user can add more snapshots.
+  $limit  = xs_get_snapshots_limit($node);
+  $current_snapshots = xs_get_vm_snapshots_count_from_node($node);
+  if ($current_snapshots >= $limit) {
+    return form_set_error(NULL, 'Validation error. You have reached the maximum number of snapshots this server could have.');
+  }
+}
+
+/**
+ * Submit handler for xs_snapshots_create_snapshot_form.
+ */
+function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
+  $vm_uuid = xs_get_vm_uuid_by_node($form_state['storage']['xs_snapshot_create']['node']);
+  $vm_ref = xs_api_get_vm_by_uuid($vm_uuid, 'vm_ref');
+
+  xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title'], $form_state['values']['description']);
+}
+
+/**
+ * Creates a snapshot of the VM identified by $vm_ref.
+ *
+ * @param string $vm_ref
+ *   VM reference.
+ * @param string $title
+ *   Title of the snapshot.
+ * @param string $description
+ *   Description of the snapshot.
+ */
+function xs_snapshot_create_snapshot($vm_ref, $title, $description) {
+  return xs_api_create_snapshot($vm_ref, $title);
 }
 
 /**
@@ -249,7 +264,12 @@ function xs_snapshots_action_snapshot_form_submit($form, &$form_state) {
 function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, $snapshot_ref) {
   global $xs_api;
 
-  $xs_api = xs_get_xs_api();
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
+  }
 
   // Add hidden fields to pass over to the action submit handler.
   $form['snapshot_ref'] = array(
