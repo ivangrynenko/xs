@@ -28,7 +28,7 @@ function xs_actions_snapshots_callback($node) {
     return t('Your server does not have snapshots.');
   }
 
-  return xs_actions_snapshots_output_render($snapshots, $node);
+  return xs_actions_snapshots_output_render($snapshots, $node, $vm);
 }
 
 /**
@@ -92,26 +92,36 @@ function xs_get_snapshots_limit($node) {
  * @return string
  * @throws \Exception
  */
-function xs_actions_snapshots_output_render($snapshots, $node) {
+function xs_actions_snapshots_output_render($snapshots, $node, $vm) {
   if (empty($snapshots)) {
     return '';
   }
 
   $headers = array(
-    'Available snapshots by date taken',
+    'Snapshot date',
+    'Name',
+    'Description',
+    'Status',
   );
 
   $rows = array();
-  foreach ($snapshots as $snapshot) {
+  foreach ($snapshots as $snap_ref => $snapshot) {
+    $is_current_state = $vm['parent'] == $snap_ref;
+
     $rows[] = array(
       date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
+      $snapshot['name_label'],
+      $snapshot['name_description'],
+      $is_current_state ? t('Last reverted from') : '',
     );
   }
 
   $table = theme('table', array('header' => $headers, 'rows' => $rows));
   $form = drupal_get_form('xs_actions_snapshot_form', $snapshots, $node->nid);
 
-  return $table . render($form);
+  $header = '<h3>Available snapshots</h3>';
+
+  return $header . $table . render($form);
 }
 
 /**
@@ -205,7 +215,10 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
 
   $date = date('d M Y h:i:sA', $snapshot_created_time);
   $form['warning'] = array(
-    '#markup' => t('You about to !action snapshot created at !date. This action cannot be undone!', array('!action' => strtoupper($action), '!date' => !empty($date) ? $date : 'N/A')),
+    '#markup' => t('You about to !action snapshot created at !date. This action cannot be undone!', array(
+      '!action' => strtoupper($action),
+      '!date' => !empty($date) ? $date : 'N/A'
+    )),
   );
 
   $form['submit'] = array(
@@ -245,8 +258,27 @@ function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
       break;
 
     case 'revert':
-      xs_actions_snapshot_revert($form_state['values']['snapshot_ref']);
-      drupal_set_message('Your Server has been reverted to the selected snapshot successfully');
+      if (is_numeric(arg(1)) && arg(0) == 'node') {
+        $node = node_load(arg(1));
+        if (xs_actions_access_callback($node)) {
+          module_load_include('inc', 'xs', 'includes/xs.actions');
+
+          // Load the VM.
+          $uuid = xs_get_vm_uuid_by_node($node);
+          $vm_ref = xs_api_get_vm_by_uuid($uuid, 'vm_ref');
+
+          // Shut down the VM.
+          xs_actions_action_vps_hard_shutdown($vm_ref);
+
+          // Revert to the selected snapshot.
+          xs_actions_snapshot_revert($form_state['values']['snapshot_ref']);
+
+          // Start the VM.
+          xs_actions_action_vps_start($vm_ref);
+
+          drupal_set_message('Your Server has been reverted to the selected snapshot and started successfully');
+        }
+      }
       drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots');
       break;
   }
@@ -309,7 +341,7 @@ function xs_action_snapshot_vbd_destroy($snapshot) {
  *   Reference of the snapshot to destroy.
  */
 function xs_actions_snapshot_revert($snapshot_ref) {
-  return xs_api_revert_snapshot($snapshot_ref);
+  xs_api_revert_snapshot($snapshot_ref);
 }
 
 /**

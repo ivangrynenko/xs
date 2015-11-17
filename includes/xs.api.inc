@@ -553,7 +553,12 @@ function xs_api_destroy_snapshot($snap_ref) {
 function xs_api_revert_snapshot($snap_ref) {
   global $xs_api;
 
-  $xs_api->VM_destroy($snap_ref);
+  try {
+    $xs_api->VM_revert($snap_ref);
+  }
+  catch (Exception $e) {
+    return $e->getMessage();
+  }
 }
 
 /**
