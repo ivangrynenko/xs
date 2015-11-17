@@ -30,7 +30,7 @@ function xs_get_xs_api() {
   // Get all defined pools.
   $xs_pools = xs_get_pools();
   if (empty($xs_pools)) {
-    return FALSE;
+    throw new Exception('Unable to get pool data');
   }
 
   // Loop through defined pools to get array of members (hosts).
@@ -40,7 +40,7 @@ function xs_get_xs_api() {
     // Loop through every member and attempt to create a connection.
     foreach ($xs_pool_members as $pool_member) {
       // In multi-server environment we attempt to connect to every server
-      // that is defined in the pool and to identify pool master. One pool
+      // that is defined in the pool and to identify pool master. Once the pool
       // master is identified, we connect to it and skip other servers.
       if (!empty($xs_master_api[$pool_uuid])) {
         continue;
@@ -51,6 +51,8 @@ function xs_get_xs_api() {
       }
       catch (Exception $e) {
         watchdog('XS', 'Error when connecting to XS: !error', array('!error' => $e->getMessage()), WATCHDOG_ERROR);
+
+        throw new Exception(t('Error when connecting to XS: !error', array('!error' => $e->getMessage())));
       }
 
       $xs_host[$pool_uuid] = xs_get_host_by_uuid($xs_api[$pool_uuid], $pool_member['uuid']);
@@ -65,6 +67,7 @@ function xs_get_xs_api() {
       $pool_master[$pool_uuid] = xs_api_get_pool_master($xs_api[$pool_uuid], $xs_api_pool[$pool_uuid]);
 
       // Reconnect to the pool master.
+      // @todo: Add skip re-connect if we connected to the master above.
       $pool_master_local = $xs_pools[$pool_uuid]['members'][$pool_master[$pool_uuid]['uuid']];
       $xs_master_api[$pool_uuid] = xs_api_connect($pool_master_local);
     }
@@ -615,4 +618,18 @@ function xs_api_destroy_vdi($vdi_ref) {
   global $xs_api;
 
   $xs_api->VDI_destroy($vdi_ref);
+}
+
+/**
+ * Creates a snapshot.
+ *
+ * @param string $vm_ref
+ *   VM reference.
+ * @param string $title
+ *   Title of the snapshot.
+ */
+function xs_api_create_snapshot($vm_ref, $title) {
+  global $xs_api;
+
+  $xs_api->VM_snapshot($vm_ref, $title);
 }

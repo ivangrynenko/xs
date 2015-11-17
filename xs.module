@@ -179,11 +179,20 @@ function xs_log($e) {
  */
 function xs_theme($existing, $type, $theme, $path) {
   $theme = array();
+
   $theme['node__xs_vps'] = array(
     'render element' => 'content',
     'base hook' => 'node',
     'template' => 'node--xs_vps',
     'path' => drupal_get_path('module', 'xs') . '/templates',
+  );
+
+  $theme['xs_actions_snapshots_output'] = array(
+    'template' => 'templates/xs-actions-snapshots-output',
+    'file' => 'theme/xs_theme.inc',
+    'variables' => array(
+      'node' => NULL,
+    ),
   );
 
   return $theme;
@@ -206,7 +215,12 @@ function xs_preprocess_node(&$variables) {
 
     global $xs_api;
 
-    $xs_api = xs_get_xs_api();
+    try {
+      $xs_api = xs_get_xs_api();
+    }
+    catch (Exception $e) {
+      watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
+    }
 
     $vm = xs_get_vm_by_uuid($variables['node']);
 

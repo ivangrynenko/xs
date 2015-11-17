@@ -12,7 +12,12 @@
 function xs_settings() {
   global $xs_api;
 
-  $xs_api = xs_get_xs_api();
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
+  }
 
   $output = array();
   $output['header']['#markup'] .= '<p>Available XenServer pools</p>';
@@ -106,7 +111,12 @@ function xs_settings_form_submit($form, &$form_state) {
 function xs_admin_pool_vms() {
   global $xs_api;
 
-  $xs_api = xs_get_xs_api();
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
+  }
 
   drupal_set_title('Available Virtual Servers');
   $view = views_get_view('xs_pools_servers');

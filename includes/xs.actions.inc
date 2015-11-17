@@ -22,7 +22,13 @@
 function xs_actions_action_callback($node, $action) {
   global $xs_api;
 
-  $xs_api = xs_get_xs_api();
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
+  }
+
   $vm = xs_get_vm_by_uuid($node);
 
   if (!in_array($action, $vm['allowed_operations'])) {
