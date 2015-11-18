@@ -248,13 +248,22 @@ function xs_theme($existing, $type, $theme, $path) {
 function xs_preprocess_node(&$variables) {
   if ($variables['node']->type == 'xs_vps') {
     drupal_page_is_cacheable(FALSE);
-    // @todo: Add content_access API call to bypass the below if no acces
-    // is given to the node.
+
+    drupal_set_title(t('Overview of !server', array('!server' => $variables['node']->title)));
 
     drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
     drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
     $vm = xs_get_vm_by_uuid($variables['node']);
+
+    // If VM is not available, we were unable to connect to any of XS hosts.
+    // Instead of displaying the confusing content, show the status message
+    // and exit.
+    if (empty($vm)) {
+      $variables['error_message'] = t('API Error. Unable to connect to the server. If this error persists, please contact our support');
+
+      return;
+    }
 
     // VM metrics.
     $vm_metrics = xs_api_get_vm_metrics($vm);

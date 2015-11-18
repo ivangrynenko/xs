@@ -16,6 +16,8 @@
  *   Rendered output.
  */
 function xs_actions_snapshots_callback($node) {
+  drupal_set_title(t('Snapshots !server', array('!server' => $node->title)));
+
   return theme('xs_actions_snapshots_output', array('node' => $node));
 }
 
@@ -36,7 +38,39 @@ function xs_get_vm_snapshots($vm) {
     }
   }
 
+  $full_snapshots = xs_snapshots_reorder($full_snapshots);
+
   return $full_snapshots;
+}
+
+/**
+ * Reorder snapshots by snapshot date.
+ *
+ * @param array $snapshots
+ *   Array of loaded snapshot objects.
+ *
+ * @return array
+ *   Reordered snapshots.
+ */
+function xs_snapshots_reorder($snapshots) {
+  if (empty($snapshots)) {
+    return $snapshots;
+  };
+
+  $remapped_snapshots = array();
+  $ordered_snapshots = array();
+  foreach ($snapshots as $snap_ref => $snapshot) {
+    $snapshot['ref'] = $snap_ref;
+    $remapped_snapshots[$snapshot['snapshot_time']->timestamp] = $snapshot;
+  }
+
+  ksort($remapped_snapshots);
+
+  foreach ($remapped_snapshots as $snapshot) {
+    $ordered_snapshots[$snapshot['ref']] = $snapshot;
+  }
+
+  return $ordered_snapshots;
 }
 
 /**

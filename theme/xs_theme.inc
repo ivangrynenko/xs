@@ -10,6 +10,16 @@
 function xs_preproces_xs_actions_snapshots_output(&$variables) {
   // Prepare variables.
   $vm = xs_get_vm_by_uuid($variables['node']);
+
+  // If VM is not available, we were unable to connect to any of XS hosts.
+  // Instead of displaying the confusing content, show the status message
+  // and exit.
+  if (empty($vm)) {
+    $variables['error_message'] = t('API Error. Unable to connect to the server. If this error persists, please contact our support');
+
+    return;
+  }
+
   $snapshots = xs_get_vm_snapshots($vm);
 
   $variables['link'] = l('> Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
@@ -41,14 +51,18 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
  *   Exception.
  */
 function xs_snapshots_page_output_render($snapshots, $node, $vm) {
-  $headers = array(
+  $headers = array (
+    '#',
     'Snapshot date',
     'Name',
     'State',
+    'Actions',
   );
 
   $rows = array();
   $current_active_snapshot = array();
+
+  $i = 1;
   foreach ($snapshots as $snap_ref => $snapshot) {
     $is_current_state = $vm['parent'] == $snap_ref;
 
@@ -57,11 +71,19 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
       $current_active_snapshot = $snapshot;
     }
 
+    // Prepare actions link.
+    $links = array();
+    $links[] = l('trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snap_ref);
+    $links[] = l('revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snap_ref);
+
     $rows[] = array(
+      $i,
       date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
       $snapshot['name_label'],
       $is_current_state ? t('Last reverted from') : '',
+      implode('|', $links),
     );
+    $i++;
   }
 
   $return_variables['table'] = theme('table', array(
