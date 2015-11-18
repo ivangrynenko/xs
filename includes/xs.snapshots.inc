@@ -137,15 +137,6 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
     '#required' => TRUE,
   );
 
-  $form['description'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Short description'),
-    '#required' => FALSE,
-    '#cols' => 60,
-    '#rows' => 2,
-    '#description' => t('Give optional description to this snapshot'),
-  );
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Create'),
@@ -180,7 +171,9 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   $vm_uuid = xs_get_vm_uuid_by_node($form_state['storage']['xs_snapshot_create']['node']);
   $vm_ref = xs_api_get_vm_by_uuid($vm_uuid, 'vm_ref');
 
-  xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title'], $form_state['values']['description']);
+  xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
+
+  $form_state['redirect'] = 'node/' . $form_state['storage']['xs_snapshot_create']['node']->nid . '/xs-snapshots';
 }
 
 /**
@@ -190,10 +183,8 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
  *   VM reference.
  * @param string $title
  *   Title of the snapshot.
- * @param string $description
- *   Description of the snapshot.
  */
-function xs_snapshot_create_snapshot($vm_ref, $title, $description) {
+function xs_snapshot_create_snapshot($vm_ref, $title) {
   return xs_api_create_snapshot($vm_ref, $title);
 }
 
@@ -441,7 +432,7 @@ function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapsh
 
   foreach ($snapshots as $ref => $snapshot) {
     // Mark the snapshot that is currently active.
-    $active = !empty($current_active_snapshot['uuid']) && $snapshot['uuid'] == $current_active_snapshot['uuid'] ? t(' (Last reverted from)') : '';
+    $active = !empty($current_active_snapshot['uuid']) && $snapshot['uuid'] == $current_active_snapshot['uuid'] ? t(' (Server\'s latest status)') : '';
 
     $options[$ref] = date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . $active;
   }
