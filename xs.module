@@ -99,7 +99,7 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['node/%node/xs-snapshots/%/%'] = array(
+  $items['node/%node/xs-snapshots/%/%xs_vm_uud'] = array(
     'title' => 'Confirm Snapshot Action',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('xs_actions_confirm_snapshots_form', 1, 3, 4),
@@ -124,6 +124,19 @@ function xs_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Menu argument loader: loads VM or snapshot reference by uuid.
+ *
+ * @param $vm_uuid
+ *   The UUID of a VPS or a Snapshot or a template.
+ *
+ * @return string
+ *   XenApi reference string of the matching UUID.
+ */
+function xs_vm_uuid_load($vm_uuid) {
+  return xs_api_get_vm_ref_by_uuid($vm_uuid);
 }
 
 /**
