@@ -83,7 +83,7 @@ function xs_snapshots_reorder($snapshots) {
  *   Array of available snapshots.
  */
 function xs_get_vm_snapshots_from_node($node) {
-  $vm = xs_get_vm_by_uuid($node);
+  $vm = xs_get_vm_by_node($node);
 
   return xs_get_vm_snapshots($vm);
 }
@@ -98,7 +98,7 @@ function xs_get_vm_snapshots_from_node($node) {
  *   Number of available snapshots or FALSE.
  */
 function xs_get_vm_snapshots_count_from_node($node) {
-  $vm = xs_get_vm_by_uuid($node);
+  $vm = xs_get_vm_by_node($node);
 
   return !empty($vm['snapshots']) ? count($vm['snapshots']) : FALSE;
 }
@@ -211,69 +211,6 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
  */
 function xs_snapshot_create_snapshot($vm_ref, $title) {
   return xs_api_create_snapshot($vm_ref, $title);
-}
-
-/**
- * Form builder for snapshot actions.
- */
-function xs_snapshots_action_snapshot_form($form, &$form_state, $snapshots, $nid, $current_active_snapshot) {
-  $form['snapshot_uuid'] = array(
-    '#type' => 'select',
-    '#options' => _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot),
-    '#default_option' => '',
-    '#description' => t('Select a snapshot to perform an action, then select the action below'),
-  );
-
-  $form['snapshot_actions'] = array(
-    '#type' => 'select',
-    '#description' => t('To destroy a snapshot, select Destroy. To revert your Server to the selected snapshot, select Revert'),
-    '#options' => array(
-      '' => t('Select Action'),
-      'destroy' => t('Destroy'),
-      'revert' => t('Revert'),
-    ),
-    '#default_option' => '',
-  );
-
-  $form['nid'] = array(
-    '#type' => 'hidden',
-    '#value' => $nid,
-  );
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Execute'),
-  );
-
-  $form['#validate'][] = 'xs_snapshots_action_snapshot_form_validate';
-  $form['#submit'][] = 'xs_snapshots_action_snapshot_form_submit';
-
-  return $form;
-}
-
-/**
- * Validation handler for xs_snapshots_action_snapshot_form.
- */
-function xs_snapshots_action_snapshot_form_validate($form, &$form_state) {
-  if ($form_state['values']['nid'] != arg(1)) {
-    return form_set_error('snapshot_actions', 'Validation error');
-  }
-
-  if (empty($form_state['values']['snapshot_actions'])) {
-    return form_set_error('snapshot_actions', 'Please select an action');
-  }
-
-  if (empty($form_state['values']['snapshot_uuid'])) {
-    return form_set_error('snapshot_uuid', 'Please select a snapshot');
-  }
-}
-
-/**
- * Submit handler for xs_snapshots_action_snapshot_form.
- */
-function xs_snapshots_action_snapshot_form_submit($form, &$form_state) {
-  // Redirect to the confirmation page.
-  drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots/' . $form_state['values']['snapshot_actions'] . '/' . $form_state['values']['snapshot_uuid']);
 }
 
 /**
