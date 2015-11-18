@@ -4,23 +4,24 @@
  * xs_theme.inc
  */
 
-function xs_preproces_xs_actions_snapshots_output($variables) {
-  if (!empty($variables['node'])) {
-    // Prepare variables.
-    $vm = xs_get_vm_by_uuid($variables['node']);
-    $snapshots = xs_get_vm_snapshots($vm);
+/**
+ * Implementation of hook_preprocess.
+ */
+function xs_preproces_xs_actions_snapshots_output(&$variables) {
+  // Prepare variables.
+  $vm = xs_get_vm_by_uuid($variables['node']);
+  $snapshots = xs_get_vm_snapshots($vm);
 
-    $variables['link'] = l('> Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
+  $variables['link'] = l('> Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
 
-    $snapshots_qty = count($snapshots);
-    $variables['snapshots_qty'] = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');
+  $snapshots_qty = count($snapshots);
+  $variables['snapshots_qty'] = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');
 
-    $page_variables = xs_snapshots_page_output_render($snapshots, $variables['node'], $vm);
+  $page_variables = xs_snapshots_page_output_render($snapshots, $variables['node'], $vm);
 
-    $variables['snapshots_max'] = (int) xs_get_snapshots_limit($variables['node']);
-    $variables['snapshots_table'] = $page_variables['table'];
-    $variables['snapshots_actions_form'] = $page_variables['form'];
-  }
+  $variables['snapshots_max'] = (int) xs_get_snapshots_limit($variables['node']);
+  $variables['snapshots_table'] = $page_variables['table'];
+  $variables['snapshots_actions_form'] = $page_variables['form'];
 }
 
 /**
@@ -43,8 +44,7 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
   $headers = array(
     'Snapshot date',
     'Name',
-    'Description',
-    'Status',
+    'State',
   );
 
   $rows = array();
@@ -60,15 +60,14 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
     $rows[] = array(
       date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
       $snapshot['name_label'],
-      $snapshot['name_description'],
       $is_current_state ? t('Last reverted from') : '',
     );
   }
 
   $return_variables['table'] = theme('table', array(
-      'header' => $headers,
-      'rows' => $rows
-    ));
+    'header' => $headers,
+    'rows' => $rows
+  ));
 
   $form = drupal_get_form('xs_snapshots_action_snapshot_form', $snapshots, $node->nid, $current_active_snapshot);
   $return_variables['form'] = render($form);

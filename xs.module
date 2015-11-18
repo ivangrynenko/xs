@@ -139,6 +139,51 @@ function xs_menu() {
 }
 
 /**
+ * Implements hook_user_login().
+ */
+function xs_user_login(&$edit, $account) {
+  // Redirect the user to the first server available.
+  if (user_access('perform own vm actions')) {
+    $vps_nodes = _xs_get_user_vps($account, 1);
+    $vps_node = reset($vps_nodes);
+    if (!empty($vps_node->nid)) {
+      drupal_goto('node/' . $vps_node->nid);
+    }
+  }
+}
+
+/**
+ * Gets all VPS nodes for the $account.
+ *
+ * @param object $account
+ *   Drupal user object.
+ *
+ * @return bool|mixed
+ *   Array of node objects or FALSE.
+ */
+function _xs_get_user_vps($account, $limit = FALSE) {
+  $query = new EntityFieldQuery();
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'xs_vps')
+    ->propertyCondition('status', 1)
+    ->propertyCondition('uid', $account->uid)
+    ->fieldCondition('field_xs_vps_owner', 'target_id', $account->uid)
+    ->propertyOrderBy('nid', 'ASC');
+  if ($limit) {
+    $query->range(0, $limit);
+  }
+
+  $result = $query->execute();
+
+  if (!empty($result['node'])) {
+    return $result;
+  }
+
+  return FALSE;
+}
+
+/**
  * Implements hook_node_load().
  */
 function xs_node_load($nodes, $types) {
@@ -178,24 +223,23 @@ function xs_log($e) {
  * Implements hook_theme().
  */
 function xs_theme($existing, $type, $theme, $path) {
-  $theme = array();
+  return array(
+    'node__xs_vps' => array(
+      'render element' => 'content',
+      'base hook' => 'node',
+      'template' => 'node--xs_vps',
+      'path' => drupal_get_path('module', 'xs') . '/templates',
+    ),
 
-  $theme['node__xs_vps'] = array(
-    'render element' => 'content',
-    'base hook' => 'node',
-    'template' => 'node--xs_vps',
-    'path' => drupal_get_path('module', 'xs') . '/templates',
-  );
-
-  $theme['xs_actions_snapshots_output'] = array(
-    'template' => 'templates/xs-actions-snapshots-output',
-    'file' => 'theme/xs_theme.inc',
-    'variables' => array(
-      'node' => NULL,
+    'xs_actions_snapshots_output' => array(
+      'template' => 'templates/xs-actions-snapshots-output',
+      'file' => 'theme/xs_theme.inc',
+      'preprocess functions' => array('xs_preproces_xs_actions_snapshots_output'),
+      'variables' => array(
+        'node' => NULL,
+      ),
     ),
   );
-
-  return $theme;
 }
 
 /**
@@ -207,22 +251,21 @@ function xs_preprocess_node(&$variables) {
     // @todo: Add content_access API call to bypass the below if no acces
     // is given to the node.
 
-    // Add message about upcoming work.
-    drupal_set_message('We are currently working on snapshots, to give you ability to create and restore snapshots of your server via this interface', 'warning');
-
     drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
     drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
-    global $xs_api;
-
-    try {
-      $xs_api = xs_get_xs_api();
-    }
-    catch (Exception $e) {
-      watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
-    }
-
     $vm = xs_get_vm_by_uuid($variables['node']);
+
+    // VM metrics.
+    $vm_metrics = xs_api_get_vm_metrics($vm);
+
+    // Guest metrics.
+    $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
+
+    // Virtual interfaces VIF.
+    $vifs = xs_get_vifs($vm);
+
+    // VBDs.
 
     // Add actions to the VM.
     module_load_include('inc', 'xs', 'includes/xs.actions');
@@ -233,7 +276,6 @@ function xs_preprocess_node(&$variables) {
     $variables['vm_last_shutdown_time'] = !empty($vm['other_config']['last_shutdown_time']) ? date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time'])) : XS_API_ERROR;
     $variables['vm_nics'] = !empty($vm['VIFs']) ? count($vm['VIFs']) : XS_API_ERROR;
 
-    $vifs = xs_get_vifs($vm);
     if (!empty($vm)) {
       foreach ($vifs as $key => $vif) {
         $variables['vm_vifs'][$key]['device'] = 'eth' . $vif['device'];
@@ -245,7 +287,6 @@ function xs_preprocess_node(&$variables) {
     $variables['vm_power_state_class'] = !empty($vm['power_state']) ? strtolower($vm['power_state']) : 'error';
   }
 
-  $vm_metrics = xs_api_get_vm_metrics($vm);
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
   $variables['vm_memory'] = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
 
@@ -256,15 +297,15 @@ function xs_preprocess_node(&$variables) {
   $server_running_time = xs_seconds2human($time_delta);
   $variables['server_uptime'] = $vm_is_running ? $server_running_time['days'] . ' days, ' . $server_running_time['hours'] . ' hours, ' . $server_running_time['minutes'] . ' minutes' : 'Halted';
 
-  // Guest metrics.
-  $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
-
   // Operating System.
   $variables['os']['version'] = !empty($vm_guest_metrix['os_version']['name']) ? $vm_guest_metrix['os_version']['name'] : 'N/A';
   $variables['os']['kernel'] = !empty($vm_guest_metrix['os_version']['uname']) ? $vm_guest_metrix['os_version']['uname'] : 'N/A';
   $variables['os']['distro'] = !empty($vm_guest_metrix['os_version']['distro']) ? $vm_guest_metrix['os_version']['distro'] : 'N/A';
   $variables['os']['major'] = !empty($vm_guest_metrix['os_version']['major']) ? $vm_guest_metrix['os_version']['major'] : 'N/A';
   $variables['os']['minor'] = !empty($vm_guest_metrix['os_version']['minor']) ? $vm_guest_metrix['os_version']['minor'] : 'N/A';
+
+  $variables['virtualization_state'] = !empty($vm_guest_metrix['PV_drivers_version']['minor']) ? $vm_guest_metrix['PV_drivers_version']['major'] . '.' . $vm_guest_metrix['PV_drivers_version']['minor'] : 'N/A';
+  $variables['virtualization_uptodate'] = empty($vm_guest_metrix['PV_drivers_up_to_date']) ? '<span class="red">' . t('Tools out of date') . '</span>' : '<span class="green">' . t('Tools up to date') . '</span>';
 
   // Network/IP addresses.
   if (!empty($vm_guest_metrix['networks'])) {
@@ -283,11 +324,11 @@ function xs_preprocess_node(&$variables) {
  * @return mixed
  */
 function xs_seconds2human($seconds) {
-  $return['seconds'] = $seconds%60;
-  $return['minutes'] = floor(($seconds%3600)/60);
-  $return['hours'] = floor(($seconds%86400)/3600);
-  $return['days'] = floor(($seconds%2592000)/86400);
-  $return['months'] = floor($seconds/2592000);
+  $return['seconds'] = $seconds % 60;
+  $return['minutes'] = floor(($seconds % 3600) / 60);
+  $return['hours'] = floor(($seconds % 86400) / 3600);
+  $return['days'] = floor(($seconds % 2592000) / 86400);
+  $return['months'] = floor($seconds / 2592000);
 
   return $return;
 }

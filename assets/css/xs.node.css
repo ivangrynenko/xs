@@ -49,3 +49,29 @@
 .xs-vm-row {
   margin: 20px 0px;
 }
+
+.red {
+  color: red;
+}
+
+.green {
+  color: green;
+}
+
+.yellow {
+  color: orange;
+}
+
+.blue {
+  color: blue;
+}
+
+.warning {
+  font-weight: bold;
+  background-repeat: no-repeat;
+  background-position: 0.1em 1.3em;
+  color: darkblue;
+  padding: 10px 10px 10px 30px;
+  border: solid 2px sandybrown;
+  margin: 10px 0;
+}

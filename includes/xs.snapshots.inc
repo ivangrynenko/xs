@@ -16,15 +16,6 @@
  *   Rendered output.
  */
 function xs_actions_snapshots_callback($node) {
-  global $xs_api;
-
-  try {
-    $xs_api = xs_get_xs_api();
-  }
-  catch (Exception $e) {
-    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
-  }
-
   return theme('xs_actions_snapshots_output', array('node' => $node));
 }
 
@@ -132,8 +123,8 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
   $form['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Snapshot name'),
-    '#size' => 32,
-    '#maxlength' => 32,
+    '#size' => 16,
+    '#maxlength' => 16,
     '#required' => TRUE,
   );
 
@@ -195,6 +186,7 @@ function xs_snapshots_action_snapshot_form($form, &$form_state, $snapshots, $nid
   $form['snapshot_uuid'] = array(
     '#type' => 'select',
     '#options' => _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot),
+    '#default_option' => '',
     '#description' => t('Select a snapshot to perform an action, then select the action below'),
   );
 
@@ -206,6 +198,7 @@ function xs_snapshots_action_snapshot_form($form, &$form_state, $snapshots, $nid
       'destroy' => t('Destroy'),
       'revert' => t('Revert'),
     ),
+    '#default_option' => '',
   );
 
   $form['nid'] = array(
@@ -253,14 +246,7 @@ function xs_snapshots_action_snapshot_form_submit($form, &$form_state) {
  * Confirmation form for snapshot action.
  */
 function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, $snapshot_ref) {
-  global $xs_api;
-
-  try {
-    $xs_api = xs_get_xs_api();
-  }
-  catch (Exception $e) {
-    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
-  }
+  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
 
   // Add hidden fields to pass over to the action submit handler.
   $form['snapshot_ref'] = array(
@@ -282,11 +268,21 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
 
   $date = date('d M Y h:i:sA', $snapshot_created_time);
   $form['warning'] = array(
-    '#markup' => t('You about to !action snapshot created at !date. This action cannot be undone!', array(
+    '#markup' => t('You about to !action the server to the snapshot, created at !date. This action cannot be undone!', array(
       '!action' => strtoupper($action),
       '!date' => !empty($date) ? $date : 'N/A'
     )),
+    '#prefix' => '<div class="red">',
+    '#suffix' => '</div>',
   );
+
+  if ($action == 'revert') {
+    $form['warning-2'] = array(
+      '#markup' => format_string('Before reverting the server to this snapshot, we recommend you to !snapshot of the current state of your server, so that you could revert to it later on.', array('!snapshot' => l(t('Create a snapshot'), 'node/' . $node->nid . '/xs-snapshots/create'))),
+      '#prefix' => '<div class="red warning">',
+      '#suffix' => '</div>',
+    );
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -434,7 +430,12 @@ function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapsh
     // Mark the snapshot that is currently active.
     $active = !empty($current_active_snapshot['uuid']) && $snapshot['uuid'] == $current_active_snapshot['uuid'] ? t(' (Server\'s latest status)') : '';
 
-    $options[$ref] = date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . $active;
+    $prefix = '';
+    if (!empty($snapshot['name_label'])) {
+      $prefix = $snapshot['name_label'];
+    }
+
+    $options[$ref] = $prefix . ' [' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . '] '. $active;
   }
 
   return $options;

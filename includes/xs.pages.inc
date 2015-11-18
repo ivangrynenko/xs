@@ -4,19 +4,15 @@
  * xs.pages.inc
  */
 
-// @todo: Replace relevant content types with custom entities.
-
 /**
  * Administrative for for default tab.
  */
 function xs_settings() {
-  global $xs_api;
-
   try {
     $xs_api = xs_get_xs_api();
   }
   catch (Exception $e) {
-    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
+    return xs_log($e);
   }
 
   $output = array();
@@ -108,16 +104,13 @@ function xs_settings_form_submit($form, &$form_state) {
   variable_set('xs_pool_is', $form_state['values']['xs_pool_is']);
 }
 
+/**
+ * Renders a block of pool servers.
+ *
+ * @return string
+ *   Rendered HTML output.
+ */
 function xs_admin_pool_vms() {
-  global $xs_api;
-
-  try {
-    $xs_api = xs_get_xs_api();
-  }
-  catch (Exception $e) {
-    watchdog('XS', 'Unable to get XenApi: !message', array('!message' => $e->getMessage()));
-  }
-
   drupal_set_title('Available Virtual Servers');
   $view = views_get_view('xs_pools_servers');
   $output = $view->preview('block');
@@ -125,9 +118,15 @@ function xs_admin_pool_vms() {
   return $output;
 }
 
+/**
+ * Create a list of templates for administrator.
+ *
+ * @return array
+ *   Array of template objects.
+ * @throws \Exception
+ *   Exception.
+ */
 function xs_admin_pool_templates() {
-  global $xs_api;
-
   drupal_set_title('Available templates');
   $pools = xs_get_pools();
   foreach ($pools as $pool) {

@@ -211,13 +211,15 @@
 
             <?php if (!empty($os['major'])) : ?>
               <li>
-                <label class="display-inline">OS Major version</label>: <?php print $os['major']; ?>
+                <label class="display-inline">OS version</label>: <?php print $os['major'] . '.' . $os['minor']; ?>
               </li>
             <?php endif; ?>
 
-            <?php if (!empty($os['minor'])) : ?>
+            <?php if (!empty($virtualization_state)) : ?>
               <li>
-                <label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?>
+                <label class="display-inline">Virtualisation State</label>:
+                <?php print $virtualization_state; ?>
+                <?php print !empty($virtualization_uptodate) ? ' (' . $virtualization_uptodate . ')' : ''; ?>
               </li>
             <?php endif; ?>
           </ul>
