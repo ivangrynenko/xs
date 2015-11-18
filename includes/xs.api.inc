@@ -69,7 +69,13 @@ function xs_get_xs_api() {
       // Reconnect to the pool master.
       // @todo: Add skip re-connect if we connected to the master above.
       $pool_master_local = $xs_pools[$pool_uuid]['members'][$pool_master[$pool_uuid]['uuid']];
-      $xs_master_api[$pool_uuid] = xs_api_connect($pool_master_local);
+      // Skip reconnect to pool master if we already connected to it.
+      if ($pool_master_local['uuid'] != $pool_member['uuid']) {
+        $xs_master_api[$pool_uuid] = xs_api_connect($pool_master_local);
+      }
+      else {
+        $xs_master_api[$pool_uuid] = $xs_api[$pool_uuid];
+      }
     }
   }
 
