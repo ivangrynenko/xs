@@ -40,7 +40,6 @@ function xs_get_xs_api() {
     return $xs_api;
   }
 
-
   // Get all defined pools.
   $xs_pools = xs_get_pools();
   if (empty($xs_pools)) {
@@ -337,14 +336,43 @@ function xs_get_all_vms($host = NULL) {
  *
  * @param string $uuid
  *   VM's UUID, as stored against VM content type.
- * @param string $type
- *   Return type. Supported values:
- *   - 'vm_ref': Only return VM ref string.
- *   - 'vm': (default) Return VM object.
  *
  * @return mixed
  */
-function xs_api_get_vm_by_uuid($uuid, $type = 'vm') {
+function xs_api_get_vm_by_uuid($uuid) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  $return = array();
+
+  $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
+
+  try {
+    $vm = $xs_api->VM_get_record($vm_ref);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+
+    return $return;
+  }
+
+  return $vm;
+}
+
+/**
+ * Gets VM object via XAPI.
+ *
+ * @param string $uuid
+ *   VM's UUID, as stored against VM content type.
+ *
+ * @return mixed
+ *   VM ref string or error message.
+ */
+function xs_api_get_vm_ref_by_uuid($uuid) {
   try {
     $xs_api = xs_get_xs_api();
   }
@@ -367,20 +395,33 @@ function xs_api_get_vm_by_uuid($uuid, $type = 'vm') {
     return $return;
   }
 
-  if ($type == 'vm_ref') {
-    return $vm_ref;
-  }
+  return $vm_ref;
+}
 
-  try {
-    $vm = $xs_api->VM_get_record($vm_ref);
-  }
-  catch (Exception $e) {
-    xs_log($e);
+/**
+ * Gets snapshot reference string by snapshot UUID.
+ *
+ * @param string $uuid
+ *   Snapshot UUID.
+ *
+ * @return mixed
+ *   Snapshot reference string or error.
+ */
+function xs_api_get_snapshot_ref_by_uuid($uuid) {
+  return xs_api_get_vm_ref_by_uuid($uuid);
+}
 
-    return $return;
-  }
-
-  return $vm;
+/**
+ * Gets snapshot object by snapshot UUID.
+ *
+ * @param string $uuid
+ *   Snapshot UUID.
+ *
+ * @return mixed
+ *   Snapshot array or error.
+ */
+function xs_api_get_snapshot_by_uuid($uuid) {
+  return xs_api_get_vm_by_uuid($uuid);
 }
 
 /**
@@ -478,7 +519,6 @@ function xs_api_get_vm_guest_metrix($vm) {
 
   return $return;
 }
-
 
 /**
  * Gets VM_metrics object via XAPI.
@@ -604,9 +644,10 @@ function xs_api_vm_start($vm_ref) {
  * @param string $snap_ref
  *   Snapshot reference.
  *
- * @return void
+ * @return array
+ *   Snapshot array.
  */
-function xs_api_get_snapshot($snap_ref) {
+function xs_api_get_snapshot_by_ref($snap_ref) {
   try {
     $xs_api = xs_get_xs_api();
   }
@@ -637,7 +678,10 @@ function xs_api_destroy_snapshot($snap_ref) {
     $xs_api->VM_destroy($snap_ref);
   }
   catch (Exception $e) {
-    watchdog('XS_API', 'Exception thrown while in !function: !message', array('!function' => __FUNCTION__, '!message' => $e->getMessage()));
+    watchdog('XS_API', 'Exception thrown while in !function: !message', array(
+      '!function' => __FUNCTION__,
+      '!message' => $e->getMessage()
+    ));
   }
 }
 

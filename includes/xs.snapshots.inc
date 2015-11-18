@@ -34,7 +34,7 @@ function xs_get_vm_snapshots($vm) {
   $full_snapshots = array();
   if (!empty($vm['snapshots'])) {
     foreach ($vm['snapshots'] as $snapshot_ref) {
-      $full_snapshots[$snapshot_ref] = xs_get_snapshot_by_ref($snapshot_ref);
+      $full_snapshots[$snapshot_ref] = xs_api_get_snapshot_by_ref($snapshot_ref);
     }
   }
 
@@ -101,19 +101,6 @@ function xs_get_vm_snapshots_count_from_node($node) {
   $vm = xs_get_vm_by_node($node);
 
   return !empty($vm['snapshots']) ? count($vm['snapshots']) : FALSE;
-}
-
-/**
- * Loads snapshot information from the VM.
- *
- * @param string $snap_ref
- *   Snapshot reference.
- *
- * @return array
- *   Array of fully loaded snapshots.
- */
-function xs_get_snapshot_by_ref($snap_ref) {
-  return xs_api_get_snapshot($snap_ref);
 }
 
 /**
@@ -194,7 +181,7 @@ function xs_snapshots_create_snapshot_form_validate($form, &$form_state) {
  */
 function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   $vm_uuid = xs_get_vm_uuid_by_node($form_state['storage']['xs_snapshot_create']['node']);
-  $vm_ref = xs_api_get_vm_by_uuid($vm_uuid, 'vm_ref');
+  $vm_ref = xs_api_get_vm_ref_by_uuid($vm_uuid);
 
   xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
 
@@ -216,13 +203,13 @@ function xs_snapshot_create_snapshot($vm_ref, $title) {
 /**
  * Confirmation form for snapshot action.
  */
-function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, $snapshot_ref) {
+function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, $snapshot_uuid) {
   drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
 
   // Add hidden fields to pass over to the action submit handler.
-  $form['snapshot_ref'] = array(
+  $form['snapshot_uuid'] = array(
     '#type' => 'hidden',
-    '#value' => $snapshot_ref,
+    '#value' => $snapshot_uuid,
   );
 
   $form['nid'] = array(
@@ -235,7 +222,7 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
     '#value' => $action,
   );
 
-  $snapshot_created_time = xs_get_snapshot_created_time($snapshot_ref);
+  $snapshot_created_time = xs_get_snapshot_created_time($snapshot_uuid);
 
   $date = date('d M Y h:i:sA', $snapshot_created_time);
   $form['warning'] = array(
@@ -274,9 +261,8 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
  * Validator for xs_actions_confirm_snapshots_form.
  */
 function xs_actions_confirm_snapshots_form_validate($form, &$form_state) {
-  if (empty($form_state['values']['snapshot_ref']) || empty($form_state['values']['action'])) {
-    drupal_set_message('Unable to complete the action. Validation error', 'error');
-    drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots');
+  if (empty($form_state['values']['snapshot_uuid']) || empty($form_state['values']['action'])) {
+    return form_set_error(NULL, 'Unable to complete the action. Validation error');
   }
 }
 
@@ -286,7 +272,8 @@ function xs_actions_confirm_snapshots_form_validate($form, &$form_state) {
 function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
   switch ($form_state['values']['action']) {
     case 'destroy':
-      xs_actions_snapshot_destroy($form_state['values']['snapshot_ref']);
+      $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
+      xs_actions_snapshot_destroy($snapshot_ref);
       drupal_set_message('The selected snapshot was deleted successfully');
       drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots');
       break;
@@ -299,13 +286,14 @@ function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
 
           // Load the VM.
           $uuid = xs_get_vm_uuid_by_node($node);
-          $vm_ref = xs_api_get_vm_by_uuid($uuid, 'vm_ref');
+          $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
 
           // Shut down the VM.
           xs_actions_action_vps_hard_shutdown($vm_ref);
 
           // Revert to the selected snapshot.
-          xs_actions_snapshot_revert($form_state['values']['snapshot_ref']);
+          $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
+          xs_actions_snapshot_revert($snapshot_ref);
 
           // Start the VM.
           xs_actions_action_vps_start($vm_ref);
@@ -321,14 +309,14 @@ function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
 /**
  * Gets snapshot created time by reference.
  *
- * @param string $snapshot_ref
- *   Snapshot reference.
+ * @param string $snapshot_uuid
+ *   Snapshot UUID.
  *
  * @return int|bool
  *   Snapshot created timestamp or FALSE.
  */
-function xs_get_snapshot_created_time($snapshot_ref) {
-  $snapshot = xs_get_snapshot_by_ref($snapshot_ref);
+function xs_get_snapshot_created_time($snapshot_uuid) {
+  $snapshot = xs_api_get_snapshot_by_uuid($snapshot_uuid);
   if (!empty($snapshot['snapshot_time'])) {
     return $snapshot['snapshot_time']->timestamp;
   }
@@ -343,7 +331,7 @@ function xs_get_snapshot_created_time($snapshot_ref) {
  *   Reference of the snapshot to destroy.
  */
 function xs_actions_snapshot_destroy($snapshot_ref) {
-  $snapshot = xs_get_snapshot_by_ref($snapshot_ref);
+  $snapshot = xs_api_get_snapshot_by_ref($snapshot_ref);
   xs_action_snapshot_vbd_destroy($snapshot);
 
   return xs_api_destroy_snapshot($snapshot_ref);

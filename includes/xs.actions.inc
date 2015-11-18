@@ -28,7 +28,7 @@ function xs_actions_action($node, $action) {
   }
 
   $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = xs_api_get_vm_by_uuid($uuid, 'vm_ref');
+  $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
 
   switch ($action) {
     case XS_API_ACTION_START:
