@@ -9,7 +9,7 @@
  */
 function xs_preproces_xs_actions_snapshots_output(&$variables) {
   // Prepare variables.
-  $vm = xs_get_vm_by_uuid($variables['node']);
+  $vm = xs_get_vm_by_node($variables['node']);
 
   // If VM is not available, we were unable to connect to any of XS hosts.
   // Instead of displaying the confusing content, show the status message

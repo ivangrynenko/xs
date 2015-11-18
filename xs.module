@@ -87,18 +87,6 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['node/%node/xs-action/%'] = array(
-    'title' => 'Perform actions on virtual server',
-    'description' => 'Use to reboot the VPS gracefully',
-    'page callback' => 'xs_actions_action_callback',
-    'page arguments' => array(1, 3),
-    'access callback' => 'xs_actions_access_callback',
-    'access arguments' => array(1),
-    'file' => 'includes/xs.actions.inc',
-    'weight' => 60,
-    'type' => MENU_CALLBACK,
-  );
-
   $items['node/%node/xs-snapshots'] = array(
     'title' => 'Snaphots',
     'description' => 'Allows browsing and actions with server snapshots',
@@ -254,7 +242,7 @@ function xs_preprocess_node(&$variables) {
     drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
     drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
-    $vm = xs_get_vm_by_uuid($variables['node']);
+    $vm = xs_get_vm_by_node($variables['node']);
 
     // If VM is not available, we were unable to connect to any of XS hosts.
     // Instead of displaying the confusing content, show the status message
@@ -350,7 +338,7 @@ function xs_seconds2human($seconds) {
  *
  * @return bool|mixed
  */
-function xs_get_vm_by_uuid($node) {
+function xs_get_vm_by_node($node) {
   if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
     drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
 
@@ -420,6 +408,7 @@ function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) 
       XS_API_ACTION_REBOOT_FORCE => t('Force Reboot VPS'),
       XS_API_ACTION_POWEROFF_FORCE => t('Force Shutdown VPS'),
     ),
+    '#default_value' => XS_API_ACTION_NOACTION,
     '#access' => xs_actions_access_callback($node),
   );
 
@@ -489,12 +478,14 @@ function xs_actions_action_form_submit($form, &$form_state) {
   }
   // End extra access check.
 
+  module_load_include('inc', 'xs', 'includes/xs.actions');
+
   // Clear action string.
   $action = filter_xss($form_state['values']['action']);
   $action = check_plain($action);
   $action = trim($action);
 
-  $form_state['redirect'] = url('node/' . $form_state['storage']['xs_vm_node']->nid . '/xs-action/' . $action);
+  xs_actions_action($form_state['storage']['xs_vm_node'], $action);
 }
 
 /**
