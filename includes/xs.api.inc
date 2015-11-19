@@ -24,13 +24,26 @@ function xs_get_pools() {
 /**
  * Initialises connection to the server and XenAPI class.
  *
- * @return \XenApi
+ * @throws Exception
+ *   Exception.
+ *
+ * @return XenApi
+ *   XenApi class instance.
+ *
+ * @throws Exception
+ *   Exception.
  */
 function xs_get_xs_api() {
+  $xs_api = &drupal_static(__FUNCTION__);
+
+  if (!empty($xs_api) && $xs_api instanceof XenApi) {
+    return $xs_api;
+  }
+
   // Get all defined pools.
   $xs_pools = xs_get_pools();
   if (empty($xs_pools)) {
-    return FALSE;
+    throw new Exception('Unable to get pool data');
   }
 
   // Loop through defined pools to get array of members (hosts).
@@ -40,7 +53,7 @@ function xs_get_xs_api() {
     // Loop through every member and attempt to create a connection.
     foreach ($xs_pool_members as $pool_member) {
       // In multi-server environment we attempt to connect to every server
-      // that is defined in the pool and to identify pool master. One pool
+      // that is defined in the pool and to identify pool master. Once the pool
       // master is identified, we connect to it and skip other servers.
       if (!empty($xs_master_api[$pool_uuid])) {
         continue;
@@ -51,6 +64,8 @@ function xs_get_xs_api() {
       }
       catch (Exception $e) {
         watchdog('XS', 'Error when connecting to XS: !error', array('!error' => $e->getMessage()), WATCHDOG_ERROR);
+
+        throw new Exception(t('Error when connecting to XS: !error', array('!error' => $e->getMessage())));
       }
 
       $xs_host[$pool_uuid] = xs_get_host_by_uuid($xs_api[$pool_uuid], $pool_member['uuid']);
@@ -65,13 +80,26 @@ function xs_get_xs_api() {
       $pool_master[$pool_uuid] = xs_api_get_pool_master($xs_api[$pool_uuid], $xs_api_pool[$pool_uuid]);
 
       // Reconnect to the pool master.
+      // @todo: Add skip re-connect if we connected to the master above.
       $pool_master_local = $xs_pools[$pool_uuid]['members'][$pool_master[$pool_uuid]['uuid']];
-      $xs_master_api[$pool_uuid] = xs_api_connect($pool_master_local);
+      // Skip reconnect to pool master if we already connected to it.
+      if ($pool_master_local['uuid'] != $pool_member['uuid']) {
+        $xs_master_api[$pool_uuid] = xs_api_connect($pool_master_local);
+      }
+      else {
+        $xs_master_api[$pool_uuid] = $xs_api[$pool_uuid];
+      }
     }
   }
 
   // For now only single pool is supported.
-  return reset($xs_master_api);
+  $xs_api = reset($xs_master_api);
+
+  if ($xs_api instanceof XenApi) {
+    return $xs_api;
+  }
+
+  throw new Exception('Unable to connect to host in xs_get_xs_api()');
 }
 
 /**
@@ -138,7 +166,12 @@ function xs_api_get_host($xs_api, $xs_host_ref) {
  *   All VMs array or FALSE.
  */
 function xs_get_all_templates($server) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $vms_array = $xs_api->VM_get_all_records();
 
@@ -162,7 +195,7 @@ function xs_get_all_templates($server) {
  *   TRUE if the $vm is a template or FALSE otherwise.
  */
 function xs_is_a_template($vm) {
-  return $vm['is_a_template'];
+  return (bool) $vm['is_a_template'];
 }
 
 /**
@@ -175,7 +208,7 @@ function xs_is_a_template($vm) {
  *   TRUE if the VM is a Pool Master or FALSE otherwise.
  */
 function xs_is_domain_controller($vm) {
-  return $vm['is_control_domain'];
+  return (bool) $vm['is_control_domain'];
 }
 
 /**
@@ -236,7 +269,12 @@ function xs_get_host_by_uuid($xs_api, $uuid) {
  *   All VMs resident in the $host in 'running' state.
  */
 function xs_get_running_vms($host) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $all_vms = array();
   $vms = array();
@@ -269,7 +307,12 @@ function xs_get_running_vms($host) {
  *   resident on that host.
  */
 function xs_get_all_vms($host = NULL) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $all_vms = $xs_api->VM_get_all();
   $vms = array();
@@ -293,15 +336,49 @@ function xs_get_all_vms($host = NULL) {
  *
  * @param string $uuid
  *   VM's UUID, as stored against VM content type.
- * @param string $type
- *   Return type. Supported values:
- *   - 'vm_ref': Only return VM ref string.
- *   - 'vm': (default) Return VM object.
  *
  * @return mixed
  */
-function xs_api_get_vm_by_uuid($uuid, $type = 'vm') {
-  global $xs_api;
+function xs_api_get_vm_by_uuid($uuid) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  $return = array();
+
+  $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
+
+  try {
+    $vm = $xs_api->VM_get_record($vm_ref);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+
+    return $return;
+  }
+
+  return $vm;
+}
+
+/**
+ * Gets VM object via XAPI.
+ *
+ * @param string $uuid
+ *   VM's UUID, as stored against VM content type.
+ *
+ * @return mixed
+ *   VM ref string or error message.
+ */
+function xs_api_get_vm_ref_by_uuid($uuid) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $return = array();
 
@@ -318,20 +395,33 @@ function xs_api_get_vm_by_uuid($uuid, $type = 'vm') {
     return $return;
   }
 
-  if ($type == 'vm_ref') {
-    return $vm_ref;
-  }
+  return $vm_ref;
+}
 
-  try {
-    $vm = $xs_api->VM_get_record($vm_ref);
-  }
-  catch (Exception $e) {
-    xs_log($e);
+/**
+ * Gets snapshot reference string by snapshot UUID.
+ *
+ * @param string $uuid
+ *   Snapshot UUID.
+ *
+ * @return mixed
+ *   Snapshot reference string or error.
+ */
+function xs_api_get_snapshot_ref_by_uuid($uuid) {
+  return xs_api_get_vm_ref_by_uuid($uuid);
+}
 
-    return $return;
-  }
-
-  return $vm;
+/**
+ * Gets snapshot object by snapshot UUID.
+ *
+ * @param string $uuid
+ *   Snapshot UUID.
+ *
+ * @return mixed
+ *   Snapshot array or error.
+ */
+function xs_api_get_snapshot_by_uuid($uuid) {
+  return xs_api_get_vm_by_uuid($uuid);
 }
 
 /**
@@ -370,7 +460,12 @@ function xs_get_pool_servers($pool) {
 }
 
 function xs_api_get_vif($vif_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   return $xs_api->VIF_get_record($vif_ref);
 }
@@ -390,7 +485,12 @@ function xs_api_get_vm_guest_metrix($vm) {
     return $return;
   }
 
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   try {
     $all_guest_metrics = $xs_api->VM_guest_metrics_get_all_records();
@@ -420,7 +520,6 @@ function xs_api_get_vm_guest_metrix($vm) {
   return $return;
 }
 
-
 /**
  * Gets VM_metrics object via XAPI.
  *
@@ -431,7 +530,12 @@ function xs_api_get_vm_guest_metrix($vm) {
  *   VM_metrics array.
  */
 function xs_api_get_vm_metrics($vm) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $return = array();
 
@@ -456,7 +560,12 @@ function xs_api_get_vm_metrics($vm) {
  *   XenApi VM reference.
  */
 function xs_api_vm_clean_reboot($vm_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VM_hard_reboot($vm_ref);
 }
@@ -468,7 +577,12 @@ function xs_api_vm_clean_reboot($vm_ref) {
  *   XenApi VM reference.
  */
 function xs_api_vm_hard_reboot($vm_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VM_hard_reboot($vm_ref);
 }
@@ -480,7 +594,12 @@ function xs_api_vm_hard_reboot($vm_ref) {
  *   XenApi VM reference.
  */
 function xs_api_vm_clean_shutdown($vm_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VM_clean_shutdown($vm_ref);
 }
@@ -492,7 +611,12 @@ function xs_api_vm_clean_shutdown($vm_ref) {
  *   XenApi VM reference.
  */
 function xs_api_vm_hard_shutdown($vm_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VM_hard_shutdown($vm_ref);
 }
@@ -504,7 +628,12 @@ function xs_api_vm_hard_shutdown($vm_ref) {
  *   XenApi VM reference.
  */
 function xs_api_vm_start($vm_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VM_start($vm_ref, FALSE, FALSE);
 }
@@ -515,10 +644,16 @@ function xs_api_vm_start($vm_ref) {
  * @param string $snap_ref
  *   Snapshot reference.
  *
- * @return void
+ * @return array
+ *   Snapshot array.
  */
-function xs_api_get_snapshot($snap_ref) {
-  global $xs_api;
+function xs_api_get_snapshot_by_ref($snap_ref) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   return $xs_api->VM_get_record($snap_ref);
 }
@@ -532,13 +667,21 @@ function xs_api_get_snapshot($snap_ref) {
  * @return void
  */
 function xs_api_destroy_snapshot($snap_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   try {
     $xs_api->VM_destroy($snap_ref);
   }
   catch (Exception $e) {
-    watchdog('XS_API', 'Exception thrown while in !function: !message', array('!function' => __FUNCTION__, '!message' => $e->getMessage()));
+    watchdog('XS_API', 'Exception thrown while in !function: !message', array(
+      '!function' => __FUNCTION__,
+      '!message' => $e->getMessage()
+    ));
   }
 }
 
@@ -551,9 +694,19 @@ function xs_api_destroy_snapshot($snap_ref) {
  * @return void
  */
 function xs_api_revert_snapshot($snap_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
-  $xs_api->VM_destroy($snap_ref);
+  try {
+    $xs_api->VM_revert($snap_ref);
+  }
+  catch (Exception $e) {
+    return $e->getMessage();
+  }
 }
 
 /**
@@ -565,7 +718,12 @@ function xs_api_revert_snapshot($snap_ref) {
  * @return void
  */
 function xs_api_vbd_destory($vbd_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VBD_destroy($vbd_ref);
 }
@@ -580,7 +738,12 @@ function xs_api_vbd_destory($vbd_ref) {
  *   VBD array.
  */
 function xs_api_get_vbd($vbd_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   return $xs_api->VBD_get_record($vbd_ref);
 }
@@ -595,7 +758,12 @@ function xs_api_get_vbd($vbd_ref) {
  *   VDI representation.
  */
 function xs_api_get_vdi($vdi_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   return $xs_api->VDI_get_record($vdi_ref);
 }
@@ -607,7 +775,31 @@ function xs_api_get_vdi($vdi_ref) {
  *   VDI reference.
  */
 function xs_api_destroy_vdi($vdi_ref) {
-  global $xs_api;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
 
   $xs_api->VDI_destroy($vdi_ref);
+}
+
+/**
+ * Creates a snapshot.
+ *
+ * @param string $vm_ref
+ *   VM reference.
+ * @param string $title
+ *   Title of the snapshot.
+ */
+function xs_api_create_snapshot($vm_ref, $title) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  $xs_api->VM_snapshot($vm_ref, $title);
 }

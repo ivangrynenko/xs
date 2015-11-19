@@ -100,129 +100,141 @@
     // We hide the comments and links now so that we can render them later.
     hide($content['comments']);
     hide($content['links']);
-    print render($content);
     ?>
     <div class="row">
+      <?php if ($error_message) : ?>
 
-      <div class="col-md-4">
-        <h3>Server Actions</h3>
-
-        <div>
-          <?php print render($actions_form); ?>
+        <div class="col-md-12">
+          <?php print $error_message; ?>
         </div>
-      </div>
 
-      <div class="col-md-8">
-        <h3>Server Status</h3>
+      <?php else: ?>
 
-        <section class="xs-vm-section">
-          <p>
+        <?php print render($content); ?>
 
-          <div class="xs-vm-row">
-            <label class="display-inline">Power state</label>:
-            <span class="vm-config-value"><?php print $vm_power_state; ?></span>
-            <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
+
+        <div class="col-md-4">
+          <h3>Server Actions</h3>
+
+          <div>
+            <?php print render($actions_form); ?>
           </div>
+        </div>
 
-          <div class="xs-vm-row">
-            <label class="display-inline">CPUs</label>
-            <span class="vm-config-value xs-vm-tag"><?php print $vm_cpu; ?></span>
-            <label class="display-inline">RAM</label>
-            <span class="vm-config-value xs-vm-tag"><?php print $vm_memory; ?>GB</span>
-          </div>
+        <div class="col-md-8">
+          <h3>Server Status</h3>
 
-          <div class="xs-vm-row">
-            <label class="display-inline">Start time</label>:
-            <span class="vm-config-value"><?php print $start_time; ?></span>
-          </div>
+          <section class="xs-vm-section">
+            <p>
 
-          <div class="xs-vm-row">
-            <label class="display-inline">Server uptime</label>:
-            <span class="vm-config-value"><?php print $server_uptime; ?></span>
-          </div>
+            <div class="xs-vm-row">
+              <label class="display-inline">Power state</label>:
+              <span class="vm-config-value"><?php print $vm_power_state; ?></span>
+              <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
+            </div>
 
-        </section>
-      </div>
-      <div class="col-md-12">
-        <h3>Server Configuration</h3>
-        <section class="xs-vm-section">
-          <div class="xs-vm-row">
-            <label class="display-inline">Network cards</label>:
-            <span class="vm-config-value"><?php print $vm_nics; ?></span>
-          </div>
+            <div class="xs-vm-row">
+              <label class="display-inline">CPUs</label>
+              <span class="vm-config-value xs-vm-tag"><?php print $vm_cpu; ?></span>
+              <label class="display-inline">RAM</label>
+              <span class="vm-config-value xs-vm-tag"><?php print $vm_memory; ?>GB</span>
+            </div>
 
-          <?php if (!empty($vm_vifs)) : ?>
-            <?php foreach ($vm_vifs as $delta => $vif) : ?>
-              <div class="xs-vm-row">
-                <label class="display-inline">Network Card <?php print $delta; ?></label>
-                <ul>
-                  <li>
-                    <label class="display-inline">Device Name</label>: <?php print $vif['device']; ?>
-                  </li>
-                  <li>
-                    <label class="display-inline">MAC Address</label>: <?php print $vif['mac']; ?>
-                  </li>
-                  <?php if (!empty($network['ips'])) : ?>
+            <div class="xs-vm-row">
+              <label class="display-inline">Start time</label>:
+              <span class="vm-config-value"><?php print $start_time; ?></span>
+            </div>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">Server uptime</label>:
+              <span class="vm-config-value"><?php print $server_uptime; ?></span>
+            </div>
+
+          </section>
+        </div>
+        <div class="col-md-12">
+          <h3>Server Configuration</h3>
+          <section class="xs-vm-section">
+            <div class="xs-vm-row">
+              <label class="display-inline">Network cards</label>:
+              <span class="vm-config-value"><?php print $vm_nics; ?></span>
+            </div>
+
+            <?php if (!empty($vm_vifs)) : ?>
+              <?php foreach ($vm_vifs as $delta => $vif) : ?>
+                <div class="xs-vm-row">
+                  <label class="display-inline">Network Card <?php print $delta; ?></label>
+                  <ul>
                     <li>
-                      <label class="display-inline">IP Address</label>: <?php print !empty($network['ips'][$delta]) ? $network['ips'][$delta] : 'Unconfigured'; ?>
+                      <label class="display-inline">Device Name</label>: <?php print $vif['device']; ?>
                     </li>
-                  <?php endif; ?>
-                </ul>
-              </div>
-            <?php endforeach; ?>
-          <?php endif; ?>
-
-          <div class="xs-vm-row">
-            <label class="display-inline">Server Name</label>:
-            <span class="description"><?php print $vm_name; ?></span>
-          </div>
-
-          <div class="xs-vm-row">
-            <label class="display-inline">Server Description</label>:
-            <span class="description"><?php print $vm_description; ?></span>
-          </div>
-          </p>
-
-        </section>
-      </div>
-
-      <div class="col-md-12">
-        <h3>Operating System</h3>
-        <section class="xs-vm-section">
-
-          <ul>
-            <?php if (!empty($os['version'])) : ?>
-              <li>
-                <label class="display-inline">Operating System</label>: <?php print $os['version']; ?>
-              </li>
+                    <li>
+                      <label class="display-inline">MAC Address</label>: <?php print $vif['mac']; ?>
+                    </li>
+                    <?php if (!empty($network['ips'])) : ?>
+                      <li>
+                        <label class="display-inline">IP Address</label>: <?php print !empty($network['ips'][$delta]) ? $network['ips'][$delta] : 'Unconfigured'; ?>
+                      </li>
+                    <?php endif; ?>
+                  </ul>
+                </div>
+              <?php endforeach; ?>
             <?php endif; ?>
 
-            <?php if (!empty($os['kernel'])) : ?>
-              <li>
-                <label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?>
-              </li>
-            <?php endif; ?>
+            <div class="xs-vm-row">
+              <label class="display-inline">Server Name</label>:
+              <span class="description"><?php print $vm_name; ?></span>
+            </div>
 
-            <?php if (!empty($os['distro'])) : ?>
-              <li>
-                <label class="display-inline">Distro</label>: <?php print $os['distro']; ?>
-              </li>
-            <?php endif; ?>
+            <div class="xs-vm-row">
+              <label class="display-inline">Server Description</label>:
+              <span class="description"><?php print $vm_description; ?></span>
+            </div>
+            </p>
 
-            <?php if (!empty($os['major'])) : ?>
-              <li>
-                <label class="display-inline">OS Major version</label>: <?php print $os['major']; ?>
-              </li>
-            <?php endif; ?>
+          </section>
+        </div>
 
-            <?php if (!empty($os['minor'])) : ?>
-              <li>
-                <label class="display-inline">OS Minor version</label>: <?php print $os['minor']; ?>
-              </li>
-            <?php endif; ?>
-          </ul>
-        </section>
-      </div>
+        <div class="col-md-12">
+          <h3>Operating System</h3>
+          <section class="xs-vm-section">
+
+            <ul>
+              <?php if (!empty($os['version'])) : ?>
+                <li>
+                  <label class="display-inline">Operating System</label>: <?php print $os['version']; ?>
+                </li>
+              <?php endif; ?>
+
+              <?php if (!empty($os['kernel'])) : ?>
+                <li>
+                  <label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?>
+                </li>
+              <?php endif; ?>
+
+              <?php if (!empty($os['distro'])) : ?>
+                <li>
+                  <label class="display-inline">Distro</label>: <?php print $os['distro']; ?>
+                </li>
+              <?php endif; ?>
+
+              <?php if (!empty($os['major'])) : ?>
+                <li>
+                  <label class="display-inline">OS version</label>: <?php print $os['major'] . '.' . $os['minor']; ?>
+                </li>
+              <?php endif; ?>
+
+              <?php if (!empty($virtualization_state)) : ?>
+                <li>
+                  <label class="display-inline">Virtualisation State</label>:
+                  <?php print $virtualization_state; ?>
+                  <?php print !empty($virtualization_uptodate) ? ' (' . $virtualization_uptodate . ')' : ''; ?>
+                </li>
+              <?php endif; ?>
+            </ul>
+          </section>
+        </div>
+      <?php endif; ?>
     </div>
 
   </div>
