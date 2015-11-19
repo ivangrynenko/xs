@@ -117,7 +117,7 @@
           <h3>Server Actions</h3>
 
           <div>
-            <?php print render($actions_form); ?>
+            <?php print $action_links_dropdown; ?>
           </div>
         </div>
 

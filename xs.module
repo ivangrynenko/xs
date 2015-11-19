@@ -87,6 +87,18 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items['node/%node/xs-action/%'] = array(
+    'title' => 'Perform actions on virtual server',
+    'description' => 'Use to reboot the VPS gracefully',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_actions_server_action_confirmation_form', 1, 3),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1),
+    'file' => 'includes/xs.actions.inc',
+    'weight' => 60,
+    'type' => MENU_CALLBACK,
+  );
+
   $items['node/%node/xs-snapshots'] = array(
     'title' => 'Snaphots',
     'description' => 'Allows browsing and actions with server snapshots',
@@ -289,6 +301,8 @@ function xs_preprocess_node(&$variables) {
     // Add actions to the VM.
     module_load_include('inc', 'xs', 'includes/xs.actions');
     $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid, $vm['allowed_operations']);
+    $links = xs_actions_get_links($variables['node']->nid, $vm['allowed_operations']);
+    $variables['action_links_dropdown'] = theme('xs_links_dropdown', array('links' => $links));
 
     $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
     $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;
@@ -409,6 +423,7 @@ function xs_get_vifs($vm) {
 
 /**
  * XS Actions form builder.
+ * @todo: REMOVE.
  */
 function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) {
   if (!empty($nid)) {
@@ -479,6 +494,7 @@ function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) 
 
 /**
  * Form validate handler for xs_actions_action_form.
+ * @todo: REMOVE.
  */
 function xs_actions_action_form_validate($form, &$form_state) {
   // Extra access check.
@@ -500,6 +516,7 @@ function xs_actions_action_form_validate($form, &$form_state) {
 
 /**
  * Form submit handler for xs_actions_action_form.
+ * @todo: REMOVE.
  */
 function xs_actions_action_form_submit($form, &$form_state) {
   // Extra access check.
@@ -522,6 +539,8 @@ function xs_actions_action_form_submit($form, &$form_state) {
   $action = filter_xss($form_state['values']['action']);
   $action = check_plain($action);
   $action = trim($action);
+
+  $form_state['redirect'] = url('node/' . $form_state['storage']['xs_vm_node']->nid . '/xs-action/' . $action);
 
   xs_actions_action($form_state['storage']['xs_vm_node'], $action);
 }
