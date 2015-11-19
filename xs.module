@@ -445,6 +445,18 @@ function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) 
   array_unshift($form['action']['#options'], t('Select action'));
 
   $form['help'] = array(
+    '#markup' => t('WARNING! NO CONFIRMATION!'),
+    '#prefix' => '<div class="label label-danger">',
+    '#suffix' => '</div>',
+  );
+
+  $form['help-more'] = array(
+    '#markup' => t('THE SELECTED ACTION WILL BE EXECUTED IMMEDIATELY UPON SUBMITTING THIS FORM!'),
+    '#prefix' => '<div class="description">',
+    '#suffix' => '</div>',
+  );
+
+  $form['help-even-more'] = array(
     '#markup' => t('Only actions available for current power state of the server are listed.'),
     '#prefix' => '<div class="description">',
     '#suffix' => '</div>',
@@ -453,6 +465,10 @@ function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) 
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Execute'),
+    '#attributes' => array(
+      'class' => array('btn btn-default'),
+      'type' => 'button',
+    ),
   );
 
   $form['#validate'][] = 'xs_actions_action_form_validate';
