@@ -99,7 +99,7 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['node/%node/xs-snapshots/%/%xs_vm_uud'] = array(
+  $items['node/%node/xs-snapshots/%/%'] = array(
     'title' => 'Confirm Snapshot Action',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('xs_actions_confirm_snapshots_form', 1, 3, 4),
@@ -146,7 +146,11 @@ function xs_user_login(&$edit, $account) {
   // Redirect the user to the first server available.
   if (user_access('perform own vm actions')) {
     $vps_nodes = _xs_get_user_vps($account, 1);
-    $vps_node = reset($vps_nodes);
+    if (empty($vps_nodes['node'])) {
+      return;
+    }
+
+    $vps_node = reset($vps_nodes['node']);
     if (!empty($vps_node->nid)) {
       drupal_goto('node/' . $vps_node->nid);
     }

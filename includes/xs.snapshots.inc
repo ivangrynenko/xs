@@ -137,21 +137,52 @@ function xs_snapshots_create_snapshot_title_callback($node) {
  * Snapshot create form.
  */
 function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
-  $form['link'] = array(
-    '#markup' => l('< Back to snapshots', 'node/' . $node->nid . '/xs-snapshots'),
+
+  $form['#prefix'] = '<div id="myModal" class="modal fade" role="dialog" aria-labelledby="gridSystemModalLabel"><div class="modal-dialog" role="document"><div class="modal-content">';
+  $form['#suffix'] = '</div></div></div>';
+
+  $form['header'] = array(
+    '#markup' => '<div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h4 class="modal-title" id="gridSystemModalLabel">Create new snapshot</h4>
+                </div>',
   );
 
   $form['title'] = array(
     '#type' => 'textfield',
-    '#title' => t('Snapshot name'),
-    '#size' => 16,
-    '#maxlength' => 16,
+    '#title' => t('Name your Snapshot'),
+    '#size' => 64,
+    '#maxlength' => 64,
     '#required' => TRUE,
+    '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12">',
+    '#suffix' => '</div></div></div>',
+    '#description' => t('Give a description meaningful to you. We record the exact date and time of snapshot creation for you. Limited to 64 characters. Click Cancel to close this modal window or Create to continue with snapshot creation.'),
   );
 
-  $form['submit'] = array(
+  $form['actions'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-footer'),
+    ),
+  );
+
+  $form['actions']['cancel'] = array(
+    '#type' => 'button',
+    '#attributes' => array(
+      'type' => 'button',
+      'class' => array('btn btn-default'),
+      'data-dismiss' => 'modal',
+    ),
+    '#value' => t('Cancel'),
+  );
+
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Create'),
+    '#attributes' => array(
+      'type' => 'button',
+      'class' => array('btn btn-primary'),
+    ),
   );
 
   return $form;
@@ -169,7 +200,7 @@ function xs_snapshots_create_snapshot_form_validate($form, &$form_state) {
   $node = node_load($nid);
   $form_state['storage']['xs_snapshot_create']['node'] = $node;
   // Check if the user can add more snapshots.
-  $limit  = xs_get_snapshots_limit($node);
+  $limit = xs_get_snapshots_limit($node);
   $current_snapshots = xs_get_vm_snapshots_count_from_node($node);
   if ($current_snapshots >= $limit) {
     return form_set_error(NULL, 'Validation error. You have reached the maximum number of snapshots this server could have.');
@@ -394,7 +425,7 @@ function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapsh
       $prefix = $snapshot['name_label'];
     }
 
-    $options[$ref] = $prefix . ' [' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . '] '. $active;
+    $options[$ref] = $prefix . ' [' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . '] ' . $active;
   }
 
   return $options;
