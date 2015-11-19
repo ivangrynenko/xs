@@ -42,15 +42,20 @@
         <div class="col-md-12">
           <h3>Available snapshots</h3>
 
-          <p>You have available <?php print $snapshots_qty; ?> out of the maximum <?php print $snapshots_max; ?></p>
+          <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
+            <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
+            Create a Snapshot
+          </button>
+          <?php print $new_snapshot_form; ?>
 
-          <p><?php print $link; ?></p>
+          <p>You have available <?php print $snapshots_qty; ?> out of the maximum <?php print $snapshots_max; ?></p>
 
         </div>
 
         <div class="col-md-12">
           <div class="help">
             <p>To destroy a snapshot, select 'Trash' in the Actions column. To revert your Server to the selected snapshot, select 'Revert'</p>
+
             <p>A confirmation screen will appear next, to confirm your action.</p>
           </div>
         </div>

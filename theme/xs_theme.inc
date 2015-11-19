@@ -23,6 +23,8 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
   $snapshots = xs_get_vm_snapshots($vm);
 
   $variables['link'] = l('> Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
+  $variables['link_url'] = url(format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
+  $variables['new_snapshot_form'] = drupal_render(drupal_get_form('xs_snapshots_create_snapshot_form', $variables['node']->nid));
 
   $snapshots_qty = count($snapshots);
   $variables['snapshots_qty'] = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');
@@ -51,6 +53,8 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
  *   Exception.
  */
 function xs_snapshots_page_output_render($snapshots, $node, $vm) {
+  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
+
   $headers = array (
     '#',
     'Snapshot date',
@@ -73,14 +77,14 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
     // Prepare actions link.
     $links = array();
-    $links[] = l('trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snap_ref);
-    $links[] = l('revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snap_ref);
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> ' . l('Trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> ' . l('Revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
 
     $rows[] = array(
       $i,
-      date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
+      '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
       $snapshot['name_label'],
-      $is_current_state ? t('Last reverted from') : '',
+      $is_current_state ? t('Last reverted to') : '',
       theme('xs_links_dropdown', array('links' => $links)),
     );
     $i++;
@@ -106,18 +110,19 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
  * @return string
  *   HTML for the dropdown.
  */
-function xs_links_dropdown_theme($links) {
-  $output = '<div class="dropdown">';
-  $output .= '<a id="dLabel" data-target="#" href="http://example.com" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">';
-  $output .= 'Dropdown trigger';
-  $output .= '<span class="caret"></span>';
-  $output .= '</a>';
-
+function xs_links_dropdown_theme($variables) {
+  $output = '<div class="btn-group">
+  <button type="button" class="btn btn-danger">Action</button>
+  <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <span class="caret"></span>
+    <span class="sr-only">Toggle Dropdown</span>
+  </button>';
 
   $output .= '<ul class="dropdown-menu" aria-labelledby="dLabel">';
-  $output .= '<li>Snapshot Actions</li>';
-  $output .= '<li role="separator" class="divider"></li>';
-  foreach ($links as $link) {
+  foreach ($variables['links'] as $i => $link) {
+    if ($i != 0) {
+      $output .= '<li role="separator" class="divider"></li>';
+    }
     $output .= '<li>' . $link . '</li>';
   }
   $output .= '</ul>';
