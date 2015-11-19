@@ -81,7 +81,7 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
       date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
       $snapshot['name_label'],
       $is_current_state ? t('Last reverted from') : '',
-      implode('|', $links),
+      theme('xs_links_dropdown', array('links' => $links)),
     );
     $i++;
   }
@@ -95,4 +95,33 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
   $return_variables['form'] = render($form);
 
   return $return_variables;
+}
+
+/**
+ * Builds bootstrap dropdown links.
+ *
+ * @param array $links
+ *   Array of links.
+ *
+ * @return string
+ *   HTML for the dropdown.
+ */
+function xs_links_dropdown_theme($links) {
+  $output = '<div class="dropdown">';
+  $output .= '<a id="dLabel" data-target="#" href="http://example.com" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">';
+  $output .= 'Dropdown trigger';
+  $output .= '<span class="caret"></span>';
+  $output .= '</a>';
+
+
+  $output .= '<ul class="dropdown-menu" aria-labelledby="dLabel">';
+  $output .= '<li>Snapshot Actions</li>';
+  $output .= '<li role="separator" class="divider"></li>';
+  foreach ($links as $link) {
+    $output .= '<li>' . $link . '</li>';
+  }
+  $output .= '</ul>';
+  $output .= '</div>';
+
+  return $output;
 }

@@ -240,6 +240,11 @@ function xs_theme($existing, $type, $theme, $path) {
         'node' => NULL,
       ),
     ),
+    'xs_links_dropdown' => array(
+      'file' => 'theme/xs_theme.inc',
+      'function' => 'xs_links_dropdown_theme',
+      'variables' => array('links' => NULL),
+    ),
   );
 }
 
