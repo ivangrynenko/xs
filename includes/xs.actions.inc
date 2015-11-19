@@ -19,11 +19,8 @@
  *
  * @return string
  */
-function xs_actions_action_callback($node, $action) {
-  global $xs_api;
-
-  $xs_api = xs_get_xs_api();
-  $vm = xs_get_vm_by_uuid($node);
+function xs_actions_action($node, $action) {
+  $vm = xs_get_vm_by_node($node);
 
   if (!in_array($action, $vm['allowed_operations'])) {
     drupal_set_message('This action is not allowed', 'error');
@@ -31,7 +28,7 @@ function xs_actions_action_callback($node, $action) {
   }
 
   $uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = xs_api_get_vm_by_uuid($uuid, 'vm_ref');
+  $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
 
   switch ($action) {
     case XS_API_ACTION_START:
@@ -65,6 +62,7 @@ function xs_actions_action_callback($node, $action) {
       drupal_set_message('This action is not recognised', 'error');
       break;
   }
+
   drupal_goto('node/' . $node->nid);
 }
 
