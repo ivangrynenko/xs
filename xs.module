@@ -307,7 +307,11 @@ function xs_preprocess_node(&$variables) {
   }
 
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
-  $variables['vm_memory'] = (int) ceil($vm_metrics['memory_actual'] / 1024 / 1024 / 1024);
+
+  // Memory in GB.
+  $memory = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
+  $memory = $memory > 1 ? (int) ceil($memory) : $memory;
+  $variables['vm_memory'] = $memory;
 
   $vm_is_running = preg_match('/running/i', $vm['power_state']);
 
