@@ -257,7 +257,7 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
 
   $date = date('d M Y h:i:sA', $snapshot_created_time);
   $form['warning'] = array(
-    '#markup' => t('You about to !action the server to the snapshot, created at !date. This action cannot be undone!', array(
+    '#markup' => t('You about to !action the snapshot, created at !date. This action cannot be undone!', array(
       '!action' => strtoupper($action),
       '!date' => !empty($date) ? $date : 'N/A'
     )),
