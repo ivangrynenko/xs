@@ -115,7 +115,6 @@ function xs_links_dropdown_theme($variables) {
   <button type="button" class="btn btn-danger">Action</button>
   <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
     <span class="caret"></span>
-    <span class="sr-only">Toggle Dropdown</span>
   </button>';
 
   $output .= '<ul class="dropdown-menu" aria-labelledby="dLabel">';
