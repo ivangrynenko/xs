@@ -77,8 +77,8 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
     // Prepare actions link.
     $links = array();
-    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> ' . l('Trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> ' . l('Revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> ' . l('Trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l('Revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
 
     $rows[] = array(
       $i,
