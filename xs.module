@@ -585,3 +585,20 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
 
   return FALSE;
 }
+
+/**
+ * Implements hook_node_update().
+ *
+ * @param object $node
+ *   Drupal node object.
+ */
+function xs_node_update($node) {
+  if ($node->type == 'xs_vps' && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+    // If teh VPS Owner field is set to specific system user, update the node
+    // owner to that user.
+    db_update('node')
+      ->fields(array('uid' => $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id']))
+      ->condition('nid', $node->nid)
+      ->execute();
+  }
+}
