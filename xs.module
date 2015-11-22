@@ -321,7 +321,11 @@ function xs_preprocess_node(&$variables) {
   }
 
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
-  $variables['vm_memory'] = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
+
+  // Memory in GB.
+  $memory = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
+  $memory = $memory > 1 ? (int) ceil($memory) : $memory;
+  $variables['vm_memory'] = $memory;
 
   $vm_is_running = preg_match('/running/i', $vm['power_state']);
 
@@ -335,7 +339,7 @@ function xs_preprocess_node(&$variables) {
   $variables['os']['kernel'] = !empty($vm_guest_metrix['os_version']['uname']) ? $vm_guest_metrix['os_version']['uname'] : 'N/A';
   $variables['os']['distro'] = !empty($vm_guest_metrix['os_version']['distro']) ? $vm_guest_metrix['os_version']['distro'] : 'N/A';
   $variables['os']['major'] = !empty($vm_guest_metrix['os_version']['major']) ? $vm_guest_metrix['os_version']['major'] : 'N/A';
-  $variables['os']['minor'] = !empty($vm_guest_metrix['os_version']['minor']) ? $vm_guest_metrix['os_version']['minor'] : 'N/A';
+  $variables['os']['minor'] = !empty($vm_guest_metrix['os_version']['minor']) ? $vm_guest_metrix['os_version']['minor'] : 'x';
 
   $variables['virtualization_state'] = !empty($vm_guest_metrix['PV_drivers_version']['minor']) ? $vm_guest_metrix['PV_drivers_version']['major'] . '.' . $vm_guest_metrix['PV_drivers_version']['minor'] : 'N/A';
   $variables['virtualization_uptodate'] = empty($vm_guest_metrix['PV_drivers_up_to_date']) ? '<span class="red">' . t('Tools out of date') . '</span>' : '<span class="green">' . t('Tools up to date') . '</span>';
