@@ -85,7 +85,7 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
       '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
       $snapshot['name_label'],
       $is_current_state ? t('Last reverted to') : '',
-      theme('xs_links_dropdown', array('links' => $links)),
+      theme('xs_links_dropdown', array('links' => $links, 'label' => t('Actions'))),
     );
     $i++;
   }
@@ -111,11 +111,13 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
  *   HTML for the dropdown.
  */
 function xs_links_dropdown_theme($variables) {
+  if (empty($variables['label'])) {
+    $variables['label'] = t('Action');
+  }
   $output = '<div class="btn-group">
-  <button type="button" class="btn btn-danger">Action</button>
   <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    ' . $variables['label'] . '
     <span class="caret"></span>
-    <span class="sr-only">Toggle Dropdown</span>
   </button>';
 
   $output .= '<ul class="dropdown-menu" aria-labelledby="dLabel">';

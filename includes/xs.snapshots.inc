@@ -178,7 +178,7 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
 
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Create'),
+    '#value' => XS_API_SNAPSHOT_CREATE_BUTTON_TITLE,
     '#attributes' => array(
       'type' => 'button',
       'class' => array('btn btn-primary'),
