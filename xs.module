@@ -18,6 +18,9 @@ define('XS_API_ACTION_POWEROFF', 'clean_shutdown');
 define('XS_API_ACTION_REBOOT_FORCE', 'hard_reboot');
 define('XS_API_ACTION_POWEROFF_FORCE', 'hard_shutdown');
 
+// Define snapshot related constants.
+define('XS_API_SNAPSHOT_CREATE_BUTTON_TITLE', 'Create');
+
 // Other constants definitions.
 define('XS_API_EMPTY_REF', 'OpaqueRef:NULL');
 
@@ -85,6 +88,18 @@ function xs_menu() {
     'file' => 'includes/xs.pages.inc',
     'weight' => 50,
     'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['node/%node/xs-actions/%'] = array(
+    'title' => 'Perform actions on virtual server',
+    'description' => 'Use to reboot the VPS gracefully',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_actions_server_action_confirmation_form', 1, 3),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1),
+    'file' => 'includes/xs.actions.inc',
+    'weight' => 60,
+    'type' => MENU_CALLBACK,
   );
 
   $items['node/%node/xs-snapshots'] = array(
@@ -256,6 +271,7 @@ function xs_preprocess_node(&$variables) {
     // If VM is not available, we were unable to connect to any of XS hosts.
     // Instead of displaying the confusing content, show the status message
     // and exit.
+    $variables['error_message'] = '';
     if (empty($vm)) {
       $variables['error_message'] = t('API Error. Unable to connect to the server. If this error persists, please contact our support');
 
@@ -276,6 +292,8 @@ function xs_preprocess_node(&$variables) {
     // Add actions to the VM.
     module_load_include('inc', 'xs', 'includes/xs.actions');
     $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid, $vm['allowed_operations']);
+    $links = xs_actions_get_links($variables['node']->nid, $vm['allowed_operations']);
+    $variables['action_links_dropdown'] = theme('xs_links_dropdown', array('links' => $links, 'label' => t('Server Actions')));
 
     $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
     $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;
@@ -400,6 +418,7 @@ function xs_get_vifs($vm) {
 
 /**
  * XS Actions form builder.
+ * @todo: REMOVE.
  */
 function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) {
   if (!empty($nid)) {
@@ -470,6 +489,7 @@ function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) 
 
 /**
  * Form validate handler for xs_actions_action_form.
+ * @todo: REMOVE.
  */
 function xs_actions_action_form_validate($form, &$form_state) {
   // Extra access check.
@@ -491,6 +511,7 @@ function xs_actions_action_form_validate($form, &$form_state) {
 
 /**
  * Form submit handler for xs_actions_action_form.
+ * @todo: REMOVE.
  */
 function xs_actions_action_form_submit($form, &$form_state) {
   // Extra access check.
@@ -513,6 +534,8 @@ function xs_actions_action_form_submit($form, &$form_state) {
   $action = filter_xss($form_state['values']['action']);
   $action = check_plain($action);
   $action = trim($action);
+
+  $form_state['redirect'] = url('node/' . $form_state['storage']['xs_vm_node']->nid . '/xs-action/' . $action);
 
   xs_actions_action($form_state['storage']['xs_vm_node'], $action);
 }
@@ -552,4 +575,21 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
   }
 
   return FALSE;
+}
+
+/**
+ * Implements hook_node_update().
+ *
+ * @param object $node
+ *   Drupal node object.
+ */
+function xs_node_update($node) {
+  if ($node->type == 'xs_vps' && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+    // If teh VPS Owner field is set to specific system user, update the node
+    // owner to that user.
+    db_update('node')
+      ->fields(array('uid' => $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id']))
+      ->condition('nid', $node->nid)
+      ->execute();
+  }
 }
