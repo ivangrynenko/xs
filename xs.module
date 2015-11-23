@@ -143,8 +143,9 @@ function xs_vm_uuid_load($vm_uuid) {
  * Implements hook_user_login().
  */
 function xs_user_login(&$edit, $account) {
-  // Redirect the user to the first server available.
-  if (user_access('perform own vm actions')) {
+  // Redirect the user to the first server available. Do not redirect if this
+  // is password reset form.
+  if (empty($_SESSION['pass_reset_' . $account->uid]) && user_access('perform own vm actions')) {
     $vps_nodes = _xs_get_user_vps($account, 1);
     if (empty($vps_nodes['node'])) {
       return;
@@ -157,6 +158,24 @@ function xs_user_login(&$edit, $account) {
   }
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function xs_form_user_pass_reset_alter(&$form, &$form_state) {
+  if (user_access('perform own vm actions')) {
+    global $user;
+
+    $vps_nodes = _xs_get_user_vps($user, 1);
+    if (empty($vps_nodes['node'])) {
+      return;
+    }
+
+    $vps_node = reset($vps_nodes['node']);
+    if (!empty($vps_node->nid)) {
+      //$form_state['redirect'] = 'node/' . $vps_node->nid;
+    }
+  }
+}
 /**
  * Gets all VPS nodes for the $account.
  *
