@@ -238,13 +238,13 @@ function xs_theme($existing, $type, $theme, $path) {
  * Implements hook_preprocess_HOOK().
  */
 function xs_preprocess_node(&$variables) {
+  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
+  drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
+  
   if ($variables['node']->type == 'xs_vps') {
     drupal_page_is_cacheable(FALSE);
 
     drupal_set_title(t('Overview of !server', array('!server' => $variables['node']->title)));
-
-    drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
-    drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
     $vm = xs_get_vm_by_node($variables['node']);
 
