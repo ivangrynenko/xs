@@ -288,6 +288,22 @@ function xs_preprocess_node(&$variables) {
     $vifs = xs_get_vifs($vm);
 
     // VBDs.
+    $disk_size = xs_api_get_disk_space($vm['VBDs']);
+    $variables['disk_size'] = $disk_size / 1024 / 1024 / 1024;
+
+    // Get individual disk device data.
+    $variables['vbds'] = array();
+    foreach ($vm['VBDs'] as $vbd_ref) {
+      $vbd = xs_api_get_vdi_by_vbd($vbd_ref);
+      if (empty($vbd)) {
+        continue;
+      }
+      $variables['vbds'][$vbd['uuid']]['virtual_size'] = $vbd['virtual_size'] / 1024 / 1024 / 1024;
+      $variables['vbds'][$vbd['uuid']]['physical_utilisation'] = (float) number_format($vbd['physical_utilisation'] / 1024 / 1024 / 1024, 2);
+      $variables['vbds'][$vbd['uuid']]['percent_physical_utilisation'] = (float) number_format($vbd['physical_utilisation'] / $vbd['virtual_size'] * 100, 1) . '%';
+      $variables['vbds'][$vbd['uuid']]['name_label'] = $vbd['name_label'];
+      $variables['vbds'][$vbd['uuid']]['type'] = $vbd['type'];
+    }
 
     // Add actions to the VM.
     module_load_include('inc', 'xs', 'includes/xs.actions');
