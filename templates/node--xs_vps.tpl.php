@@ -113,15 +113,13 @@
         <?php print render($content); ?>
 
 
-        <div class="col-md-4">
-          <h3>Server Actions</h3>
-
+        <div class="col-md-12 align-right">
           <div>
             <?php print $action_links_dropdown; ?>
           </div>
         </div>
 
-        <div class="col-md-8">
+        <div class="col-md-6">
           <h3>Server Status</h3>
 
           <section class="xs-vm-section">
@@ -152,7 +150,7 @@
 
           </section>
         </div>
-        <div class="col-md-12">
+        <div class="col-md-6">
           <h3>Server Configuration</h3>
           <section class="xs-vm-section">
             <div class="xs-vm-row">

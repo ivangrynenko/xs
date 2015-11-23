@@ -5,15 +5,15 @@
  */
 
 function xs_actions_get_links($nid, $allowed_operations) {
-
+  $action_links = xs_get_available_actions();
   // Prepare actions link.
-  $links = array();
-
-  $links[XS_API_ACTION_START] = '<div class="dropdown-links"><span class="glyphicon glyphicon-play-circle" aria-hidden="true"></span> ' . l(t('Start'), 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_START, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-  $links[XS_API_ACTION_REBOOT] = '<div class="dropdown-links"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> ' . l(t('Reboot'), 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_REBOOT, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-  $links[XS_API_ACTION_POWEROFF] = '<div class="dropdown-links"><span class="glyphicon glyphicon-off" aria-hidden="true"></span> ' . l(t('Shut Down'), 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_POWEROFF, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-  $links[XS_API_ACTION_REBOOT_FORCE] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l(t('Force Reboot'), 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_REBOOT_FORCE, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-  $links[XS_API_ACTION_POWEROFF_FORCE] = '<div class="dropdown-links"><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> ' . l(t('Force Shutdown'), 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_POWEROFF_FORCE, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+  $links = array(
+    XS_API_ACTION_START => '<div class="dropdown-links"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> ' . l($action_links[XS_API_ACTION_START], 'node/' . $nid . '/xs-actions/start') . '</div>',
+    XS_API_ACTION_REBOOT => '<div class="dropdown-links"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> ' . l($action_links[XS_API_ACTION_REBOOT], 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_REBOOT, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>',
+    XS_API_ACTION_POWEROFF => '<div class="dropdown-links"><span class="glyphicon glyphicon-off" aria-hidden="true"></span> ' . l($action_links[XS_API_ACTION_POWEROFF], 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_POWEROFF, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>',
+    XS_API_ACTION_REBOOT_FORCE => '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l($action_links[XS_API_ACTION_REBOOT_FORCE], 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_REBOOT_FORCE, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>',
+    XS_API_ACTION_POWEROFF_FORCE => '<div class="dropdown-links"><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> ' . l($action_links[XS_API_ACTION_POWEROFF_FORCE], 'node/' . $nid . '/xs-actions/' . XS_API_ACTION_POWEROFF_FORCE, array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>',
+  );
 
   // Filter out VM operations that are not allowed. For example, remove 'start'
   // operation for a VM that is in Running state.
@@ -34,12 +34,12 @@ function xs_actions_get_links($nid, $allowed_operations) {
  */
 function xs_get_available_actions() {
   return array(
-    XS_API_ACTION_NOACTION => t('Select action'),
-    XS_API_ACTION_START => t('Start VPS'),
-    XS_API_ACTION_REBOOT => t('Reboot VPS'),
-    XS_API_ACTION_POWEROFF => t('Shut Down VPS'),
-    XS_API_ACTION_REBOOT_FORCE => t('Force Reboot VPS'),
-    XS_API_ACTION_POWEROFF_FORCE => t('Force Shutdown VPS'),
+//    XS_API_ACTION_NOACTION => t('Select action'),
+    XS_API_ACTION_START => t('Start'),
+    XS_API_ACTION_REBOOT => t('Reboot'),
+    XS_API_ACTION_POWEROFF => t('Shut Down'),
+    XS_API_ACTION_REBOOT_FORCE => t('Force Reboot'),
+    XS_API_ACTION_POWEROFF_FORCE => t('Force Shutdown'),
   );
 }
 
@@ -50,8 +50,9 @@ function xs_actions_server_action_confirmation_form($form, &$form_state, $node, 
   $actions = xs_get_available_actions();
 
   $form['warning'] = array(
-    '#markup' => t('You about to perform a disruptive operation to your server: !action!', array(
+    '#markup' => t('Are you sure you want to execute the "!action" operation to your server "!server_name"?', array(
       '!action' => $actions[$action],
+      '!server_name' => $node->title,
     )),
     '#prefix' => '<div class="red">',
     '#suffix' => '</div>',

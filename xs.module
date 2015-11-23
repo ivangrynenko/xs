@@ -18,6 +18,9 @@ define('XS_API_ACTION_POWEROFF', 'clean_shutdown');
 define('XS_API_ACTION_REBOOT_FORCE', 'hard_reboot');
 define('XS_API_ACTION_POWEROFF_FORCE', 'hard_shutdown');
 
+// Define snapshot related constants.
+define('XS_API_SNAPSHOT_CREATE_BUTTON_TITLE', 'Create');
+
 // Other constants definitions.
 define('XS_API_EMPTY_REF', 'OpaqueRef:NULL');
 
@@ -87,7 +90,7 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['node/%node/xs-action/%'] = array(
+  $items['node/%node/xs-actions/%'] = array(
     'title' => 'Perform actions on virtual server',
     'description' => 'Use to reboot the VPS gracefully',
     'page callback' => 'drupal_get_form',
@@ -268,6 +271,7 @@ function xs_preprocess_node(&$variables) {
     // If VM is not available, we were unable to connect to any of XS hosts.
     // Instead of displaying the confusing content, show the status message
     // and exit.
+    $variables['error_message'] = '';
     if (empty($vm)) {
       $variables['error_message'] = t('API Error. Unable to connect to the server. If this error persists, please contact our support');
 
@@ -289,7 +293,7 @@ function xs_preprocess_node(&$variables) {
     module_load_include('inc', 'xs', 'includes/xs.actions');
     $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid, $vm['allowed_operations']);
     $links = xs_actions_get_links($variables['node']->nid, $vm['allowed_operations']);
-    $variables['action_links_dropdown'] = theme('xs_links_dropdown', array('links' => $links));
+    $variables['action_links_dropdown'] = theme('xs_links_dropdown', array('links' => $links, 'label' => t('Server Actions')));
 
     $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
     $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;

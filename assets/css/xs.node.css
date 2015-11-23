@@ -80,11 +80,15 @@
 .warning {
   font-weight: bold;
   background-repeat: no-repeat;
-  background-position: 0.1em 1.3em;
+  background-position: 0.1em 0.5em;
   color: darkblue;
   padding: 10px 10px 10px 30px;
   border: solid 2px sandybrown;
   margin: 10px 0;
+}
+
+.align-right {
+  text-align: right;
 }
 
 .modal-content input[type="submit"] {

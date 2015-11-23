@@ -40,29 +40,58 @@
         </div>
       <?php else: ?>
         <div class="col-md-12">
-          <h3>Available snapshots</h3>
 
-          <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
-            <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
-            Create a Snapshot
-          </button>
-          <?php print $new_snapshot_form; ?>
+          <h3>Available server snapshots</h3>
 
-          <p>You have available <?php print $snapshots_qty; ?> out of the maximum <?php print $snapshots_max; ?></p>
+          <p>You have <?php print $snapshots_qty; ?> snapshots available. Your server is limited to have the maximum <?php print $snapshots_max; ?> snapshots.</p>
+
+          <p>
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
+              <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
+              <?php print t('Create a Snapshot'); ?>
+            </button>
+          </p>
+          <p><?php print $link; ?></p>
 
         </div>
 
-        <div class="col-md-12">
-          <div class="help">
-            <p>To destroy a snapshot, select 'Trash' in the Actions column. To revert your Server to the selected snapshot, select 'Revert'</p>
-
-            <p>A confirmation screen will appear next, to confirm your action.</p>
-          </div>
-        </div>
+<!--        <div class="col-md-12">-->
+<!--          <div class="help">-->
+<!--            <p></p>-->
+<!--          </div>-->
+<!--        </div>-->
 
         <div class="col-md-12">
           <?php print $snapshots_table; ?>
         </div>
+
+        <div class="col-md-12">
+          <div class="help">
+            <p>
+              Snapshots are the fastest way to backup and revert your entire server.
+              Whether you need to revert last configuration changes or had an unsuccessful
+              deployment, just select the last snapshot you created and select
+              'Revert' link from the Actions column.
+            </p>
+            <p>
+              Before attempting to change server configuration, navigate to this
+              page and click the <?php print t('Create a Snapshot'); ?> button.
+              Just give it a title and click the <?php print XS_API_SNAPSHOT_CREATE_BUTTON_TITLE; ?> button.
+            </p>
+            <p>
+              Snapshot Actions help: To destroy a snapshot, select 'Trash' in the Actions column.<br />
+              Destroying a snapshot has no impact on your server.<br />
+              To revert your Server to the selected snapshot, select 'Revert'.<br />
+              Reverting a snapshot will cause your server to be shut down, it's
+              disks to be reverted to the date and time of the snapshot creation.
+              The server will start automatically.</p>
+            <p class="note">
+              Note! To avoid harmful actions to your server, a confirmation
+              dialogue will appear after you select an action.
+            </p>
+          </div>
+        </div>
+
       <?php endif; ?>
     <?php endif; ?>
   </div>
