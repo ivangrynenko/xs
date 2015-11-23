@@ -152,24 +152,6 @@ function xs_vm_uuid_load($vm_uuid) {
 }
 
 /**
- * Implements hook_user_login().
- */
-function xs_user_login(&$edit, $account) {
-  // Redirect the user to the first server available.
-  if (user_access('perform own vm actions')) {
-    $vps_nodes = _xs_get_user_vps($account, 1);
-    if (empty($vps_nodes['node'])) {
-      return;
-    }
-
-    $vps_node = reset($vps_nodes['node']);
-    if (!empty($vps_node->nid)) {
-      drupal_goto('node/' . $vps_node->nid);
-    }
-  }
-}
-
-/**
  * Gets all VPS nodes for the $account.
  *
  * @param object $account
@@ -267,14 +249,19 @@ function xs_theme($existing, $type, $theme, $path) {
 /**
  * Implements hook_preprocess_HOOK().
  */
+function xs_preprocess_page(&$variables) {
+  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css', array('weight' => 999));
+  drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
 function xs_preprocess_node(&$variables) {
   if ($variables['node']->type == 'xs_vps') {
     drupal_page_is_cacheable(FALSE);
 
     drupal_set_title(t('Overview of !server', array('!server' => $variables['node']->title)));
-
-    drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
-    drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 
     $vm = xs_get_vm_by_node($variables['node']);
 
