@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the xs module.
+ */
+
+/**
+ * Install xs_snap_policy schema.
+ */
+function xs_update_7001() {
+  $schema['xs_snap_policy'] = array(
+    'description' => 'The base table for the XS Snapshot Policy entity',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key of the XS Snapshot Policy entity',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'XS Snapshot Policy name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'frequency' => array(
+        'description' => 'XS Snapshots frequency.',
+        'type' => 'text',
+        'length' => 32,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+
+  db_create_table('xs_snap_policy', $schema['xs_snap_policy']);
+}

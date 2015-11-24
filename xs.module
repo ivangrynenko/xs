@@ -619,3 +619,25 @@ function xs_node_update($node) {
       ->execute();
   }
 }
+
+/**
+ * Implements hook_entity_info().
+ */
+function xs_entity_info() {
+
+  $info = array();
+
+  $info['xs_snapshot_policy'] = array(
+    'label' => t('XS Snapshot Policy'),
+    'base table' => 'xs_snap_policy',
+    'entity keys' => array(
+      'id' => 'id',
+      'label' => 'name',
+    ),
+    'module' => 'xs',
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+  );
+
+  return $info;
+}
