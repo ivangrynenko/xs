@@ -113,13 +113,15 @@
         <?php print render($content); ?>
 
 
-        <div class="col-md-12 align-right">
+        <div class="col-md-4">
+          <h3>Server Actions</h3>
+
           <div>
-            <?php print $action_links_dropdown; ?>
+            <?php print render($actions_form); ?>
           </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-8">
           <h3>Server Status</h3>
 
           <section class="xs-vm-section">
@@ -136,6 +138,8 @@
               <span class="vm-config-value xs-vm-tag"><?php print $vm_cpu; ?></span>
               <label class="display-inline">RAM</label>
               <span class="vm-config-value xs-vm-tag"><?php print $vm_memory; ?>GB</span>
+              <label class="display-inline">HDD</label>
+              <span class="vm-config-value xs-vm-tag"><?php print $disk_size; ?>GB</span>
             </div>
 
             <div class="xs-vm-row">
@@ -150,31 +154,32 @@
 
           </section>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
           <h3>Server Configuration</h3>
           <section class="xs-vm-section">
             <div class="xs-vm-row">
               <label class="display-inline">Network cards</label>:
-              <span class="vm-config-value"><?php print $vm_nics; ?></span>
+
+              <?php if (!empty($vm_vifs)) : ?>
+                <ol>
+                  <?php foreach ($vm_vifs as $delta => $vif) : ?>
+                    <li>
+                      <label class="display-inline"><?php print $vif['device']; ?></label>: <?php if (!empty($network['ips'])) : ?><?php print !empty($network['ips'][$delta]) ? 'IPv4: ' . $network['ips'][$delta] : 'Unconfigured'; ?><?php endif; ?> (MAC: <?php print $vif['mac']; ?>)
+                    </li>
+                  <?php endforeach; ?>
+                </ol>
+              <?php endif; ?>
             </div>
 
-            <?php if (!empty($vm_vifs)) : ?>
-              <?php foreach ($vm_vifs as $delta => $vif) : ?>
-                <div class="xs-vm-row">
-                  <label class="display-inline">Network Card <?php print $delta; ?></label>
-                  <ul>
-                    <li>
-                      <label class="display-inline">Device Name</label>: <?php print $vif['device']; ?>
-                    </li>
-                    <li>
-                      <label class="display-inline">MAC Address</label>: <?php print $vif['mac']; ?>
-                    </li>
-                    <?php if (!empty($network['ips'])) : ?>
-                      <li>
-                        <label class="display-inline">IP Address</label>: <?php print !empty($network['ips'][$delta]) ? $network['ips'][$delta] : 'Unconfigured'; ?>
-                      </li>
-                    <?php endif; ?>
-                  </ul>
+            <?php if (!empty($vbds)) : ?>
+              <div class="xs-vm-row">
+              <label class="display-inline">Attached HDDs</label>
+              <?php foreach ($vbds as $uuid => $vbd) : ?>
+                <ol>
+                  <li>
+                    <label class="display-inline"><?php print $vbd['name_label']; ?> (<?php print $vbd['type']; ?>)</label>: Size <?php print $vbd['virtual_size']; ?> GB (Currently used <?php print $vbd['percent_physical_utilisation']; ?> or <?php print $vbd['physical_utilisation']; ?> GB)
+                  </li>
+                </ol>
                 </div>
               <?php endforeach; ?>
             <?php endif; ?>

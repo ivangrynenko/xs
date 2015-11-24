@@ -803,3 +803,63 @@ function xs_api_create_snapshot($vm_ref, $title) {
 
   $xs_api->VM_snapshot($vm_ref, $title);
 }
+
+/**
+ * Gets total disk space for all HDDs.
+ *
+ * @param array $vbd_refs
+ *   VBD reference.
+ *
+ * @return int|void
+ *   All disks size in bytes.
+ */
+function xs_api_get_disk_space($vbd_refs) {
+  $hdd_size = 0;
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  foreach ($vbd_refs as $vbd_ref) {
+    $vbd_type = $xs_api->VBD_get_type($vbd_ref);
+    if ($vbd_type == 'Disk') {
+      $vdi_ref = $xs_api->VBD_get_VDI($vbd_ref);
+      $hdd_size += intval($xs_api->VDI_get_virtual_size($vdi_ref));
+    }
+  }
+
+  return $hdd_size;
+}
+
+/**
+ * Loads VDI by VBD ref.
+ *
+ * @param string $vbd_ref
+ *   VBD reference.
+ * @param string $type
+ *   Disk type, values range:
+ *   - 'Disk': HDD
+ *   - 'CD': CD.
+ *
+ * @return int|void
+ *   All disks size in bytes.
+ */
+function xs_api_get_vdi_by_vbd($vbd_ref, $type = 'Disk') {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  $vbd = FALSE;
+  $vbd_type = $xs_api->VBD_get_type($vbd_ref);
+  if ($vbd_type == $type) {
+    $vdi_ref = $xs_api->VBD_get_VDI($vbd_ref);
+    $vbd = xs_api_get_vdi($vdi_ref);
+  }
+
+  return $vbd;
+}
