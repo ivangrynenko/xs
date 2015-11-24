@@ -72,7 +72,7 @@ function xs_strongarm() {
   $strongarm->name = 'content_access_xs_vps';
   $strongarm->value = array(
     'view_own' => array(
-      0 => 2,
+      0 => 4,
       1 => 3,
     ),
     'view' => array(

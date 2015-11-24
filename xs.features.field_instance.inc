@@ -10,7 +10,7 @@
 function xs_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'comment-comment_node_xs_vps-comment_body'
+  // Exported field_instance: 'comment-comment_node_xs_vps-comment_body'.
   $field_instances['comment-comment_node_xs_vps-comment_body'] = array(
     'bundle' => 'comment_node_xs_vps',
     'default_value' => NULL,
@@ -43,7 +43,7 @@ function xs_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-xs_vps-field_xs_pool_uuid'
+  // Exported field_instance: 'node-xs_vps-field_xs_pool_uuid'.
   $field_instances['node-xs_vps-field_xs_pool_uuid'] = array(
     'bundle' => 'xs_vps',
     'default_value' => NULL,
@@ -82,10 +82,14 @@ function xs_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-xs_vps-field_xs_vps_owner'
+  // Exported field_instance: 'node-xs_vps-field_xs_vps_owner'.
   $field_instances['node-xs_vps-field_xs_vps_owner'] = array(
     'bundle' => 'xs_vps',
-    'default_value' => NULL,
+    'default_value' => array(
+      0 => array(
+        'target_id' => 1,
+      ),
+    ),
     'deleted' => 0,
     'description' => 'Select VPS owner.',
     'display' => array(
@@ -118,7 +122,7 @@ function xs_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-xs_vps-field_xs_vps_snapshots_limit'
+  // Exported field_instance: 'node-xs_vps-field_xs_vps_snapshots_limit'.
   $field_instances['node-xs_vps-field_xs_vps_snapshots_limit'] = array(
     'bundle' => 'xs_vps',
     'default_value' => array(
@@ -158,7 +162,7 @@ function xs_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-xs_vps-field_xs_vps_uuid'
+  // Exported field_instance: 'node-xs_vps-field_xs_vps_uuid'.
   $field_instances['node-xs_vps-field_xs_vps_uuid'] = array(
     'bundle' => 'xs_vps',
     'default_value' => NULL,
