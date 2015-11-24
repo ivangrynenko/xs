@@ -51,15 +51,9 @@
               <?php print t('Create a Snapshot'); ?>
             </button>
           </p>
-          <p><?php print $link; ?></p>
+          <?php print $new_snapshot_form; ?>
 
         </div>
-
-<!--        <div class="col-md-12">-->
-<!--          <div class="help">-->
-<!--            <p></p>-->
-<!--          </div>-->
-<!--        </div>-->
 
         <div class="col-md-12">
           <?php print $snapshots_table; ?>
