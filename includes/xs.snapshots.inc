@@ -16,7 +16,7 @@
  *   Rendered output.
  */
 function xs_actions_snapshots_callback($node) {
-  drupal_set_title(t('Snapshots !server', array('!server' => $node->title)));
+  drupal_set_title(t('Snapshots of: !server', array('!server' => $node->title)));
 
   return theme('xs_actions_snapshots_output', array('node' => $node));
 }
