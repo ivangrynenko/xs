@@ -24,6 +24,26 @@ define('XS_API_SNAPSHOT_CREATE_BUTTON_TITLE', 'Create');
 // Other constants definitions.
 define('XS_API_EMPTY_REF', 'OpaqueRef:NULL');
 
+// Entity-related definitions.
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_HOURLY', '1-hourly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_HOURLY', t('Every 1 hour'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_TWO_HOURLY', '2-hourly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWO_HOURLY', t('Every 2 hours'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_FOUR_HOURLY', '4-hourly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_FOUR_HOURLY', t('Every 4 hours'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_SIX_HOURLY', '6-hourly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_SIX_HOURLY', t('Every 6 hours'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_EIGHT_HOURLY', '8-hourly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_EIGHT_HOURLY', t('Every 8 hours'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_TWELVE_HOURLY', '12-hourly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWELVE_HOURLY', t('Every 12 hours'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_DAILY', '1-daily');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_DAILY', t('1 snapshot daily'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_TWO_DAILY', '2-daily');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWO_DAILY', t('Every 2 days'));
+define('XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_WEEKLY', '1-weekly');
+define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_WEEKLY', t('1 snapshot weekly'));
+
 /**
  * Implements hook_permission().
  */
@@ -624,20 +644,189 @@ function xs_node_update($node) {
  * Implements hook_entity_info().
  */
 function xs_entity_info() {
-
   $info = array();
 
   $info['xs_snapshot_policy'] = array(
     'label' => t('XS Snapshot Policy'),
-    'base table' => 'xs_snap_policy',
+    'base table' => 'xs_snapshot_policy',
     'entity keys' => array(
       'id' => 'id',
       'label' => 'name',
+      'bundle' => 'xs_snapshot_policy',
     ),
     'module' => 'xs',
     'entity class' => 'Entity',
-    'controller class' => 'EntityAPIController',
+    'controller class' => 'XsEntityApiController',
+//    'metadata controller class' => 'XsMetadataController',
+    'fieldable' => FALSE,
+    'exportable' => FALSE,
+    'access callback' => 'xs_entity_access',
+    'views controller class' => 'EntityDefaultViewsController',
+    'load hook' => 'xs_snapshot_policy_load',
   );
 
   return $info;
+}
+
+function xs_snapshot_policy_load($policy_id) {
+
+}
+
+function xs_snapshot_policy_new() {
+  return entity_get_controller('xs_snapshot_policy')->create();
+}
+
+/**
+ * Access callback for xs_snapshot_policy.
+ */
+function xs_entity_access() {
+  global $user;
+
+  if ($user->uid == 1 || user_access('perform any vm actions')) {
+    return TRUE;
+  }
+
+  return user_access('perform own vm actions');
+}
+
+/**
+ * Defines drop-down select element for snapshot policies.
+ *
+ * @return array
+ *   Array for the form select element.
+ */
+function _xs_get_snapshots_policy_type() {
+  return array(
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_HOURLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_HOURLY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_TWO_HOURLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWO_HOURLY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_FOUR_HOURLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_FOUR_HOURLY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_SIX_HOURLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_SIX_HOURLY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_EIGHT_HOURLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_EIGHT_HOURLY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_TWELVE_HOURLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWELVE_HOURLY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_DAILY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_DAILY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_TWO_DAILY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWO_DAILY,
+    XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_WEEKLY => XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_WEEKLY,
+  );
+}
+
+/**
+ * Form definition for 'xs_snapshots_policy_create_form'.
+ */
+function xs_snapshots_policy_create_form($form, &$form_state, $nid) {
+  $form_state['storage']['node_nid'] = $nid;
+
+  $form['#prefix'] = '<div id="new_snapshot_policy_form" class="modal fade" role="dialog" aria-labelledby="gridSystemModalLabel"><div class="modal-dialog" role="document"><div class="modal-content">';
+  $form['#suffix'] = '</div></div></div>';
+
+  $form['header'] = array(
+    '#markup' => '<div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h4 class="modal-title" id="gridSystemModalLabel">Create new automated snapshots policy</h4>
+                </div>',
+  );
+
+  $form['is_new'] = array(
+    '#type' => 'hidden',
+    '#value' => 1,
+  );
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Policy name'),
+    '#size' => 64,
+    '#maxlength' => 64,
+    '#description' => t('Give a name, to this policy'),
+    '#required' => TRUE,
+    '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12">',
+    '#suffix' => '</div></div></div>',
+  );
+
+  $form['frequency'] = array(
+    '#type' => 'select',
+    '#title' => t('Select snapshots type'),
+    '#options' => _xs_get_snapshots_policy_type(),
+    '#description' => t('Select how often you want snapshots to be created'),
+    '#required' => TRUE,
+  );
+
+  $form['status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Active'),
+    '#description' => t('Select to activate this policy'),
+    '#default_value' => 1,
+  );
+
+  $form['actions'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-footer'),
+    ),
+  );
+
+  $form['actions']['cancel'] = array(
+    '#type' => 'button',
+    '#attributes' => array(
+      'type' => 'button',
+      'class' => array('btn btn-default'),
+      'data-dismiss' => 'modal',
+    ),
+    '#value' => t('Cancel'),
+  );
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => XS_API_SNAPSHOT_CREATE_BUTTON_TITLE,
+    '#attributes' => array(
+      'type' => 'button',
+      'class' => array('btn btn-primary'),
+    ),
+  );
+
+  return $form;
+}
+
+function xs_snapshots_policy_create_form_validate($form, &$form_state) {
+  $linked_node = node_load($form_state['storage']['node_nid']);
+  if (!xs_actions_access_callback($linked_node)) {
+    drupal_set_message('Validation error. Unable to create snapshots automation policy.', 'error');
+    return form_set_error(NULL, 'Validation error. Unable to create snapshots automation policy.');
+  }
+}
+
+function xs_snapshots_policy_create_form_submit($form, &$form_state) {
+//  $policy = xs_snapshot_policy_new($form_state);
+//
+////  $policy = (object) $form_state['values'];
+//
+//  $policy->target_id = $form_state['storage']['node_nid'];
+//  $linked_node = node_load($policy->target_id);
+//  $policy->uid = $linked_node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'];
+//  if ($policy->is_new) {
+//    $policy->created = REQUEST_TIME;
+//    $policy->changed = REQUEST_TIME;
+//  }
+//  else {
+//    $policy->changed = REQUEST_TIME;
+//  }
+//
+////  $policy->save();
+//
+//  entity_save('xs_snapshots_policy', $policy);
+  $fields['target_id'] = $form_state['storage']['node_nid'];
+  $linked_node = node_load($policy->target_id);
+  $fields['uid'] = $linked_node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'];
+  if ($policy->is_new) {
+    $fields['created'] = REQUEST_TIME;
+    $fields['changed'] = REQUEST_TIME;
+  }
+  else {
+    $fields['changed'] = REQUEST_TIME;
+  }
+
+  $policy =  new EntityDB($fields, 'xs_snapshot_policy');
+  $policy->name = "xs_snapshot_policy";
+  $policy->label = "Snapshots policy";
+
+
+  $policy->save();
 }

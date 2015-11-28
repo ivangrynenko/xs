@@ -69,3 +69,4 @@ features[views_view][] = xs_pools_servers
 features[views_view][] = xs_user_vms
 features_exclude[dependencies][ctools] = ctools
 project path = sites/all/modules
+files[] = includes/xs_snapshot_policy.entity.inc
