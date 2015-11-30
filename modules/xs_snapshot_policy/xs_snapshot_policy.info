@@ -1,0 +1,8 @@
+name = Xenserver Snapshot Policy
+description = Management of xenserver snapshot policies
+core = 7.x
+package = XS
+version = 7.x-1.0-rc1
+dependencies[] = xs
+
+files[] = includes/xs_snapshot_policy.class.php
