@@ -1,7 +1,7 @@
 <?php
 
 /**
- * xs_snapshot_policy.class.php
+ * xs_snapshot_policy1.class.php
  */
 class XsSnapshotPolicy {
   public $name;
@@ -26,7 +26,7 @@ class XsSnapshotPolicy {
   }
 
   public function load() {
-    $query = db_select('xs_snapshot_policy', 'p');
+    $query = db_select('xs_snapshot_policy1', 'p');
     $query->join('xs_snapshot_policy_id_type_id', 't', 'p.id = t.id');
     $query->join('xs_snapshot_policy_uid_id', 'u', 'u.id = p.id');
     $query->join('xs_snapshot_policy_type', 'type', 'type.type_id = t.type_id');
@@ -63,7 +63,7 @@ class XsSnapshotPolicy {
     $this->created = time();
     $this->changed = time();
 
-    $query = db_insert('xs_snapshot_policy', array(
+    $query = db_insert('xs_snapshot_policy1', array(
       'target_id' => $this->target_id,
       'name' => $this->name,
       'status' => $this->status,
@@ -104,7 +104,7 @@ class XsSnapshotPolicy {
   protected function update() {
     $this->changed = time();
 
-    $query = db_update('xs_snapshot_policy');
+    $query = db_update('xs_snapshot_policy1');
     $query->fields(array(
       'target_id' => $this->target_id,
       'name' => $this->name,

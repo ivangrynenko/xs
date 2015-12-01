@@ -1,50 +1,5 @@
 <?php
-/**
- * @file
- * Snapshot policy related code.
- */
-
-// Entity-related definitions.
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_HOURLY', '1-hourly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_HOURLY', t('Every 1 hour'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_TWO_HOURLY', '2-hourly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWO_HOURLY', t('Every 2 hours'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_FOUR_HOURLY', '4-hourly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_FOUR_HOURLY', t('Every 4 hours'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_SIX_HOURLY', '6-hourly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_SIX_HOURLY', t('Every 6 hours'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_EIGHT_HOURLY', '8-hourly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_EIGHT_HOURLY', t('Every 8 hours'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_TWELVE_HOURLY', '12-hourly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWELVE_HOURLY', t('Every 12 hours'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_DAILY', '1-daily');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_DAILY', t('1 snapshot daily'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_TWO_DAILY', '2-daily');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_TWO_DAILY', t('Every 2 days'));
-define('XS_SNAPSHOTS_POLICY_LABEL_KEY_ONE_WEEKLY', '1-weekly');
-define('XS_SNAPSHOTS_POLICY_LABEL_LABEL_ONE_WEEKLY', t('1 snapshot weekly'));
-
 define('XS_SNAPSHOT_MAX_POLICIES_PER_USER', 1);
-
-/**
- * Implements hook_permission().
- */
-function xs_snapshot_policy_permission() {
-  return array(
-    'create xs_snapshot_policy' => array(
-      'title' => t('Create XS Snapshot Policy'),
-      'description' => t('Allows users to create XS Snapshot Policies.'),
-      'restrict access' => TRUE,
-    ),
-    'edit own xs_snapshot_policy XS Snapshot Policies' => array(
-      'title' => t('Edit own XS Snapshot Policy'),
-      'description' => t('Allows users to edit own XS Snapshot Policies.'),
-      'restrict access' => TRUE,
-    ),
-  );
-}
-
-
 /**
  * Defines drop-down select element for snapshot policies.
  *
@@ -166,3 +121,347 @@ function xs_snapshot_policy_create_form_submit($form, &$form_state) {
 
   $policy->save();
 }
+
+/**
+ * Implements hook_entity_info().
+ */
+function xs_snapshot_policy_entity_info() {
+  $return = array(
+    'xs_snapshot_policy' => array(
+      'label' => t('Snapshot Policy'),
+      'entity class' => 'SnapshotPolicy',
+      'controller class' => 'SnapshotPolicyController',
+      'base table' => 'xs_snapshot_policy',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'spid',
+        'bundle' => 'type',
+      ),
+      'bundle keys' => array(
+        'bundle' => 'type',
+      ),
+      'bundles' => array(),
+      'load hook' => 'xs_snapshot_policy_load',
+      'view modes' => array(
+        'full' => array(
+          'label' => t('Default'),
+          'custom settings' => FALSE,
+        ),
+      ),
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+      'module' => 'xs_snapshot_policy',
+      'access callback' => 'xs_snapshot_policy_access',
+    ),
+  );
+  $return['xs_snapshot_policy_type'] = array(
+    'label' => t('Snapshot Policy Type'),
+    'entity class' => 'SnapshotPolicyType',
+    'controller class' => 'SnapshotPolicyTypeController',
+    'base table' => 'xs_snapshot_policy_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'xs_snapshot_policy',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'module' => 'xs_snapshot_policy',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/structure/xs/snapshot-policy-types',
+      'file' => 'xs_snapshot_policy.admin.inc',
+      'controller class' => 'ExampleTaskTypeUIController',
+    ),
+    'access callback' => 'xs_snapshot_policy_type_access',
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function xs_snapshot_policy_entity_info_alter(&$entity_info) {
+  foreach (xs_snapshot_policy_types() as $type => $info) {
+    $entity_info['xs_snapshot_policy']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/structure/xs/snapshot-policy-types/manage/%xs_snapshot_policy_type',
+        'real path' => 'admin/structure/xs/snapshot-policy-types/manage/' . $type,
+        'bundle argument' => 4,
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function xs_snapshot_policy_menu() {
+  $items = array();
+
+  $items['snapshot-policy/add'] = array(
+    'title' => 'Add snapshot-policy',
+    'page callback' => 'xs_snapshot_policy_admin_add_page',
+    'access arguments' => array('administer xs_snapshot_policy entities'),
+    'file' => 'xs_snapshot_policy.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'tab_parent' => 'snapshot-policy',
+    'tab_root' => 'snapshot-policy',
+  );
+
+  $snapshot_policy_uri = 'snapshot-policy/%xs_snapshot_policy';
+  $snapshot_policy_uri_argument_position = 1;
+
+  $items[$snapshot_policy_uri] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('xs_snapshot_policy', $snapshot_policy_uri_argument_position),
+    'page callback' => 'xs_snapshot_policy_view',
+    'page arguments' => array($snapshot_policy_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 'xs_snapshot_policy', $snapshot_policy_uri_argument_position),
+    'file' => 'xs_snapshot_policy.pages.inc',
+  );
+
+  $items[$snapshot_policy_uri . '/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items[$snapshot_policy_uri . '/delete'] = array(
+    'title' => 'Delete snapshot-policy',
+    'title callback' => 'xs_snapshot_policy_label',
+    'title arguments' => array($snapshot_policy_uri_argument_position),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_snapshot_policy_delete_form', $snapshot_policy_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'xs_snapshot_policy', $snapshot_policy_uri_argument_position),
+    'file' => 'xs_snapshot_policy.admin.inc',
+  );
+
+  $items[$snapshot_policy_uri . '/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_snapshot_policy_form', $snapshot_policy_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'xs_snapshot_policy', $snapshot_policy_uri_argument_position),
+    'file' => 'xs_snapshot_policy.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  foreach (xs_snapshot_policy_types() as $type => $info) {
+    $items['snapshot-policy/add/' . $type] = array(
+      'title' => 'Add snapshot-policy',
+      'page callback' => 'xs_snapshot_policy_add',
+      'page arguments' => array(2),
+      'access callback' => 'entity_access',
+      'access arguments' => array('create', 'xs_snapshot_policy', $type),
+      'file' => 'xs_snapshot_policy.admin.inc',
+    );
+  }
+
+  $items['admin/structure/xs/snapshot-policy-types/%xs_snapshot_policy_type/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_snapshot_policy_type_form_delete_confirm', 4),
+    'access arguments' => array('administer xs_snapshot_policy types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'xs_snapshot_policy.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function xs_snapshot_policy_permission() {
+  $permissions = array(
+    'administer xs_snapshot_policy types' => array(
+      'title' => t('Administer snapshot-policy types'),
+      'description' => t('Allows users to configure snapshot-policy types and their fields.'),
+      'restrict access' => TRUE,
+    ),
+    'create xs_snapshot_policy entities' => array(
+      'title' => t('Create tasks'),
+      'description' => t('Allows users to create tasks.'),
+      'restrict access' => TRUE,
+    ),
+    'view xs_snapshot_policy entities' => array(
+      'title' => t('View tasks'),
+      'description' => t('Allows users to view tasks.'),
+      'restrict access' => TRUE,
+    ),
+    'edit any xs_snapshot_policy entities' => array(
+      'title' => t('Edit any tasks'),
+      'description' => t('Allows users to edit any tasks.'),
+      'restrict access' => TRUE,
+    ),
+    'edit own xs_snapshot_policy entities' => array(
+      'title' => t('Edit own tasks'),
+      'description' => t('Allows users to edit own tasks.'),
+      'restrict access' => TRUE,
+    ),
+  );
+
+  return $permissions;
+}
+
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+function xs_snapshot_policy_entity_property_info_alter(&$info) {
+  $properties = &$info['xs_snapshot_policy']['properties'];
+  $properties['created'] = array(
+    'label' => t("Date created"),
+    'type' => 'date',
+    'description' => t("The date the node was posted."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer nodes',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t("Date changed"),
+    'type' => 'date',
+    'schema field' => 'changed',
+    'description' => t("The date the node was most recently updated."),
+  );
+  $properties['uid'] = array(
+    'label' => t("Author"),
+    'type' => 'user',
+    'description' => t("The author of the snapshot-policy."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer xs_snapshot_policy entities',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  );
+}
+
+
+/*******************************************************************************
+ ********************************* Snapshot Policy API's **********************************
+ ******************************************************************************/
+
+/**
+ * Access callback for snapshot-policy.
+ */
+function xs_snapshot_policy_access($op, $task, $account = NULL, $entity_type = NULL) {
+  global $user;
+
+  if (!isset($account)) {
+    $account = $user;
+  }
+  switch ($op) {
+    case 'create':
+      return user_access('administer xs_snapshot_policy entities', $account)
+          || user_access('create xs_snapshot_policy entities', $account);
+    case 'view':
+      return user_access('administer xs_snapshot_policy entities', $account)
+          || user_access('view xs_snapshot_policy entities', $account);
+    case 'edit':
+      return user_access('administer xs_snapshot_policy entities')
+          || user_access('edit any xs_snapshot_policy entities')
+          || (user_access('edit own xs_snapshot_policy entities') && ($task->uid == $account->uid));
+  }
+}
+
+/**
+ * Load a snapshot-policy.
+ */
+function xs_snapshot_policy_load($tkid, $reset = FALSE) {
+  $tasks = xs_snapshot_policy_load_multiple(array($tkid), array(), $reset);
+  return reset($tasks);
+}
+
+/**
+ * Load multiple tasks based on certain conditions.
+ */
+function xs_snapshot_policy_load_multiple($tkids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('xs_snapshot_policy', $tkids, $conditions, $reset);
+}
+
+/**
+ * Save snapshot-policy.
+ */
+function xs_snapshot_policy_save($task) {
+  entity_save('xs_snapshot_policy', $task);
+}
+
+/**
+ * Delete single snapshot-policy.
+ */
+function xs_snapshot_policy_delete($task) {
+  entity_delete('xs_snapshot_policy', entity_id('xs_snapshot_policy' ,$task));
+}
+
+/**
+ * Delete multiple tasks.
+ */
+function xs_snapshot_policy_delete_multiple($task_ids) {
+  entity_delete_multiple('xs_snapshot_policy', $task_ids);
+}
+
+
+/*******************************************************************************
+ ****************************** Snapshot Policy Type API's ********************************
+ ******************************************************************************/
+
+/**
+ * Access callback for snapshot-policy Type.
+ */
+function xs_snapshot_policy_type_access($op, $entity = NULL) {
+  return user_access('administer xs_snapshot_policy types');
+}
+
+/**
+ * Load snapshot-policy Type.
+ */
+function xs_snapshot_policy_type_load($task_type) {
+  return xs_snapshot_policy_types($task_type);
+}
+
+/**
+ * List of snapshot-policy Types.
+ */
+function xs_snapshot_policy_types($type_name = NULL) {
+  $types = entity_load_multiple_by_name('xs_snapshot_policy_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Save snapshot-policy type entity.
+ */
+function xs_snapshot_policy_type_save($task_type) {
+  entity_save('xs_snapshot_policy_type', $task_type);
+}
+
+/**
+ * Delete single case type.
+ */
+function xs_snapshot_policy_type_delete($task_type) {
+  entity_delete('xs_snapshot_policy_type', entity_id('xs_snapshot_policy_type' ,$task_type));
+}
+
+/**
+ * Delete multiple case types.
+ */
+function xs_snapshot_policy_type_delete_multiple($task_type_ids) {
+  entity_delete_multiple('xs_snapshot_policy_type', $task_type_ids);
+}
+
+/**
+  * Implements hook_views_api().
+  */
+function xs_snapshot_policy_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'xs_snapshot_policy'),
+  );
+}
+

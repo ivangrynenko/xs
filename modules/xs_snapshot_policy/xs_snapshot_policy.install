@@ -1,176 +1,93 @@
 <?php
+
 /**
- * @file
- * xs_snapshot_policy module install/uninstall code.
+ * Implements hook_schema().
  */
-
 function xs_snapshot_policy_schema() {
-  $schema['xs_snapshot_policy'] = array(
-    'description' => 'The base table for the XS Snapshot Policy entity',
-    'fields' => array(
-      'id' => array(
-        'description' => 'Primary key of the XS Snapshot Policy entity',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'target_id' => array(
-        'description' => 'Node id of the VM node',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'name' => array(
-        'description' => 'XS Snapshot Policy name.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-      ),
-      'status' => array(
-        'description' => 'Boolean indicating whether the node is published (visible to non-administrators).',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-      ),
-      'created' => array(
-        'description' => 'The Unix timestamp when the node was created.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'changed' => array(
-        'description' => 'The Unix timestamp when the node was most recently saved.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'indexes' => array(
-      'nid' => array('target_id'),
-      'xs_policy_changed' => array('changed'),
-      'xs_policy_created' => array('created'),
-    ),
-    'unique keys' => array(
-      'target id' => array('target_id'),
-    ),
-    'primary key' => array('id'),
-  );
+  $schema = array();
 
-  $schema['xs_snapshot_policy_type'] = array(
-    'description' => 'Table for the XS Snapshot Policy types',
+  $schema['xs_snapshot_policy'] = array(
+    'description' => 'The base table for tasks.',
     'fields' => array(
-      'type_id' => array(
-        'description' => 'xs_snapshot_policy type ID',
+      'spid' => array(
+        'description' => 'The primary identifier for the snapshot-policy.',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'type' => array(
-        'description' => 'XS Snapshots frequency.',
-        'type' => 'text',
-        'length' => 32,
-        'not null' => FALSE,
-      ),
-    ),
-    'indexes' => array(
-      'type' => array(array('type', 5)),
-    ),
-    'primary key' => array('type_id'),
-  );
-
-  $schema['xs_snapshot_policy_id_type_id'] = array(
-    'description' => 'Linking table for the XS Snapshot Policy types',
-    'fields' => array(
-      'id' => array(
-        'description' => 'XS Snapshots policy ID.',
-        'type' => 'int',
+        'description' => 'The type (bundle) of this snapshot-policy.',
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
-        'default' => 0,
+        'default' => '',
       ),
-      'type_id' => array(
-        'description' => 'xs_snapshot_policy type ID',
-        'type' => 'int',
+      'title' => array(
+        'description' => 'The title of the snapshot-policy.',
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'indexes' => array(
-      'id_type_id' => array('type_id', 'id'),
-    ),
-    'foreign keys' => array(
-      'policy_id' => array(
-        'table' => 'xs_snapshot_policy',
-        'columns' => array('id' => 'id'),
-      ),
-      'policy_type_id' => array(
-        'table' => 'xs_snapshot_policy_type',
-        'columns' => array('type_id' => 'type_id'),
-      ),
-    ),
-    'primary key' => array('id'),
-  );
-
-  $schema['xs_snapshot_policy_uid_id'] = array(
-    'description' => 'Linking table for the XS Snapshot Policies and users',
-    'fields' => array(
-      'id' => array(
-        'description' => 'XS Snapshots policy ID.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
+        'default' => '',
       ),
       'uid' => array(
-        'description' => 'Owner uid',
+        'description' => 'ID of Drupal user creator.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the snapshot-policy was created.',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
       ),
-    ),
-    'indexes' => array(
-      'id_type_id' => array('uid', 'id'),
-    ),
-    'foreign keys' => array(
-      'policy_creator' => array(
-        'table' => 'users',
-        'columns' => array('uid' => 'uid'),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the snapshot-policy was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       ),
-      'policy_id' => array(
-        'table' => 'xs_snapshot_policy',
-        'columns' => array('id' => 'id'),
+      'description' => array(
+        'description' => 'snapshot-policy description.',
+        'type' => 'text',
       ),
     ),
+    'primary key' => array('spid'),
+  );
+
+  $schema['xs_snapshot_policy_type'] = array(
+    'description' => 'Stores information about all defined snapshot-policy types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique snapshot-policy type ID.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'description' => array(
+        'description' => 'A brief description of this type.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'medium',
+        'translatable' => TRUE,
+      ),
+    ) + entity_exportable_schema_fields(),
     'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
   );
 
   return $schema;
 }
-
-/**
- * Install xs_snapshot_policy schema and add default values.
- */
-//function xs_snapshot_policy_update_7001() {
-//  if (!db_table_exists('xs_snapshot_policy_type')) {
-//    $schema = xs_snapshot_policy_schema();
-//
-//    db_create_table('xs_snapshot_policy_type', $schema['xs_snapshot_policy_type']);
-//  }
-//
-//  if (!db_table_exists('xs_snapshot_policy')) {
-//    $schema = xs_snapshot_policy_schema();
-//
-//    db_create_table('xs_snapshot_policy', $schema['xs_snapshot_policy']);
-//  }
-//
-//  if (!db_table_exists('xs_snapshot_policy_uid_id')) {
-//    $schema = xs_snapshot_policy_schema();
-//
-//    db_create_table('xs_snapshot_policy_uid_id', $schema['xs_snapshot_policy_uid_id']);
-//  }
-//
-//  if (!db_table_exists('xs_snapshot_policy_id_type_id')) {
-//    $schema = xs_snapshot_policy_schema();
-//
-//    db_create_table('xs_snapshot_policy_id_type_id', $schema['xs_snapshot_policy_id_type_id']);
-//  }
-//}

@@ -1,8 +1,11 @@
-name = Xenserver Snapshot Policy
-description = Management of xenserver snapshot policies
-core = 7.x
+name = XenServer Snapshot Policy
+description = Manage Snapshot Automated Policies by users.
 package = XS
-version = 7.x-1.0-rc1
-dependencies[] = xs
+version = 7.x-dev
+core = 7.x
 
-files[] = includes/xs_snapshot_policy.class.php
+dependencies[] = xs
+dependencies[] = entity
+dependencies[] = views
+
+files[] = xs_snapshot_policy.controller.inc
