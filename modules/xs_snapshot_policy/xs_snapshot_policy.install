@@ -7,7 +7,7 @@ function xs_snapshot_policy_schema() {
   $schema = array();
 
   $schema['xs_snapshot_policy'] = array(
-    'description' => 'The base table for tasks.',
+    'description' => 'The base table for XenServer Snapshot Policies.',
     'fields' => array(
       'spid' => array(
         'description' => 'The primary identifier for the snapshot-policy.',
@@ -46,10 +46,6 @@ function xs_snapshot_policy_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'description' => array(
-        'description' => 'snapshot-policy description.',
-        'type' => 'text',
-      ),
     ),
     'primary key' => array('spid'),
   );
@@ -74,13 +70,6 @@ function xs_snapshot_policy_schema() {
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'description' => array(
-        'description' => 'A brief description of this type.',
-        'type' => 'text',
-        'not null' => TRUE,
-        'size' => 'medium',
-        'translatable' => TRUE,
       ),
     ) + entity_exportable_schema_fields(),
     'primary key' => array('id'),

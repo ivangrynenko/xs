@@ -5,7 +5,7 @@
  */
 function xs_snapshot_policy_views_default_views() {
   $view = new view;
-  $view->name = 'tasks';
+  $view->name = 'XenServer Snapshot Policies';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'xs_snapshot_policy';
@@ -145,7 +145,7 @@ function xs_snapshot_policy_views_default_views() {
   $handler->display->display_options['menu']['title'] = 'Tasks';
   $handler->display->display_options['menu']['weight'] = '0';
 
-  $views['tasks'] = $view;
+  $views['xenserver_snapshot_policies'] = $view;
 
   return $views;
 }

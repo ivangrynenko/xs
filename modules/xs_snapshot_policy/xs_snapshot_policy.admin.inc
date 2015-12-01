@@ -32,12 +32,6 @@ function xs_snapshot_policy_type_form($form, &$form_state, $task_type, $op = 'ed
     '#description' => t('A unique machine-readable name for this snapshot-policy type. It must only contain lowercase letters, numbers, and underscores.'),
   );
 
-  $form['description'] = array(
-    '#type' => 'textarea',
-    '#default_value' => isset($task_type->description) ? $task_type->description : '',
-    '#description' => t('Description about the snapshot-policy type.'),
-  );
-
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
@@ -138,12 +132,6 @@ function xs_snapshot_policy_form($form, &$form_state, $task) {
     '#required' => TRUE,
     '#title' => t('Name'),
     '#default_value' => $task->title,
-  );
-
-  $form['description'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Description'),
-    '#default_value' => $task->description,
   );
 
   $form['uid'] = array(

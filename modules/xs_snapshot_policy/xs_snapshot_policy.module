@@ -288,23 +288,23 @@ function xs_snapshot_policy_permission() {
       'restrict access' => TRUE,
     ),
     'create xs_snapshot_policy entities' => array(
-      'title' => t('Create tasks'),
-      'description' => t('Allows users to create tasks.'),
+      'title' => t('Create XenServer Snapshot Policies'),
+      'description' => t('Allows users to create XenServer Snapshot Policies.'),
       'restrict access' => TRUE,
     ),
     'view xs_snapshot_policy entities' => array(
-      'title' => t('View tasks'),
-      'description' => t('Allows users to view tasks.'),
+      'title' => t('View XenServer Snapshot Policies'),
+      'description' => t('Allows users to view XenServer Snapshot Policies.'),
       'restrict access' => TRUE,
     ),
     'edit any xs_snapshot_policy entities' => array(
-      'title' => t('Edit any tasks'),
-      'description' => t('Allows users to edit any tasks.'),
+      'title' => t('Edit any XenServer Snapshot Policies'),
+      'description' => t('Allows users to edit any XenServer Snapshot Policies.'),
       'restrict access' => TRUE,
     ),
     'edit own xs_snapshot_policy entities' => array(
-      'title' => t('Edit own tasks'),
-      'description' => t('Allows users to edit own tasks.'),
+      'title' => t('Edit own XenServer Snapshot Policies'),
+      'description' => t('Allows users to edit own XenServer Snapshot Policies.'),
       'restrict access' => TRUE,
     ),
   );
@@ -343,11 +343,6 @@ function xs_snapshot_policy_entity_property_info_alter(&$info) {
   );
 }
 
-
-/*******************************************************************************
- ********************************* Snapshot Policy API's **********************************
- ******************************************************************************/
-
 /**
  * Access callback for snapshot-policy.
  */
@@ -380,7 +375,7 @@ function xs_snapshot_policy_load($tkid, $reset = FALSE) {
 }
 
 /**
- * Load multiple tasks based on certain conditions.
+ * Load multiple XenServer Snapshot Policies based on certain conditions.
  */
 function xs_snapshot_policy_load_multiple($tkids = array(), $conditions = array(), $reset = FALSE) {
   return entity_load('xs_snapshot_policy', $tkids, $conditions, $reset);
@@ -401,16 +396,11 @@ function xs_snapshot_policy_delete($task) {
 }
 
 /**
- * Delete multiple tasks.
+ * Delete multiple XenServer Snapshot Policies.
  */
 function xs_snapshot_policy_delete_multiple($task_ids) {
   entity_delete_multiple('xs_snapshot_policy', $task_ids);
 }
-
-
-/*******************************************************************************
- ****************************** Snapshot Policy Type API's ********************************
- ******************************************************************************/
 
 /**
  * Access callback for snapshot-policy Type.
