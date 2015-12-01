@@ -124,22 +124,22 @@ function xs_snapshot_policy_add($type) {
 /**
  * Snapshot Policy Form.
  */
-function xs_snapshot_policy_form($form, &$form_state, $task) {
-  $form_state['snapshot-policy'] = $task;
+function xs_snapshot_policy_form($form, &$form_state, $snapshot_policy) {
+  $form_state['snapshot-policy'] = $snapshot_policy;
 
   $form['title'] = array(
     '#type' => 'textfield',
     '#required' => TRUE,
     '#title' => t('Name'),
-    '#default_value' => $task->title,
+    '#default_value' => $snapshot_policy->title,
   );
 
   $form['uid'] = array(
     '#type' => 'value',
-    '#value' => $task->uid,
+    '#value' => $snapshot_policy->uid,
   );
 
-  field_attach_form('xs_snapshot_policy', $task, $form, $form_state);
+  field_attach_form('xs_snapshot_policy', $snapshot_policy, $form, $form_state);
 
   $submit = array();
   if (!empty($form['#submit'])) {
@@ -157,8 +157,8 @@ function xs_snapshot_policy_form($form, &$form_state, $task) {
   );
 
   // Show Delete button if we edit snapshot-policy.
-  $task_id = entity_id('xs_snapshot_policy' ,$task);
-  if (!empty($task_id) && xs_snapshot_policy_access('edit', $task)) {
+  $task_id = entity_id('xs_snapshot_policy' ,$snapshot_policy);
+  if (!empty($task_id) && xs_snapshot_policy_access('edit', $snapshot_policy)) {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete'),
@@ -179,17 +179,17 @@ function xs_snapshot_policy_form_validate($form, &$form_state) {
  * Snapshot Policy submit handler.
  */
 function xs_snapshot_policy_form_submit($form, &$form_state) {
-  $task = $form_state['snapshot-policy'];
+  $snapshot_policy = $form_state['snapshot-policy'];
 
-  entity_form_submit_build_entity('xs_snapshot_policy', $task, $form, $form_state);
+  entity_form_submit_build_entity('xs_snapshot_policy', $snapshot_policy, $form, $form_state);
 
-  xs_snapshot_policy_save($task);
+  xs_snapshot_policy_save($snapshot_policy);
 
-  $snapshot_policy_uri = entity_uri('xs_snapshot_policy', $task);
+  $snapshot_policy_uri = entity_uri('xs_snapshot_policy', $snapshot_policy);
 
   $form_state['redirect'] = $snapshot_policy_uri['path'];
 
-  drupal_set_message(t('Snapshot Policy %title saved.', array('%title' => entity_label('xs_snapshot_policy', $task))));
+  drupal_set_message(t('Snapshot Policy %title saved.', array('%title' => entity_label('xs_snapshot_policy', $snapshot_policy))));
 }
 
 function xs_snapshot_policy_form_submit_delete($form, &$form_state) {
