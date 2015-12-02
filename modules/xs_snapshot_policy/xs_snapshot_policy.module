@@ -111,6 +111,9 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
   return $form;
 }
 
+/**
+ * Form validate handler.
+ */
 function xs_snapshot_policy_create_form_validate($form, &$form_state) {
   $linked_node = node_load($form_state['storage']['node_nid']);
   if (!xs_snapshot_policy_access_callback('create', $linked_node)) {
@@ -133,13 +136,10 @@ function xs_snapshot_policy_create_form_validate($form, &$form_state) {
  * Form submit handler.
  */
 function xs_snapshot_policy_create_form_submit($form, &$form_state) {
-  module_load_include('inc', 'xs_snapshot_policy', 'xs_snapshot_policy.admin');
-
   $form_state['values']['uid'] = xs_get_vps_owner_uid($form_state['storage']['linked_node']);
   $form_state['values']['target_id'] = $form_state['storage']['linked_node']->nid;
   $policy = entity_create('xs_snapshot_policy', $form_state['values']);
   $policy->save();
-//  entity_save('xs_snapshot_policy', $policy);
 
   drupal_set_message(t('Successfully added new snapshots policy !title', array('!title' => $policy->title)), 'status');
 }
@@ -431,19 +431,44 @@ function xs_snapshot_policy_access($op, $snapshot_policy, $account = NULL, $enti
 
 /**
  * Load a snapshot-policy.
+ *
+ * @param int $spid
+ *   Policy ID.
+ * @param array $conditions
+ *   An array of conditions to send to the query. Good example would be to
+ *   filter policies by user and/or node id by setting $conditions to
+ *   array('uid' => $uid, 'target_id' => $nid).
+ * @param bool $reset
+ *   TRUE to reset entity cache.
+ *
+ * @return SnapshotPolicy
+ *   Entity object.
+ *
  */
-function xs_snapshot_policy_load($type_id = NULL, $conditions = array(), $reset = FALSE) {
-  $type_ids = !empty($type_id) ? array($type_id) : FALSE;
-  $policies = xs_snapshot_policy_load_multiple($type_ids, $conditions, $reset);
+function xs_snapshot_policy_load($spid = NULL, $conditions = array(), $reset = FALSE) {
+  $spids = !empty($spid) ? array($spid) : FALSE;
+  $policies = xs_snapshot_policy_load_multiple($spids, $conditions, $reset);
 
   return reset($policies);
 }
 
 /**
  * Load multiple XenServer Snapshot Policies based on certain conditions.
+ *
+ * @param array|bool $spids
+ *   Array of Policy IDs. If omitted, all entities will be retrieved.
+ * @param array $conditions
+ *   An array of conditions to send to the query. Good example would be to
+ *   filter policies by user and/or node id by setting $conditions to
+ *   array('uid' => $uid, 'target_id' => $nid).
+ * @param bool $reset
+ *   TRUE to reset entity cache.
+ *
+ * @return SnapshotPolicy
+ *   Entity object.
  */
-function xs_snapshot_policy_load_multiple($type_ids = FALSE, $conditions = array(), $reset = FALSE) {
-  return entity_load('xs_snapshot_policy', $type_ids, $conditions, $reset);
+function xs_snapshot_policy_load_multiple($spids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('xs_snapshot_policy', $spids, $conditions, $reset);
 }
 
 /**
