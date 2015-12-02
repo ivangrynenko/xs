@@ -19,6 +19,25 @@ function xs_user_default_permissions() {
     'module' => 'xs',
   );
 
+  // Exported permission: 'administer xs_snapshot_policy types'.
+  $permissions['administer xs_snapshot_policy types'] = array(
+    'name' => 'administer xs_snapshot_policy types',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
+  );
+
+  // Exported permission: 'create xs_snapshot_policy entities'.
+  $permissions['create xs_snapshot_policy entities'] = array(
+    'name' => 'create xs_snapshot_policy entities',
+    'roles' => array(
+      'XS VPS Customer' => 'XS VPS Customer',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
+  );
+
   // Exported permission: 'create xs_vps content'.
   $permissions['create xs_vps content'] = array(
     'name' => 'create xs_vps content',
@@ -46,6 +65,15 @@ function xs_user_default_permissions() {
     'module' => 'node',
   );
 
+  // Exported permission: 'edit any xs_snapshot_policy entities'.
+  $permissions['edit any xs_snapshot_policy entities'] = array(
+    'name' => 'edit any xs_snapshot_policy entities',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
+  );
+
   // Exported permission: 'edit any xs_vps content'.
   $permissions['edit any xs_vps content'] = array(
     'name' => 'edit any xs_vps content',
@@ -53,6 +81,16 @@ function xs_user_default_permissions() {
       'administrator' => 'administrator',
     ),
     'module' => 'node',
+  );
+
+  // Exported permission: 'edit own xs_snapshot_policy entities'.
+  $permissions['edit own xs_snapshot_policy entities'] = array(
+    'name' => 'edit own xs_snapshot_policy entities',
+    'roles' => array(
+      'XS VPS Customer' => 'XS VPS Customer',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
   );
 
   // Exported permission: 'edit own xs_vps content'.
@@ -81,6 +119,16 @@ function xs_user_default_permissions() {
       'administrator' => 'administrator',
     ),
     'module' => 'xs',
+  );
+
+  // Exported permission: 'view own xs_snapshot_policy entities'.
+  $permissions['view own xs_snapshot_policy entities'] = array(
+    'name' => 'view own xs_snapshot_policy entities',
+    'roles' => array(
+      'XS VPS Customer' => 'XS VPS Customer',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
   );
 
   return $permissions;

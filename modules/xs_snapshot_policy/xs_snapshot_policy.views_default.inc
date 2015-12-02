@@ -5,11 +5,11 @@
  */
 function xs_snapshot_policy_views_default_views() {
   $view = new view;
-  $view->name = 'XenServer Snapshot Policies';
+  $view->name = 'xs_snapshot_policies';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'xs_snapshot_policy';
-  $view->human_name = 'Tasks';
+  $view->human_name = 'XenServer Snapshot Policies';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
