@@ -16,7 +16,7 @@ function xs_snapshot_policy_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Tasks';
+  $handler->display->display_options['title'] = 'Policies';
   $handler->display->display_options['access']['type'] = 'none';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
@@ -142,7 +142,7 @@ function xs_snapshot_policy_views_default_views() {
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'snapshot-policy';
   $handler->display->display_options['menu']['type'] = 'normal';
-  $handler->display->display_options['menu']['title'] = 'Tasks';
+  $handler->display->display_options['menu']['title'] = 'Policies';
   $handler->display->display_options['menu']['weight'] = '0';
 
   $views['xenserver_snapshot_policies'] = $view;
