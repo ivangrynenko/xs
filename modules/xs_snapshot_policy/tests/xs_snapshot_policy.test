@@ -1,0 +1,36 @@
+<?php
+/**
+ * @file
+ * Common test class file.
+ */
+
+/**
+ * Common Simpletest class for all xenserver tests.
+ */
+abstract class XenServerSnapshotPolicyTestCase extends XenServerTestCase {
+  /**
+   * {@inheritdoc}
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'XenServer Snapshot Policy access',
+      'description' => 'Tests users is able to only access their own snapshot policy .',
+      'group' => 'XenServer',
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp('entity', 'field_ui');
+  }
+
+  public function testUserCreatePolicyEntity() {
+    $xenserver_user = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'edit own xs_snapshot_policy entities',
+    ));
+  }
+
+}

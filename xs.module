@@ -51,6 +51,15 @@ function xs_permission() {
  * Implements hook_menu().
  */
 function xs_menu() {
+  $items = array();
+
+  $items['admin/structure/xs'] = array(
+    'title' => 'XenServer',
+    'access arguments' => array('administer xs_snapshot_policy types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   $items['admin/config/services/xs'] = array(
     'title' => 'Overview',
     'description' => 'Xenserver pool configurationand settings.',

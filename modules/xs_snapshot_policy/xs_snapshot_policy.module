@@ -113,6 +113,10 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
 
 function xs_snapshot_policy_create_form_validate($form, &$form_state) {
   $linked_node = node_load($form_state['storage']['node_nid']);
+  if (!xs_snapshot_policy_access_callback('create', $linked_node)) {
+    return form_set_error(NULL, 'Validation error. You cannot add policy for this server.');
+  }
+
   $form_state['storage']['linked_node'] = $linked_node;
   if (!xs_actions_access_callback($linked_node)) {
     drupal_set_message('Validation error. Unable to create snapshots automation policy.', 'error');
@@ -125,12 +129,17 @@ function xs_snapshot_policy_create_form_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Form submit handler.
+ */
 function xs_snapshot_policy_create_form_submit($form, &$form_state) {
   module_load_include('inc', 'xs_snapshot_policy', 'xs_snapshot_policy.admin');
 
   $form_state['values']['uid'] = xs_get_vps_owner_uid($form_state['storage']['linked_node']);
+  $form_state['values']['target_id'] = $form_state['storage']['linked_node']->nid;
   $policy = entity_create('xs_snapshot_policy', $form_state['values']);
-  entity_save('xs_snapshot_policy', $policy);
+  $policy->save();
+//  entity_save('xs_snapshot_policy', $policy);
 
   drupal_set_message(t('Successfully added new snapshots policy !title', array('!title' => $policy->title)), 'status');
 }
@@ -165,19 +174,32 @@ function xs_snapshot_policy_get_snapshot_max($nid) {
  *
  * @param int $uid
  *   Drupal user uid.
+ * @param int $nid
+ *   Parent VM Node nid.
  *
  * @return array
  *   Array of entity objects.
  */
-function xs_snapshot_policy_get_policies_per_user($uid) {
-  return xs_snapshot_policy_load_multiple(FALSE, array('uid' => $uid));
+function xs_snapshot_policy_get_policies_per_user($uid, $nid) {
+  return xs_snapshot_policy_load_multiple(FALSE, array(
+    'uid' => $uid,
+    'target_id' => $nid
+  ));
 }
 
 /**
- * Calculates the number of policies owned by a user..
+ * Calculates the number of policies owned by a user.
+ *
+ * @param int $uid
+ *   Drupal user uid.
+ * @param int $nid
+ *   Parent VM Node nid.
+ *
+ * @return int
+ *   Number of policies for the user and parent server.
  */
-function xs_snapshot_policy_get_policies_count_per_user($uid) {
-  $policies = xs_snapshot_policy_get_policies_per_user($uid);
+function xs_snapshot_policy_get_policies_count_per_user($uid, $nid) {
+  $policies = xs_snapshot_policy_get_policies_per_user($uid, $nid);
 
   return count($policies);
 }
@@ -262,13 +284,6 @@ function xs_snapshot_policy_entity_info_alter(&$entity_info) {
 function xs_snapshot_policy_menu() {
   $items = array();
 
-  $items['admin/structure/xs'] = array(
-    'title' => 'XenServer',
-    'access arguments' => array('administer xs_snapshot_policy types'),
-    'weight' => 1,
-    'type' => MENU_NORMAL_ITEM,
-  );
-
   $items['admin/structure/xs/snapshot-policy-types/%xs_snapshot_policy_type/delete'] = array(
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
@@ -284,8 +299,8 @@ function xs_snapshot_policy_menu() {
     'description' => 'Manage server automated snapshot policy',
     'page callback' => 'xs_snapshot_policy_display_callback',
     'page arguments' => array(1),
-    'access callback' => 'entity_access',
-    'access arguments' => array('create', 'xs_snapshot_policy'),
+    'access callback' => 'xs_snapshot_policy_access_callback',
+    'access arguments' => array('view', 1),
     'weight' => 65,
     'type' => MENU_LOCAL_TASK,
   );
@@ -312,9 +327,9 @@ function xs_snapshot_policy_permission() {
       'description' => t('Allows users to create XenServer Snapshot Policies.'),
       'restrict access' => TRUE,
     ),
-    'view xs_snapshot_policy entities' => array(
-      'title' => t('View XenServer Snapshot Policies'),
-      'description' => t('Allows users to view XenServer Snapshot Policies.'),
+    'view own xs_snapshot_policy entities' => array(
+      'title' => t('View own XenServer Snapshot Policies'),
+      'description' => t('Allows users to view XenServer Snapshot Policies they created.'),
       'restrict access' => TRUE,
     ),
     'edit any xs_snapshot_policy entities' => array(
@@ -363,6 +378,33 @@ function xs_snapshot_policy_entity_property_info_alter(&$info) {
 }
 
 /**
+ * Access callback for snapshot policies page.
+ *
+ * @param string $op
+ *   Type of access string, e.g. 'view'.
+ * @param object $node
+ *   Node object of the server.
+ *
+ * @return bool
+ *   TRUE for access or FALSE for no access.
+ */
+function xs_snapshot_policy_access_callback($op, $node) {
+  global $user;
+
+  switch ($op) {
+    case 'view':
+      return user_access('administer xs_snapshot_policy entities', $user)
+      || (user_access('view own xs_snapshot_policy entities', $user) && (xs_get_vps_owner_uid($node) === $user->uid));
+      break;
+
+    case 'create':
+      return user_access('administer xs_snapshot_policy entities', $user)
+      || (user_access('create xs_snapshot_policy entities', $user) && (xs_get_vps_owner_uid($node) === $user->uid));
+      break;
+  }
+}
+
+/**
  * Access callback for snapshot-policy.
  */
 function xs_snapshot_policy_access($op, $snapshot_policy, $account = NULL, $entity_type = NULL) {
@@ -375,9 +417,11 @@ function xs_snapshot_policy_access($op, $snapshot_policy, $account = NULL, $enti
     case 'create':
       return user_access('administer xs_snapshot_policy entities', $account)
       || user_access('create xs_snapshot_policy entities', $account);
+
     case 'view':
       return user_access('administer xs_snapshot_policy entities', $account)
-      || user_access('view xs_snapshot_policy entities', $account);
+      || (user_access('view own xs_snapshot_policy entities', $account) && ($snapshot_policy->uid == $account->uid));
+
     case 'edit':
       return user_access('administer xs_snapshot_policy entities')
       || user_access('edit any xs_snapshot_policy entities')

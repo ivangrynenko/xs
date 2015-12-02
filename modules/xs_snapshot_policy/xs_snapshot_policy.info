@@ -9,3 +9,7 @@ dependencies[] = entity
 dependencies[] = views
 
 files[] = xs_snapshot_policy.controller.inc
+files[] = xs_snapshot_policy.admin.inc
+files[] = xs_snapshot_policy.pages.inc
+files[] = xs_snapshot_policy.views_default.inc
+files[] = tests/xs_snapshot_policy.test
