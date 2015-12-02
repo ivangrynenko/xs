@@ -24,8 +24,7 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
 
   $variables['link'] = l('> Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
   $variables['link_url'] = url(format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
-  $variables['new_snapshot_form'] = drupal_render(drupal_get_form('xs_snapshots_create_snapshot_form', $variables['node']->nid));
-  $variables['new_snapshot_policy_form'] = drupal_render(drupal_get_form('xs_snapshots_policy_create_form', $variables['node']->nid));
+  // $variables['new_snapshot_form'] = drupal_render(drupal_get_form('xs_snapshots_create_snapshot_form', $variables['node']->nid));
 
   $snapshots_qty = count($snapshots);
   $variables['snapshots_qty'] = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');

@@ -15,8 +15,8 @@ function xs_snapshot_policy_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'type' => array(
-        'description' => 'The type (bundle) of this snapshot-policy.',
+      'type_id' => array(
+        'description' => 'The type (bundle) id of this snapshot-policy.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -53,25 +53,31 @@ function xs_snapshot_policy_schema() {
   $schema['xs_snapshot_policy_type'] = array(
     'description' => 'Stores information about all defined snapshot-policy types.',
     'fields' => array(
-      'id' => array(
-        'type' => 'serial',
-        'not null' => TRUE,
-        'description' => 'Primary Key: Unique snapshot-policy type ID.',
-      ),
-      'type' => array(
-        'description' => 'The machine-readable name of this type.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-      ),
-      'label' => array(
-        'description' => 'The human-readable name of this type.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-    ) + entity_exportable_schema_fields(),
+        'id' => array(
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => 'Primary Key: Unique snapshot-policy type ID.',
+        ),
+        'type' => array(
+          'description' => 'The machine-readable name of this type.',
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+        ),
+        'time' => array(
+          'description' => 'Time in seconds between runs.',
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+        ),
+        'label' => array(
+          'description' => 'The human-readable name of this type.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+      ) + entity_exportable_schema_fields(),
     'primary key' => array('id'),
     'unique keys' => array(
       'type' => array('type'),

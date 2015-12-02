@@ -4,6 +4,7 @@ class SnapshotPolicyController extends EntityAPIController {
 
   public function create(array $values = array()) {
     global $user;
+
     $values += array(
       'title' => '',
       'created' => REQUEST_TIME,
@@ -25,6 +26,7 @@ class SnapshotPolicyController extends EntityAPIController {
    public function create(array $values = array()) {
     $values += array(
       'label' => '',
+      'time' => '',
     );
     return parent::create($values);
   }

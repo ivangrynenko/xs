@@ -133,6 +133,7 @@ function xs_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  // @todo: Review if this is needed.
   $items['node/%node/xs-snapshots/create'] = array(
     'title' => 'Create a Snapshot of the server',
     'title callback' => 'xs_snapshots_create_snapshot_title_callback',
