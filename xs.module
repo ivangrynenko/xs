@@ -601,8 +601,9 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
     }
   }
 
-  if (user_access('perform own vm actions') && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
-    return $user->uid == $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'];
+  $owner_uid = xs_get_vps_owner_uid($node);
+  if (user_access('perform own vm actions') && !empty($owner_uid)) {
+    return $user->uid == $owner_uid;
   }
 
   return FALSE;
@@ -615,12 +616,41 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
  *   Drupal node object.
  */
 function xs_node_update($node) {
-  if ($node->type == 'xs_vps' && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+  $owner_uid = xs_get_vps_owner_uid($node);
+  if ($node->type == 'xs_vps' && !empty($owner_uid)) {
     // If teh VPS Owner field is set to specific system user, update the node
     // owner to that user.
     db_update('node')
-      ->fields(array('uid' => $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id']))
+      ->fields(array('uid' => $owner_uid))
       ->condition('nid', $node->nid)
       ->execute();
   }
+}
+
+/**
+ * Retrieves VPS node owner from a designated field.
+ *
+ * @param object $node
+ *   Drupal node object
+ *
+ * @return bool|int
+ *   Owner uid or FALSE.
+ */
+function xs_get_vps_owner_uid($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
+  try {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $uid = $node_wrapper->field_xs_vps_owner->value()->uid;
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to load server node !title. The error was: !message', array(
+      '!title' => $node->title,
+      '!message' => $e->getMessage(),
+    ), WATCHDOG_ERROR);
+  }
+
+  return !empty($uid) ? $uid : FALSE;
 }

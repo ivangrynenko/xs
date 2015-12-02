@@ -1,9 +1,11 @@
 <?php
+/**
+ * @file
+ * Administration interface functions.
+ */
 
 /**
  * Generates the snapshot-policy type editing form.
- *
- * @todo: in use.
  */
 function xs_snapshot_policy_type_form($form, &$form_state, $snapshot_policy_type, $op = 'edit') {
   if ($op == 'clone') {
@@ -63,8 +65,6 @@ function xs_snapshot_policy_type_form($form, &$form_state, $snapshot_policy_type
 
 /**
  * Submit handler for creating/editing snapshot_policy_type.
- *
- * @todo: In use.
  */
 function xs_snapshot_policy_type_form_submit(&$form, &$form_state) {
   $form_state['values']['module'] = 'xs_snapshot_policy';
@@ -78,8 +78,6 @@ function xs_snapshot_policy_type_form_submit(&$form, &$form_state) {
 
 /**
  * Deletes snapshot policy.
- *
- * @todo: In use.
  */
 function xs_snapshot_policy_type_form_submit_delete(&$form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/xs/snapshot-policy-types/' . $form_state['xs_snapshot_policy_type']->type . '/delete';
@@ -87,8 +85,6 @@ function xs_snapshot_policy_type_form_submit_delete(&$form, &$form_state) {
 
 /**
  * Snapshot Policy type delete form.
- *
- * @todo: In use.
  */
 function xs_snapshot_policy_type_form_delete_confirm($form, &$form_state, $snapshot_policy_type) {
   $form_state['snapshot_policy_type'] = $snapshot_policy_type;
@@ -108,8 +104,6 @@ function xs_snapshot_policy_type_form_delete_confirm($form, &$form_state, $snaps
 
 /**
  * Snapshot Policy type delete form submit handler.
- *
- * @todo: In use.
  */
 function xs_snapshot_policy_type_form_delete_confirm_submit($form, &$form_state) {
   $snapshot_policy_type = $form_state['snapshot_policy_type'];
@@ -125,173 +119,4 @@ function xs_snapshot_policy_type_form_delete_confirm_submit($form, &$form_state)
   )));
 
   $form_state['redirect'] = 'admin/structure/xs/snapshot-policy-types';
-}
-
-/**
- * Page to select snapshot-policy Type to add new snapshot-policy.
- *
- * @todo: NOT IN USE.
- */
-function xs_snapshot_policy_admin_add_page() {
-  $items = array();
-  foreach (xs_snapshot_policy_types() as $task_type_key => $snapshot_policy_type) {
-    $items[] = l(entity_label('xs_snapshot_policy_type', $snapshot_policy_type), 'snapshot-policy/add/' . $task_type_key);
-  }
-  return array(
-    'list' => array(
-      '#theme' => 'item_list',
-      '#items' => $items,
-      '#title' => t('Select type of snapshot-policy to create.')
-    )
-  );
-}
-
-/**
- * Add new snapshot-policy page callback.
- *
- * @todo: not in use.
- */
-function xs_snapshot_policy_add($type_id) {
-  $snapshot_policy_type = xs_snapshot_policy_types($type_id);
-
-  $task = entity_create('xs_snapshot_policy', array(
-    'type_id' => $type_id,
-    'title' => $snapshot_policy_type->title,
-    'uid' => $snapshot_policy_type->uid,
-    'created' => $snapshot_policy_type->created,
-    'changed' => $snapshot_policy_type->changed,
-  ));
-
-  //drupal_set_title(t('Create @name', array('@name' => entity_label('snapshot_policy_type', $snapshot_policy_type))));
-
-//  $output = drupal_get_form('xs_snapshot_policy_form', $task);
-//
-//  return $output;
-}
-
-/**
- * Snapshot Policy Form.
- *
- * @todo: Not In use.
- */
-function __xs_snapshot_policy_form($form, &$form_state, $snapshot_policy) {
-  $form_state['snapshot-policy'] = $snapshot_policy;
-
-  $form['title'] = array(
-    '#type' => 'textfield',
-    '#required' => TRUE,
-    '#title' => t('Name'),
-    '#default_value' => $snapshot_policy->title,
-  );
-
-//  $form['time'] = array(
-//    '#type' => 'textfield',
-//    '#required' => TRUE,
-//    '#title' => t('Time in seconds'),
-//    '#description' => t('Set the number of seconds between task runs'),
-//    '#default_value' => $snapshot_policy->time,
-//  );
-
-  $form['uid'] = array(
-    '#type' => 'value',
-    '#value' => $snapshot_policy->uid,
-  );
-
-  field_attach_form('xs_snapshot_policy', $snapshot_policy, $form, $form_state);
-
-  $submit = array();
-  if (!empty($form['#submit'])) {
-    $submit += $form['#submit'];
-  }
-
-  $form['actions'] = array(
-    '#weight' => 100,
-  );
-
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save snapshot-policy'),
-    '#submit' => $submit + array('xs_snapshot_policy_form_submit'),
-  );
-
-  // Show Delete button if we edit snapshot-policy.
-  $task_id = entity_id('xs_snapshot_policy', $snapshot_policy);
-  if (!empty($task_id) && xs_snapshot_policy_access('edit', $snapshot_policy)) {
-    $form['actions']['delete'] = array(
-      '#type' => 'submit',
-      '#value' => t('Delete'),
-      '#submit' => array('xs_snapshot_policy_form_submit_delete'),
-    );
-  }
-
-  $form['#validate'][] = 'xs_snapshot_policy_form_validate';
-
-  return $form;
-}
-
-function xs_snapshot_policy_form_validate($form, &$form_state) {
-}
-
-/**
- * Snapshot Policy submit handler.
- *
- * @todo: NOT IN USE.
- */
-function xs_snapshot_policy_form_submit($form, &$form_state) {
-  $snapshot_policy = $form_state['snapshot-policy'];
-
-  entity_form_submit_build_entity('xs_snapshot_policy', $snapshot_policy, $form, $form_state);
-
-  xs_snapshot_policy_save($snapshot_policy);
-
-  $snapshot_policy_uri = entity_uri('xs_snapshot_policy', $snapshot_policy);
-
-  $form_state['redirect'] = $snapshot_policy_uri['path'];
-
-  drupal_set_message(t('Snapshot Policy %title saved.', array('%title' => entity_label('xs_snapshot_policy', $snapshot_policy))));
-}
-
-/**
- * @todo: NOT IN USE.
- */
-function xs_snapshot_policy_form_submit_delete($form, &$form_state) {
-  $task = $form_state['snapshot-policy'];
-  $snapshot_policy_uri = entity_uri('xs_snapshot_policy', $task);
-  $form_state['redirect'] = $snapshot_policy_uri['path'] . '/delete';
-}
-
-/**
- * Delete confirmation form.
- *
- * @todo: NOT IN USE.
- */
-function xs_snapshot_policy_delete_form($form, &$form_state, $task) {
-  $form_state['snapshot-policy'] = $task;
-  // Always provide entity id in the same form key as in the entity edit form.
-  $form['task_type_id'] = array(
-    '#type' => 'value',
-    '#value' => entity_id('xs_snapshot_policy', $task)
-  );
-  $snapshot_policy_uri = entity_uri('xs_snapshot_policy', $task);
-  return confirm_form($form,
-    t('Are you sure you want to delete snapshot-policy %title?', array('%title' => entity_label('xs_snapshot_policy', $task))),
-    $snapshot_policy_uri['path'],
-    t('This action cannot be undone.'),
-    t('Delete'),
-    t('Cancel')
-  );
-}
-
-/**
- * Delete form submit handler.
- *
- * @todo: NOT IN USE.
- */
-function xs_snapshot_policy_delete_form_submit($form, &$form_state) {
-  $task = $form_state['snapshot-policy'];
-  xs_snapshot_policy_delete($task);
-
-  drupal_set_message(t('Snapshot Policy %title deleted.', array('%title' => entity_label('xs_snapshot_policy', $task))));
-
-  $form_state['redirect'] = '<front>';
 }

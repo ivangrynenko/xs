@@ -1,5 +1,6 @@
 <?php
 define('XS_SNAPSHOT_MAX_POLICIES_PER_USER', 1);
+
 /**
  * Defines drop-down select element for snapshot policies.
  *
@@ -70,6 +71,17 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
     '#required' => TRUE,
   );
 
+  $form['snapshots'] = array(
+    '#type' => 'select',
+    '#title' => t('Select max snapshots'),
+    '#options' => xs_snapshot_policy_get_snapshot_max($nid),
+    '#description' => t('Select the maximum number of snapshots to keep.
+    Once this limit is reached, snapshots will be rotated. Refer to the help text
+    at the bottom of this page to understand how manually created snapshots and
+    snapshots created by this policy are rotated.'),
+    '#required' => TRUE,
+  );
+
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -106,26 +118,68 @@ function xs_snapshot_policy_create_form_validate($form, &$form_state) {
     drupal_set_message('Validation error. Unable to create snapshots automation policy.', 'error');
     return form_set_error(NULL, 'Validation error. Unable to create snapshots automation policy.');
   }
+
+  $limit = xs_get_snapshots_limit($linked_node);
+  if ($form_state['values']['snapshots'] > $limit) {
+    form_set_error('snapshots', 'Validation error. You attempted to select the number of snapshots to keep, which is greater that allowed for your server');
+  }
 }
 
 function xs_snapshot_policy_create_form_submit($form, &$form_state) {
   module_load_include('inc', 'xs_snapshot_policy', 'xs_snapshot_policy.admin');
-  try {
-    $node_wrapper = entity_metadata_wrapper('node', $form_state['storage']['linked_node']);
-  }
-  catch (Exception $e) {
-    watchdog('XS_SNAP_POLICY', $e->getMessage(), WATCHDOG_ERROR);
-  }
 
-//  xs_snapshot_policy_add($form_state['values']['type_id']);
-
+  $form_state['values']['uid'] = xs_get_vps_owner_uid($form_state['storage']['linked_node']);
   $policy = entity_create('xs_snapshot_policy', $form_state['values']);
-  $policy->title = $form_state['values']['title'];
-  $policy->type_id = $form_state['values']['type_id'];
-  $policy->uid = $node_wrapper->field_xs_vps_owner->value();
-  $policy->created = time();
-  $policy->changed = time();
   entity_save('xs_snapshot_policy', $policy);
+
+  drupal_set_message(t('Successfully added new snapshots policy !title', array('!title' => $policy->title)), 'status');
+}
+
+/**
+ * Prepares options for the drop-down select of maximum snapshots.
+ *
+ * @param int $nid
+ *   Node id.
+ *
+ * @return array
+ *   Array of options as required for the form select element.
+ */
+function xs_snapshot_policy_get_snapshot_max($nid) {
+  module_load_include('inc', 'xs', 'includes/xs.snapshots');
+
+  $node = node_load($nid);
+  $limit = xs_get_snapshots_limit($node);
+
+  $options = array();
+  $i = 1;
+  while ($i <= $limit) {
+    $options[$i] = format_plural($i, '@count Snapshot', '@count Snapshots', array('@count' => $i));
+    $i++;
+  }
+
+  return $options;
+}
+
+/**
+ * Loads all Policies owned by a user.
+ *
+ * @param int $uid
+ *   Drupal user uid.
+ *
+ * @return array
+ *   Array of entity objects.
+ */
+function xs_snapshot_policy_get_policies_per_user($uid) {
+  return xs_snapshot_policy_load_multiple(FALSE, array('uid' => $uid));
+}
+
+/**
+ * Calculates the number of policies owned by a user..
+ */
+function xs_snapshot_policy_get_policies_count_per_user($uid) {
+  $policies = xs_snapshot_policy_get_policies_per_user($uid);
+
+  return count($policies);
 }
 
 /**
@@ -208,95 +262,12 @@ function xs_snapshot_policy_entity_info_alter(&$entity_info) {
 function xs_snapshot_policy_menu() {
   $items = array();
 
-  // @todo: Consider removing this.
-  $items['snapshot-policy/add'] = array(
-    'title' => 'Add snapshot-policy',
-    'page callback' => 'xs_snapshot_policy_admin_add_page',
-    'access arguments' => array('administer xs_snapshot_policy entities'),
-    'file' => 'xs_snapshot_policy.admin.inc',
-    'type' => MENU_LOCAL_ACTION,
-    'tab_parent' => 'snapshot-policy',
-    'tab_root' => 'snapshot-policy',
+  $items['admin/structure/xs'] = array(
+    'title' => 'XenServer',
+    'access arguments' => array('administer xs_snapshot_policy types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
   );
-
-  // @todo: Consider removing this.
-  $snapshot_policy_uri = 'snapshot-policy/%xs_snapshot_policy';
-  $snapshot_policy_uri_argument_position = 1;
-
-  // @todo: Consider removing this.
-  $items[$snapshot_policy_uri] = array(
-    'title callback' => 'entity_label',
-    'title arguments' => array(
-      'xs_snapshot_policy',
-      $snapshot_policy_uri_argument_position
-    ),
-    'page callback' => 'xs_snapshot_policy_view',
-    'page arguments' => array($snapshot_policy_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array(
-      'view',
-      'xs_snapshot_policy',
-      $snapshot_policy_uri_argument_position
-    ),
-    'file' => 'xs_snapshot_policy.pages.inc',
-  );
-
-  // @todo: Consider removing this.
-  $items[$snapshot_policy_uri . '/view'] = array(
-    'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-
-  // @todo: Consider removing this.
-  $items[$snapshot_policy_uri . '/delete'] = array(
-    'title' => 'Delete snapshot-policy',
-    'title callback' => 'xs_snapshot_policy_label',
-    'title arguments' => array($snapshot_policy_uri_argument_position),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array(
-      'xs_snapshot_policy_delete_form',
-      $snapshot_policy_uri_argument_position
-    ),
-    'access callback' => 'entity_access',
-    'access arguments' => array(
-      'edit',
-      'xs_snapshot_policy',
-      $snapshot_policy_uri_argument_position
-    ),
-    'file' => 'xs_snapshot_policy.admin.inc',
-  );
-
-  // @todo: Consider removing this.
-  $items[$snapshot_policy_uri . '/edit'] = array(
-    'title' => 'Edit',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array(
-      'xs_snapshot_policy_form',
-      $snapshot_policy_uri_argument_position
-    ),
-    'access callback' => 'entity_access',
-    'access arguments' => array(
-      'edit',
-      'xs_snapshot_policy',
-      $snapshot_policy_uri_argument_position
-    ),
-    'file' => 'xs_snapshot_policy.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-  );
-
-  // @todo: Consider removing this.
-  foreach (xs_snapshot_policy_types() as $type => $info) {
-    $items['snapshot-policy/add/' . $type] = array(
-      'title' => 'Add snapshot-policy',
-      'page callback' => 'xs_snapshot_policy_add',
-      'page arguments' => array(2),
-      'access callback' => 'entity_access',
-      'access arguments' => array('create', 'xs_snapshot_policy', $type),
-      'file' => 'xs_snapshot_policy.admin.inc',
-    );
-  }
 
   $items['admin/structure/xs/snapshot-policy-types/%xs_snapshot_policy_type/delete'] = array(
     'title' => 'Delete',
@@ -417,16 +388,18 @@ function xs_snapshot_policy_access($op, $snapshot_policy, $account = NULL, $enti
 /**
  * Load a snapshot-policy.
  */
-function xs_snapshot_policy_load($tkid, $reset = FALSE) {
-  $tasks = xs_snapshot_policy_load_multiple(array($tkid), array(), $reset);
-  return reset($tasks);
+function xs_snapshot_policy_load($type_id = NULL, $conditions = array(), $reset = FALSE) {
+  $type_ids = !empty($type_id) ? array($type_id) : FALSE;
+  $policies = xs_snapshot_policy_load_multiple($type_ids, $conditions, $reset);
+
+  return reset($policies);
 }
 
 /**
  * Load multiple XenServer Snapshot Policies based on certain conditions.
  */
-function xs_snapshot_policy_load_multiple($tkids = array(), $conditions = array(), $reset = FALSE) {
-  return entity_load('xs_snapshot_policy', $tkids, $conditions, $reset);
+function xs_snapshot_policy_load_multiple($type_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('xs_snapshot_policy', $type_ids, $conditions, $reset);
 }
 
 /**

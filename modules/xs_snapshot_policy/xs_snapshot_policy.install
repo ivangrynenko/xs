@@ -34,6 +34,11 @@ function xs_snapshot_policy_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
+      'snapshots' => array(
+        'description' => 'Maximum number of snapshots to keep for this policy.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
       'created' => array(
         'description' => 'The Unix timestamp when the snapshot-policy was created.',
         'type' => 'int',

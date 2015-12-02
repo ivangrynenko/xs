@@ -15,13 +15,19 @@
 
       <h3>Manage Automated Server Snapshots</h3>
 
-      <p>
-        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#new_snapshot_policy_form">
-          <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
-          <?php print t('Create Snapshot Policy'); ?>
-        </button>
-      </p>
-      <?php print $new_snapshot_policy_form; ?>
+      <p>Your server is limited to have
+        <strong><?php print $number_of_policies; ?></strong></p>
+      <?php if ($policies_exceeded) : ?>
+        <p>You have reached your policies limit. You can edit or delete your current policy.</p>
+      <?php else: ?>
+        <p>
+          <button type="button" class="btn btn-success" data-toggle="modal" data-target="#new_snapshot_policy_form">
+            <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
+            <?php print t('Create Snapshot Policy'); ?>
+          </button>
+        </p>
+        <?php print $new_snapshot_policy_form; ?>
+      <?php endif; ?>
 
     </div>
 
@@ -32,29 +38,18 @@
     <div class="col-md-12">
       <div class="help">
         <p>
-          Snapshots are the fastest way to backup and revert your entire server.
-          Whether you need to revert last configuration changes or had an unsuccessful
-          deployment, just select the last snapshot you created and select
-          'Revert' link from the Actions column.
+          The automated snapshots policy helps you to set your server protection
+          policy. Once you create a policy, a snapshot of your server will be
+          created accordingly.
         </p>
-
-        <p>
-          Before attempting to change server configuration, navigate to this
-          page and click the <?php print t('Create a Snapshot'); ?> button.
-          Just give it a title and click the <?php print XS_API_SNAPSHOT_CREATE_BUTTON_TITLE; ?> button.
-        </p>
-
-        <p>
-          Snapshot Actions help: To destroy a snapshot, select 'Trash' in the Actions column.<br/>
-          Destroying a snapshot has no impact on your server.<br/>
-          To revert your Server to the selected snapshot, select 'Revert'.<br/>
-          Reverting a snapshot will cause your server to be shut down, it's
-          disks to be reverted to the date and time of the snapshot creation.
-          The server will start automatically.</p>
 
         <p class="note">
-          Note! To avoid harmful actions to your server, a confirmation
-          dialogue will appear after you select an action.
+          This policy will never remove manually created snapshots. Only snapshots
+          created by this policy will be rotated. Here is how this works. Let's say
+          you create a policy for maximum of 20 snapshots, your server set to the
+          maximum of 25 snapshots and you have created 15 manual snapshots. In this
+          example, the policy you create will be able to create and rotate 5 snapshots
+          automatically.
         </p>
       </div>
     </div>
