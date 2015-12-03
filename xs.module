@@ -1,0 +1,621 @@
+<?php
+/**
+ * @file
+ * Code for the XenServer API feature.
+ */
+
+include_once 'xs.features.inc';
+
+define('XS_POWERSTATE_VM_DOWN', 'Down');
+define('XS_API_ERROR', 'API Error. Unable to get the status.');
+define('XS_API_VPS_CONTENT_TYPE', 'xs_vps');
+
+// Define xs actions.
+define('XS_API_ACTION_NOACTION', 'noaction');
+define('XS_API_ACTION_START', 'start');
+define('XS_API_ACTION_REBOOT', 'clean_reboot');
+define('XS_API_ACTION_POWEROFF', 'clean_shutdown');
+define('XS_API_ACTION_REBOOT_FORCE', 'hard_reboot');
+define('XS_API_ACTION_POWEROFF_FORCE', 'hard_shutdown');
+
+// Define snapshot related constants.
+define('XS_API_SNAPSHOT_CREATE_BUTTON_TITLE', 'Create');
+
+// Other constants definitions.
+define('XS_API_EMPTY_REF', 'OpaqueRef:NULL');
+
+/**
+ * Implements hook_permission().
+ */
+function xs_permission() {
+  return array(
+    'administer xenserver pool' => array(
+      'title' => t('Administer Xenserver Pool'),
+    ),
+    'perform own vm actions' => array(
+      'title' => t('Perform own VPS actions'),
+      'description' => 'Use to poweroff, reboot, poweron a VPS',
+    ),
+    'perform any vm actions' => array(
+      'title' => t('Perform Any VPS actions'),
+      'description' => 'Use to poweroff, reboot, poweron a VPS',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function xs_menu() {
+  $items['admin/config/services/xs'] = array(
+    'title' => 'Overview',
+    'description' => 'Xenserver pool configurationand settings.',
+    'page callback' => 'xs_settings',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+  );
+
+  $items['admin/config/services/xs/default'] = array(
+    'title' => 'Overview',
+    'description' => 'Xenserver pool configurationand settings.',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xs/settings'] = array(
+    'title' => 'Xenserver Pools',
+    'description' => 'Xenserver Pools settings.',
+    'page callback' => 'xs_admin_pool_configuration',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xs/vms'] = array(
+    'title' => 'VMs',
+    'description' => 'VMs available',
+    'page callback' => 'xs_admin_pool_vms',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+    'weight' => 50,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/config/services/xs/templates'] = array(
+    'title' => 'Templates',
+    'description' => 'Templates available',
+    'page callback' => 'xs_admin_pool_templates',
+    'access arguments' => array('administer xenserver pool'),
+    'file' => 'includes/xs.pages.inc',
+    'weight' => 50,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['node/%node/xs-actions/%'] = array(
+    'title' => 'Perform actions on virtual server',
+    'description' => 'Use to reboot the VPS gracefully',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'xs_actions_server_action_confirmation_form',
+      1,
+      3
+    ),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1),
+    'file' => 'includes/xs.actions.inc',
+    'weight' => 60,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['node/%node/xs-snapshots'] = array(
+    'title' => 'Snaphots',
+    'description' => 'Allows browsing and actions with server snapshots',
+    'page callback' => 'xs_actions_snapshots_callback',
+    'page arguments' => array(1),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1, TRUE),
+    'file' => 'includes/xs.snapshots.inc',
+    'weight' => 60,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['node/%node/xs-snapshots/%/%'] = array(
+    'title' => 'Confirm Snapshot Action',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_actions_confirm_snapshots_form', 1, 3, 4),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1, TRUE),
+    'file' => 'includes/xs.snapshots.inc',
+    'weight' => 60,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['node/%node/xs-snapshots/create'] = array(
+    'title' => 'Create a Snapshot of the server',
+    'title callback' => 'xs_snapshots_create_snapshot_title_callback',
+    'title arguments' => array(1),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xs_snapshots_create_snapshot_form', 1),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1, TRUE),
+    'file' => 'includes/xs.snapshots.inc',
+    'weight' => 60,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Menu argument loader: loads VM or snapshot reference by uuid.
+ *
+ * @param $vm_uuid
+ *   The UUID of a VPS or a Snapshot or a template.
+ *
+ * @return string
+ *   XenApi reference string of the matching UUID.
+ */
+function xs_vm_uuid_load($vm_uuid) {
+  return xs_api_get_vm_ref_by_uuid($vm_uuid);
+}
+
+/**
+ * Gets all VPS nodes for the $account.
+ *
+ * @param object $account
+ *   Drupal user object.
+ *
+ * @return bool|mixed
+ *   Array of node objects or FALSE.
+ */
+function _xs_get_user_vps($account, $limit = FALSE) {
+  $query = new EntityFieldQuery();
+  $query
+    ->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'xs_vps')
+    ->propertyCondition('status', 1)
+    ->propertyCondition('uid', $account->uid)
+    ->fieldCondition('field_xs_vps_owner', 'target_id', $account->uid)
+    ->propertyOrderBy('nid', 'ASC');
+  if ($limit) {
+    $query->range(0, $limit);
+  }
+
+  $result = $query->execute();
+
+  if (!empty($result['node'])) {
+    return $result;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Implements hook_node_load().
+ */
+function xs_node_load($nodes, $types) {
+  foreach ($nodes as $node) {
+    if ($node->type == XS_API_VPS_CONTENT_TYPE) {
+      module_load_include('inc', 'xs', 'includes/xs.actions');
+      $access = xs_actions_access_callback($node);
+      if (!$access) {
+        drupal_not_found();
+      }
+    }
+  }
+}
+
+/**
+ * Logs errors into watchdog.
+ *
+ * @param Exception $e
+ *   An exception caught.
+ */
+function xs_log($e) {
+  if ($e instanceof Exception) {
+    watchdog('XS', 'Error when attempting to get host_get_by_uuid, error: !error, file: !file, line: !line', array(
+      '!error' => $e->getMessage(),
+      '!file' => $e->getFile(),
+      '!line' => $e->getLine(),
+    ), WATCHDOG_ERROR);
+  }
+  else {
+    watchdog('XS', 'Error when attempting to get host_get_by_uuid, error: !error', array(
+      '!error' => var_export($e, TRUE),
+    ), WATCHDOG_ERROR);
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function xs_theme($existing, $type, $theme, $path) {
+  return array(
+    'node__xs_vps' => array(
+      'render element' => 'content',
+      'base hook' => 'node',
+      'template' => 'node--xs_vps',
+      'path' => drupal_get_path('module', 'xs') . '/templates',
+    ),
+
+    'xs_actions_snapshots_output' => array(
+      'template' => 'templates/xs-actions-snapshots-output',
+      'file' => 'theme/xs_theme.inc',
+      'preprocess functions' => array('xs_preproces_xs_actions_snapshots_output'),
+      'variables' => array(
+        'node' => NULL,
+      ),
+    ),
+    'xs_links_dropdown' => array(
+      'file' => 'theme/xs_theme.inc',
+      'function' => 'xs_links_dropdown_theme',
+      'variables' => array('links' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function xs_preprocess_page(&$variables) {
+  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css', array('weight' => 999));
+  drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function xs_preprocess_node(&$variables) {
+  if ($variables['node']->type == 'xs_vps') {
+    drupal_page_is_cacheable(FALSE);
+
+    drupal_set_title(t('Overview of !server', array('!server' => $variables['node']->title)));
+
+    $vm = xs_get_vm_by_node($variables['node']);
+
+    // If VM is not available, we were unable to connect to any of XS hosts.
+    // Instead of displaying the confusing content, show the status message
+    // and exit.
+    $variables['error_message'] = '';
+    if (empty($vm)) {
+      $variables['error_message'] = t('API Error. Unable to connect to the server. If this error persists, please contact our support');
+
+      return;
+    }
+
+    // VM metrics.
+    $vm_metrics = xs_api_get_vm_metrics($vm);
+
+    // Guest metrics.
+    $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
+
+    // Virtual interfaces VIF.
+    $vifs = xs_get_vifs($vm);
+
+    // VBDs.
+    $disk_size = xs_api_get_disk_space($vm['VBDs']);
+    $variables['disk_size'] = $disk_size / 1024 / 1024 / 1024;
+
+    // Get individual disk device data.
+    $variables['vbds'] = array();
+    foreach ($vm['VBDs'] as $vbd_ref) {
+      $vbd = xs_api_get_vdi_by_vbd($vbd_ref);
+      if (empty($vbd)) {
+        continue;
+      }
+      $variables['vbds'][$vbd['uuid']]['virtual_size'] = $vbd['virtual_size'] / 1024 / 1024 / 1024;
+      $variables['vbds'][$vbd['uuid']]['physical_utilisation'] = (float) number_format($vbd['physical_utilisation'] / 1024 / 1024 / 1024, 2);
+      $variables['vbds'][$vbd['uuid']]['percent_physical_utilisation'] = (float) number_format($vbd['physical_utilisation'] / $vbd['virtual_size'] * 100, 1) . '%';
+      $variables['vbds'][$vbd['uuid']]['name_label'] = $vbd['name_label'];
+      $variables['vbds'][$vbd['uuid']]['type'] = $vbd['type'];
+    }
+
+    // Add actions to the VM.
+    module_load_include('inc', 'xs', 'includes/xs.actions');
+    $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid, $vm['allowed_operations']);
+    $links = xs_actions_get_links($variables['node']->nid, $vm['allowed_operations']);
+    $variables['action_links_dropdown'] = theme('xs_links_dropdown', array(
+      'links' => $links,
+      'label' => t('Server Actions')
+    ));
+
+    $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
+    $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;
+    $variables['vm_last_shutdown_time'] = !empty($vm['other_config']['last_shutdown_time']) ? date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time'])) : XS_API_ERROR;
+    $variables['vm_nics'] = !empty($vm['VIFs']) ? count($vm['VIFs']) : XS_API_ERROR;
+
+    if (!empty($vm)) {
+      foreach ($vifs as $key => $vif) {
+        $variables['vm_vifs'][$key]['device'] = 'eth' . $vif['device'];
+        $variables['vm_vifs'][$key]['mac'] = $vif['MAC'];
+      }
+    }
+
+    $variables['vm_power_state'] = !empty($vm['power_state']) ? $vm['power_state'] : XS_API_ERROR;
+    $variables['vm_power_state_class'] = !empty($vm['power_state']) ? strtolower($vm['power_state']) : 'error';
+  }
+
+  $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
+
+  // Memory in GB.
+  $memory = $vm_metrics['memory_actual'] / 1024 / 1024 / 1024;
+  $memory = $memory > 1 ? (int) ceil($memory) : $memory;
+  $variables['vm_memory'] = $memory;
+
+  $vm_is_running = preg_match('/running/i', $vm['power_state']);
+
+  $variables['start_time'] = $vm_is_running ? date("d M Y h:iA", $vm_metrics['start_time']->timestamp) : 'Halted';
+  $time_delta = REQUEST_TIME - $vm_metrics['start_time']->timestamp;
+  $server_running_time = xs_seconds2human($time_delta);
+  $variables['server_uptime'] = $vm_is_running ? $server_running_time['days'] . ' days, ' . $server_running_time['hours'] . ' hours, ' . $server_running_time['minutes'] . ' minutes' : 'Halted';
+
+  // Operating System.
+  $variables['os']['version'] = !empty($vm_guest_metrix['os_version']['name']) ? $vm_guest_metrix['os_version']['name'] : 'N/A';
+  $variables['os']['kernel'] = !empty($vm_guest_metrix['os_version']['uname']) ? $vm_guest_metrix['os_version']['uname'] : 'N/A';
+  $variables['os']['distro'] = !empty($vm_guest_metrix['os_version']['distro']) ? $vm_guest_metrix['os_version']['distro'] : 'N/A';
+  $variables['os']['major'] = !empty($vm_guest_metrix['os_version']['major']) ? $vm_guest_metrix['os_version']['major'] : 'N/A';
+  $variables['os']['minor'] = !empty($vm_guest_metrix['os_version']['minor']) ? $vm_guest_metrix['os_version']['minor'] : 'x';
+
+  $variables['virtualization_state'] = !empty($vm_guest_metrix['PV_drivers_version']['minor']) ? $vm_guest_metrix['PV_drivers_version']['major'] . '.' . $vm_guest_metrix['PV_drivers_version']['minor'] : 'N/A';
+  $variables['virtualization_uptodate'] = empty($vm_guest_metrix['PV_drivers_up_to_date']) ? '<span class="red">' . t('Tools out of date') . '</span>' : '<span class="green">' . t('Tools up to date') . '</span>';
+
+  // Network/IP addresses.
+  if (!empty($vm_guest_metrix['networks'])) {
+    foreach ($vm_guest_metrix['networks'] as $interface => $ip_address) {
+      $interface_id = preg_replace('/[^0-9]/', '', $interface);
+      $variables['network']['ips'][$interface_id] = $ip_address ? $ip_address : 'Unconfigured';
+    }
+  }
+}
+
+/**
+ * Converts seconds into uptime-readable numbers.
+ *
+ * @param $seconds
+ *
+ * @return mixed
+ */
+function xs_seconds2human($seconds) {
+  $return['seconds'] = $seconds % 60;
+  $return['minutes'] = floor(($seconds % 3600) / 60);
+  $return['hours'] = floor(($seconds % 86400) / 3600);
+  $return['days'] = floor(($seconds % 2592000) / 86400);
+  $return['months'] = floor($seconds / 2592000);
+
+  return $return;
+}
+
+/**
+ * Get VM by UUID, stored against $node.
+ *
+ * @param object $node
+ *   Drupal node.
+ *
+ * @return bool|mixed
+ */
+function xs_get_vm_by_node($node) {
+  if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
+    drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
+
+    return FALSE;
+  }
+
+  return xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+}
+
+/**
+ * Get VM UUID from $node object.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return string|bool
+ *   UUID of the VM or FALSE.
+ */
+function xs_get_vm_uuid_by_node($node) {
+  if (!empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
+    return $node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'];
+  }
+
+  return FALSE;
+}
+
+/**
+ * Gets VIFs of a $vm via XAPI.
+ *
+ * @param array $vm
+ *   XAPI VM object.
+ *
+ * @return array
+ *   Array of XAPI VIFs arrays.
+ */
+function xs_get_vifs($vm) {
+  $vifs = array();
+  if (!empty($vm['VIFs'])) {
+    foreach ($vm['VIFs'] as $vif_ref) {
+      $vifs[] = xs_api_get_vif($vif_ref);
+    }
+  }
+
+  return $vifs;
+}
+
+/**
+ * XS Actions form builder.
+ *
+ * @todo: REMOVE.
+ */
+function xs_actions_action_form($form, &$form_state, $nid, $allowed_operations) {
+  if (!empty($nid)) {
+    $node = node_load($nid);
+  }
+
+  $form['id'] = array(
+    '#type' => 'hidden',
+    '#value' => $nid,
+  );
+
+  $form['action'] = array(
+    '#type' => 'select',
+    '#options' => array(
+      XS_API_ACTION_NOACTION => t('Select action'),
+      XS_API_ACTION_START => t('Start VPS'),
+      XS_API_ACTION_REBOOT => t('Reboot VPS'),
+      XS_API_ACTION_POWEROFF => t('Shut Down VPS'),
+      XS_API_ACTION_REBOOT_FORCE => t('Force Reboot VPS'),
+      XS_API_ACTION_POWEROFF_FORCE => t('Force Shutdown VPS'),
+    ),
+    '#default_value' => XS_API_ACTION_NOACTION,
+    '#access' => xs_actions_access_callback($node),
+  );
+
+  // Filter out VM operations that are not allowed. For example, remove 'start'
+  // operation for a VM that is in Running state.
+  foreach ($form['action']['#options'] as $key => $option) {
+    if (!in_array($key, $allowed_operations)) {
+      unset($form['action']['#options'][$key]);
+    }
+  }
+
+  array_unshift($form['action']['#options'], t('Select action'));
+
+  $form['help'] = array(
+    '#markup' => t('WARNING! NO CONFIRMATION!'),
+    '#prefix' => '<div class="label label-danger">',
+    '#suffix' => '</div>',
+  );
+
+  $form['help-more'] = array(
+    '#markup' => t('THE SELECTED ACTION WILL BE EXECUTED IMMEDIATELY UPON SUBMITTING THIS FORM!'),
+    '#prefix' => '<div class="description">',
+    '#suffix' => '</div>',
+  );
+
+  $form['help-even-more'] = array(
+    '#markup' => t('Only actions available for current power state of the server are listed.'),
+    '#prefix' => '<div class="description">',
+    '#suffix' => '</div>',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Execute'),
+    '#attributes' => array(
+      'class' => array('btn btn-default'),
+      'type' => 'button',
+    ),
+  );
+
+  $form['#validate'][] = 'xs_actions_action_form_validate';
+  $form['#submit'][] = 'xs_actions_action_form_submit';
+
+  return $form;
+}
+
+/**
+ * Form validate handler for xs_actions_action_form.
+ *
+ * @todo: REMOVE.
+ */
+function xs_actions_action_form_validate($form, &$form_state) {
+  // Extra access check.
+  $nid = arg(1);
+  $node = node_load($nid);
+  $access = xs_actions_access_callback($node);
+
+  if (!$access) {
+    form_set_error('action', t('Action validation failed, please contact support and quote error number FS-61'));
+  }
+  // End extra access check.
+
+  if ($form_state['values']['action'] == '0') {
+    return form_set_error('action', t('Select valid action, then press Execute button'));
+  }
+
+  $form_state['storage']['xs_vm_node'] = $node;
+}
+
+/**
+ * Form submit handler for xs_actions_action_form.
+ *
+ * @todo: REMOVE.
+ */
+function xs_actions_action_form_submit($form, &$form_state) {
+  // Extra access check.
+  if (empty($form_state['storage']['xs_vm_node'])) {
+    drupal_set_message('Action validation failed, please contact support and quote error number FS-72', 'error');
+    drupal_goto('node/' . arg(1));
+  }
+
+  $access = xs_actions_access_callback($form_state['storage']['xs_vm_node']);
+
+  if (!$access) {
+    drupal_set_message('Action validation failed, please contact support and quote error number FS-79', 'error');
+    drupal_goto('node/' . arg(1));
+  }
+  // End extra access check.
+
+  module_load_include('inc', 'xs', 'includes/xs.actions');
+
+  // Clear action string.
+  $action = filter_xss($form_state['values']['action']);
+  $action = check_plain($action);
+  $action = trim($action);
+
+  $form_state['redirect'] = url('node/' . $form_state['storage']['xs_vm_node']->nid . '/xs-action/' . $action);
+
+  xs_actions_action($form_state['storage']['xs_vm_node'], $action);
+}
+
+/**
+ * Access callback to perform VM actions.
+ *
+ * @param object $node
+ *   VM Node object.
+ *
+ * @return bool
+ *   TRUE for access or FALSE for no access.
+ */
+function xs_actions_access_callback($node, $snapshots = FALSE) {
+  global $user;
+
+  if (empty($node)) {
+    return FALSE;
+  }
+
+  if ($user->uid == 1 || user_access('perform any vm actions')) {
+    return TRUE;
+  }
+
+  // For snapshots page, check if snapshot limit is set. Restrict access to the
+  // snapshots tab if no snapshots allowed ($snapshots_limit = 0).
+  if ($snapshots) {
+    module_load_include('inc', 'xs', 'includes/xs.snapshots');
+    $snapshots_limit = xs_get_snapshots_limit($node);
+    if (empty($snapshots_limit)) {
+      return FALSE;
+    }
+  }
+
+  if (user_access('perform own vm actions') && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+    return $user->uid == $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'];
+  }
+
+  return FALSE;
+}
+
+/**
+ * Implements hook_node_update().
+ *
+ * @param object $node
+ *   Drupal node object.
+ */
+function xs_node_update($node) {
+  if ($node->type == 'xs_vps' && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+    // If teh VPS Owner field is set to specific system user, update the node
+    // owner to that user.
+    db_update('node')
+      ->fields(array('uid' => $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id']))
+      ->condition('nid', $node->nid)
+      ->execute();
+  }
+}
