@@ -11,41 +11,64 @@
 <section class="node node-snapshots">
   <div class="row">
 
-    <div class="col-md-12">
+    <div class="col-md-8">
 
-      <h3>Manage Automated Server Snapshots</h3>
+      <h3>Manage Automated Server Snapshot Policy</h3>
 
-      <p>Your server is limited to have
-        <strong><?php print $number_of_policies; ?></strong></p>
-      <?php if ($policies_exceeded) : ?>
-        <p>You have reached your policies limit. You can edit or delete your current policy.</p>
-      <?php else: ?>
-        <p>
-          <button type="button" class="btn btn-success" data-toggle="modal" data-target="#new_snapshot_policy_form">
-            <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
-            <?php print t('Create Snapshot Policy'); ?>
-          </button>
+
+      <?php if ($policy_name) : ?>
+        <p class="text-success">Your server is protected by
+          <strong><?php print $policy_name; ?></strong> automated snapshot policy.
         </p>
-        <?php print $new_snapshot_policy_form; ?>
+        <div>
+          <h5>Policy Details</h5>
+
+          <p>
+
+          <div>
+            Name: <?php print $policy_name; ?>
+          </div>
+          <div>
+            Type: <?php print $policy_type; ?>
+          </div>
+          <div>
+            Snapshots limit: <?php print $policy_snapshots; ?>
+          </div>
+          </p>
+        </div>
+      <?php else: ?>
+        <p class="text-danger">Your server does not have automated backups policy.</p>
       <?php endif; ?>
+
+      <p>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#snapshot_policy_form">
+          <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
+          <?php print $policy_name ? t('Edit Policy') : t('Create Policy'); ?>
+        </button>
+      </p>
+      <?php print $policy_form; ?>
 
     </div>
 
-    <div class="col-md-12">
-      <div class="help">
+    <div class="col-md-8">
+      <div>
         <p>
+        <small class="text-muted">
           The automated snapshots policy helps you to set your server protection
           policy. Once you create a policy, a snapshot of your server will be
           created accordingly.
+        </small>
         </p>
 
-        <p class="note">
+        <p>
+        <small class="text-warning">
           This policy will never remove manually created snapshots. Only snapshots
           created by this policy will be rotated. Here is how this works. Let's say
           you create a policy for maximum of 20 snapshots, your server set to the
           maximum of 25 snapshots and you have created 15 manual snapshots. In this
           example, the policy you create will be able to create and rotate 5 snapshots
           automatically.
+        </small>
         </p>
       </div>
     </div>

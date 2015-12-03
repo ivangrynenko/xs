@@ -15,9 +15,22 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
   $variables['content_attributes_array'] = array();
 
   $author_uid = xs_get_vps_owner_uid($variables['node']);
-  $policies_limit = xs_snapshot_policy_get_policies_count_per_user($author_uid, $variables['node']->nid);
-  $variables['number_of_policies'] = format_plural($policies_limit, '@count automated snapshot policy', '@count automated snapshot policies', array('@count' => $policies_limit));
-  $variables['policies_exceeded'] = $policies_limit >= XS_SNAPSHOT_MAX_POLICIES_PER_USER;
-  $new_snapshot_form = drupal_get_form('xs_snapshot_policy_create_form', $variables['node']->nid);
-  $variables['new_snapshot_policy_form'] = drupal_render($new_snapshot_form);
+  $policy = xs_snapshot_policy_get_policies_per_user($author_uid, $variables['node']->nid);
+  if (!empty($policy) && !empty($policy->title)) {
+    $variables['policy_name'] = $policy->title;
+    $variables['policy_snapshots'] = $policy->snapshots;
+    $policy_types = entity_load('xs_snapshot_policy_type', array($policy->type_id));
+    $policy_type = reset($policy_types);
+    $variables['policy_type'] = $policy_type->label;
+  }
+  else {
+    $variables['policy_name'] = '';
+    $variables['policy_snapshots'] = '';
+    $variables['policy_type'] = '';
+  }
+  $variables['policies_exceeded'] = xs_snapshot_policy_get_policies_count_per_user($author_uid, $variables['node']->nid) >= XS_SNAPSHOT_MAX_POLICIES_PER_USER;
+
+  $spid = !empty($policy->spid) ? $policy->spid : NULL;
+  $policy_form = drupal_get_form('xs_snapshot_policy_form', $variables['node']->nid, $spid);
+  $variables['policy_form'] = drupal_render($policy_form);
 }

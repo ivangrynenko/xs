@@ -12,7 +12,7 @@ function _xs_get_snapshots_policy_type() {
   $query->fields('t', array('id', 'label'));
   $result = $query->execute();
 
-  $options = array();
+  $options = array(0 => '- Select -');
   while ($row = $result->fetchAssoc()) {
     $options[$row['id']] = $row['label'];
   }
@@ -37,18 +37,24 @@ function xs_snapshot_policy_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Form definition for 'xs_snapshot_policy_create_form'.
+ * Form definition for 'xs_snapshot_policy_form'.
  */
-function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
+function xs_snapshot_policy_form($form, &$form_state, $nid, $spid = NULL) {
   $form_state['storage']['node_nid'] = $nid;
 
-  $form['#prefix'] = '<div id="new_snapshot_policy_form" class="modal fade" role="dialog" aria-labelledby="gridSystemModalLabel"><div class="modal-dialog" role="document"><div class="modal-content">';
+  $title = t('Create snapshot policy');
+  if ($spid) {
+    $policy = xs_snapshot_policy_load($spid);
+    $title = t('Edit snapshot policy');
+  }
+
+  $form['#prefix'] = '<div id="snapshot_policy_form" class="modal fade" role="dialog" aria-labelledby="gridSystemModalLabel"><div class="modal-dialog" role="document"><div class="modal-content">';
   $form['#suffix'] = '</div></div></div>';
 
   $form['header'] = array(
     '#markup' => '<div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                  <h4 class="modal-title" id="gridSystemModalLabel">Create new automated snapshots policy</h4>
+                  <h4 class="modal-title" id="gridSystemModalLabel">' . $title . '</h4>
                 </div>',
   );
 
@@ -57,29 +63,52 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
     '#title' => t('Policy name'),
     '#size' => 64,
     '#maxlength' => 64,
+    '#default_value' => !empty($policy->title) ? $policy->title : '',
     '#description' => t('Give a name, to this policy'),
     '#required' => TRUE,
-    '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12">',
-    '#suffix' => '</div></div></div>',
+    '#prefix' => '<div class="modal-body"><div class="form-group">',
+    '#suffix' => '</div></div>',
+    '#attributes' => array(
+      'classes' => array('form-control'),
+    ),
   );
 
   $form['type_id'] = array(
     '#type' => 'select',
-    '#title' => t('Select snapshots type'),
+    '#title' => t('Policy type'),
     '#options' => _xs_get_snapshots_policy_type(),
-    '#description' => t('Select how often you want snapshots to be created'),
+    '#default_value' => !empty($policy->type_id) ? $policy->type_id : '0',
+    '#description' => '<small class="text-muted">' . t('Select how often you want snapshots to be created') . '</small>',
     '#required' => TRUE,
+    '#prefix' => '<div class="modal-body"><div class="form-group">',
+    '#suffix' => '</div></div>',
+    '#attributes' => array(
+      'classes' => array('form-control'),
+    ),
   );
+
+  if ($spid) {
+    $form['spid'] = array(
+      '#type' => 'hidden',
+      '#value' => $spid,
+    );
+  }
 
   $form['snapshots'] = array(
     '#type' => 'select',
-    '#title' => t('Select max snapshots'),
+    '#title' => t('Snapshots limit'),
     '#options' => xs_snapshot_policy_get_snapshot_max($nid),
-    '#description' => t('Select the maximum number of snapshots to keep.
-    Once this limit is reached, snapshots will be rotated. Refer to the help text
-    at the bottom of this page to understand how manually created snapshots and
-    snapshots created by this policy are rotated.'),
+    '#default_value' => !empty($policy->snapshots) ? $policy->snapshots : '0',
+    '#description' => '<small class="text-muted">' . t('Select the maximum number of snapshots to keep.
+      Once this limit is reached, snapshots will be rotated. Refer to the help text
+      at the bottom of this page to understand how manually created snapshots and
+      snapshots created by this policy are rotated.') . '</small>',
     '#required' => TRUE,
+    '#prefix' => '<div class="modal-body"><div class="form-group">',
+    '#suffix' => '</div></div>',
+    '#attributes' => array(
+      'classes' => array('form-control'),
+    ),
   );
 
   $form['actions'] = array(
@@ -88,6 +117,17 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
       'class' => array('modal-footer'),
     ),
   );
+
+  if ($spid) {
+    $form['actions']['delete'] = array(
+      '#type' => 'submit',
+      '#attributes' => array(
+        'type' => 'button',
+        'class' => array('btn btn-danger'),
+      ),
+      '#value' => t('Delete'),
+    );
+  }
 
   $form['actions']['cancel'] = array(
     '#type' => 'button',
@@ -101,7 +141,7 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
 
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => XS_API_SNAPSHOT_CREATE_BUTTON_TITLE,
+    '#value' => empty($spid) ? XS_API_SNAPSHOT_CREATE_BUTTON_TITLE : t('Update'),
     '#attributes' => array(
       'type' => 'button',
       'class' => array('btn btn-primary'),
@@ -114,7 +154,7 @@ function xs_snapshot_policy_create_form($form, &$form_state, $nid) {
 /**
  * Form validate handler.
  */
-function xs_snapshot_policy_create_form_validate($form, &$form_state) {
+function xs_snapshot_policy_form_validate($form, &$form_state) {
   $linked_node = node_load($form_state['storage']['node_nid']);
   if (!xs_snapshot_policy_access_callback('create', $linked_node)) {
     return form_set_error(NULL, 'Validation error. You cannot add policy for this server.');
@@ -126,22 +166,57 @@ function xs_snapshot_policy_create_form_validate($form, &$form_state) {
     return form_set_error(NULL, 'Validation error. Unable to create snapshots automation policy.');
   }
 
+  module_load_include('inc', 'xs', 'includes/xs.snapshots');
   $limit = xs_get_snapshots_limit($linked_node);
   if ($form_state['values']['snapshots'] > $limit) {
     form_set_error('snapshots', 'Validation error. You attempted to select the number of snapshots to keep, which is greater that allowed for your server');
+  }
+
+  if ($form_state['values']['target_id'] == '0') {
+    form_set_error('snapshots', 'Validation error. Please select the policy type.');
+  }
+
+  if ($form_state['values']['snapshots'] == '0') {
+    form_set_error('snapshots', 'Validation error. Please select the number of snapshots this policy to maintain.');
   }
 }
 
 /**
  * Form submit handler.
  */
-function xs_snapshot_policy_create_form_submit($form, &$form_state) {
+function xs_snapshot_policy_form_submit($form, &$form_state) {
   $form_state['values']['uid'] = xs_get_vps_owner_uid($form_state['storage']['linked_node']);
   $form_state['values']['target_id'] = $form_state['storage']['linked_node']->nid;
-  $policy = entity_create('xs_snapshot_policy', $form_state['values']);
-  $policy->save();
 
-  drupal_set_message(t('Successfully added new snapshots policy !title', array('!title' => $policy->title)), 'status');
+  if (empty($form_state['values']['spid']) && $form_state['values']['op'] == XS_API_SNAPSHOT_CREATE_BUTTON_TITLE) {
+    // New policy. Create.
+    $policy = entity_create('xs_snapshot_policy', $form_state['values']);
+    $policy->save();
+
+    drupal_set_message(t('Successfully added new snapshots policy !title', array('!title' => $policy->title)), 'status');
+  }
+  elseif (!empty($form_state['values']['spid']) && $form_state['values']['op'] == t('Delete')) {
+    // Delete existing policy.
+    $policies = entity_load('xs_snapshot_policy', array($form_state['values']['spid']));
+    $policy = reset($policies);
+    xs_snapshot_policy_delete($policy);
+
+    drupal_set_message(t('Successfully deleted snapshots policy !title', array('!title' => $policy->title)), 'status');
+  }
+  elseif (!empty($form_state['values']['spid']) && $form_state['values']['op'] == t('Update')) {
+    // Update existing policy.
+    $policy = xs_snapshot_policy_load($form_state['values']['spid']);
+    $policy->title = $form_state['values']['title'];
+    $policy->snapshots = $form_state['values']['snapshots'];
+    $policy->type_id = $form_state['values']['type_id'];
+    // Save and go back.
+    $policy->save();
+
+    drupal_set_message(t('Successfully updated snapshots policy !title', array('!title' => $policy->title)), 'status');
+  }
+  else {
+    drupal_set_message(t('Unable to complete operation due to an error. Please contact our support.'), 'error');
+  }
 }
 
 /**
@@ -159,7 +234,7 @@ function xs_snapshot_policy_get_snapshot_max($nid) {
   $node = node_load($nid);
   $limit = xs_get_snapshots_limit($node);
 
-  $options = array();
+  $options = array(0 => '- Select -');
   $i = 1;
   while ($i <= $limit) {
     $options[$i] = format_plural($i, '@count Snapshot', '@count Snapshots', array('@count' => $i));
@@ -181,10 +256,18 @@ function xs_snapshot_policy_get_snapshot_max($nid) {
  *   Array of entity objects.
  */
 function xs_snapshot_policy_get_policies_per_user($uid, $nid) {
-  return xs_snapshot_policy_load_multiple(FALSE, array(
-    'uid' => $uid,
-    'target_id' => $nid
-  ));
+  if (XS_SNAPSHOT_MAX_POLICIES_PER_USER == 1) {
+    return xs_snapshot_policy_load(NULL, array(
+      'uid' => $uid,
+      'target_id' => $nid
+    ));
+  }
+  else {
+    return xs_snapshot_policy_load_multiple(FALSE, array(
+      'uid' => $uid,
+      'target_id' => $nid
+    ));
+  }
 }
 
 /**
@@ -295,7 +378,7 @@ function xs_snapshot_policy_menu() {
   );
 
   $items['node/%node/xs-snapshot-policy'] = array(
-    'title' => 'Automated Snaphot Policy',
+    'title' => 'Snaphot Policy',
     'description' => 'Manage server automated snapshot policy',
     'page callback' => 'xs_snapshot_policy_display_callback',
     'page arguments' => array(1),
@@ -481,15 +564,16 @@ function xs_snapshot_policy_save($snapshot_policy) {
 /**
  * Delete single snapshot-policy.
  */
-function xs_snapshot_policy_delete($task) {
-  entity_delete('xs_snapshot_policy', entity_id('xs_snapshot_policy', $task));
+function xs_snapshot_policy_delete($snapshot_policy) {
+  $entity_id = entity_id('xs_snapshot_policy', $snapshot_policy);
+  entity_delete('xs_snapshot_policy', $entity_id);
 }
 
 /**
  * Delete multiple XenServer Snapshot Policies.
  */
-function xs_snapshot_policy_delete_multiple($task_ids) {
-  entity_delete_multiple('xs_snapshot_policy', $task_ids);
+function xs_snapshot_policy_delete_multiple($snapshot_policy_ids) {
+  entity_delete_multiple('xs_snapshot_policy', $snapshot_policy_ids);
 }
 
 /**

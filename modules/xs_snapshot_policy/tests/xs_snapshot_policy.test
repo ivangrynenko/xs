@@ -51,6 +51,26 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
     $this->getWrongUser();
   }
 
+  /**
+   * Test that user owning the server node can access policy page.
+   */
+  public function testUserAccessPolicyEntity() {
+    $this->drupalLogin($this->ownerUser);
+
+    // Access the snapshot policies page as the user and ensure the form is
+    // present.
+    $this->drupalGet('node/' . $this->serverNode->nid . '/xs-snapshot-policy');
+    $this->assertResponse(200);
+    $this->assertFieldByName('title');
+    $this->assertFieldByName('type_id');
+    $this->assertFieldByName('snapshots');
+    $this->assertFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->assertFieldById('edit-cancel', t('Cancel'));
+  }
+
+  /**
+   * Test that user owning the server node can create policy.
+   */
   public function testUserCreatePolicyEntity() {
     $this->drupalLogin($this->ownerUser);
 
@@ -58,9 +78,63 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
     $edit[0]['type_id'] = 1;
     $edit[0]['snapshots'] = rand(1, 9);
 
+    // Submit the new policy form and check if this worked.
     $this->drupalPost('node/' . $this->serverNode->nid . '/xs-snapshot-policy', $edit[0], XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
     $this->assertResponse(200);
     $this->assertText(t('Successfully added new snapshots policy !title', array('!title' => $edit[0]['title'])));
+    $this->assertText(t('Your server is limited to have'));
+    $this->assertNoFieldByName('title');
+    $this->assertNoFieldByName('type_id');
+    $this->assertNoFieldByName('snapshots');
+    $this->assertNoFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->assertNoFieldById('edit-cancel', t('Cancel'));
+  }
+
+  /**
+   * Assert that wrong user cannot access somebody else's policy entity.
+   */
+  public function testWrongUserUnableAccessPolicyEntityPage() {
+    $this->drupalLogin($this->wrongUser);
+
+    // Access the snapshot policies page as the user and ensure the form is
+    // present.
+    $this->drupalGet('node/' . $this->serverNode->nid . '/xs-snapshot-policy');
+    $this->assertResponse(403);
+    $this->assertNoFieldByName('title');
+    $this->assertNoFieldByName('type_id');
+    $this->assertNoFieldByName('snapshots');
+    $this->assertNoFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->assertNoFieldById('edit-cancel', t('Cancel'));
+  }
+
+  /**
+   * Tests that non-privileged user can't access policy type add/delete pages.
+   */
+  public function testNonAdminUserCannotDeletePolicyType() {
+    $this->drupalGet('admin/structure/xs/snapshot-policy-types/add');
+    $this->verbose($this->drupalGetContent());
+    $this->assertResponse(403);
+
+    $i = 0;
+    while ($i < 3) {
+      $edit[$i]['label'] = $this->randomName();
+      $edit[$i]['time'] = rand(1, 10) * 3600;
+      $edit[$i]['type'] = strtolower($edit[$i]['label']);
+
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $edit[$i]['type'] . '/delete');
+      $this->verbose($this->drupalGetContent());
+      $this->assertResponse(403);
+
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $edit[$i]['type'] . '/edit');
+      $this->verbose($this->drupalGetContent());
+      $this->assertResponse(403);
+
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $edit[$i]['type'] . '/clone');
+      $this->verbose($this->drupalGetContent());
+      $this->assertResponse(403);
+
+      $i++;
+    }
   }
 
   /**
@@ -103,7 +177,7 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
 
     $this->serverNode = $this->drupalCreateNode(array(
       'type' => XS_API_VPS_CONTENT_TYPE,
-      'field_xs_vps_owner' => array(LANGUAGE_NONE =>array(array('target_id' => $this->ownerUser->uid))),
+      'field_xs_vps_owner' => array(LANGUAGE_NONE => array(array('target_id' => $this->ownerUser->uid))),
     ));
   }
 
