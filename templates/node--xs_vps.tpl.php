@@ -113,15 +113,13 @@
         <?php print render($content); ?>
 
 
-        <div class="col-md-4">
-          <h3>Server Actions</h3>
-
+        <div class="col-md-12 align-right">
           <div>
-            <?php print render($actions_form); ?>
+            <?php print $action_links_dropdown; ?>
           </div>
         </div>
 
-        <div class="col-md-8">
+        <div class="col-md-6">
           <h3>Server Status</h3>
 
           <section class="xs-vm-section">
@@ -154,7 +152,7 @@
 
           </section>
         </div>
-        <div class="col-md-12">
+        <div class="col-md-6">
           <h3>Server Configuration</h3>
           <section class="xs-vm-section">
             <div class="xs-vm-row">
@@ -164,7 +162,7 @@
                 <ol>
                   <?php foreach ($vm_vifs as $delta => $vif) : ?>
                     <li>
-                      <label class="display-inline"><?php print $vif['device']; ?></label>: <?php if (!empty($network['ips'])) : ?><?php print !empty($network['ips'][$delta]) ? 'IPv4: ' . $network['ips'][$delta] : 'Unconfigured'; ?><?php endif; ?> (MAC: <?php print $vif['mac']; ?>)
+                      <label class="display-inline"><?php print $vif['device']; ?></label>: <?php if (!empty($network['ips'])) : ?><?php print !empty($network['ips'][$delta]) ? 'IPv4: <span class="xs-vm-tag">' . $network['ips'][$delta] . '</span>' : 'Unconfigured'; ?><?php endif; ?> MAC: <span class="xs-vm-tag"><?php print $vif['mac']; ?></span>
                     </li>
                   <?php endforeach; ?>
                 </ol>
@@ -177,7 +175,7 @@
               <?php foreach ($vbds as $uuid => $vbd) : ?>
                 <ol>
                   <li>
-                    <label class="display-inline"><?php print $vbd['name_label']; ?> (<?php print $vbd['type']; ?>)</label>: Size <?php print $vbd['virtual_size']; ?> GB (Currently used <?php print $vbd['percent_physical_utilisation']; ?> or <?php print $vbd['physical_utilisation']; ?> GB)
+                    <label class="display-inline"><?php print $vbd['name_label']; ?> (<?php print $vbd['type']; ?>)</label>: Size <span class="xs-vm-tag"><?php print $vbd['virtual_size']; ?> GB</span> <br />Current utilisation: <?php print $vbd['percent_physical_utilisation']; ?> or <?php print $vbd['physical_utilisation']; ?> GB
                   </li>
                 </ol>
                 </div>
