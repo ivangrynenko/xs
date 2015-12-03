@@ -17,27 +17,26 @@
 
 
       <?php if ($policy_name) : ?>
-        <p class="text-success">Your server is protected by
-          <strong><?php print $policy_name; ?></strong> automated snapshot policy.
+        <p class="text-success">
+          Your server is protected!
         </p>
         <div>
           <h5>Policy Details</h5>
 
           <p>
-
-          <div>
-            Name: <?php print $policy_name; ?>
-          </div>
-          <div>
-            Type: <?php print $policy_type; ?>
-          </div>
-          <div>
-            Snapshots limit: <?php print $policy_snapshots; ?>
-          </div>
+            <div>
+              Name: <?php print $policy_name; ?>
+            </div>
+            <div>
+              Type: <?php print $policy_type; ?>
+            </div>
+            <div>
+              Snapshots limit: <?php print $policy_snapshots; ?>
+            </div>
           </p>
         </div>
       <?php else: ?>
-        <p class="text-danger">Your server does not have automated backups policy.</p>
+        <p class="text-danger">Your server is not protected by an automated snapshots policy!</p>
       <?php endif; ?>
 
       <p>
@@ -53,22 +52,22 @@
     <div class="col-md-8">
       <div>
         <p>
-        <small class="text-muted">
-          The automated snapshots policy helps you to set your server protection
-          policy. Once you create a policy, a snapshot of your server will be
-          created accordingly.
-        </small>
+          <small class="text-muted">
+            The automated snapshots policy helps you to set your server protection
+            policy. Once you create a policy, a snapshot of your server will be
+            created accordingly.
+          </small>
         </p>
 
         <p>
-        <small class="text-warning">
-          This policy will never remove manually created snapshots. Only snapshots
-          created by this policy will be rotated. Here is how this works. Let's say
-          you create a policy for maximum of 20 snapshots, your server set to the
-          maximum of 25 snapshots and you have created 15 manual snapshots. In this
-          example, the policy you create will be able to create and rotate 5 snapshots
-          automatically.
-        </small>
+          <small class="text-warning">
+            This policy will never remove manually created snapshots. Only snapshots
+            created by this policy will be rotated. Here is how this works. Let's say
+            you create a policy for maximum of 20 snapshots, your server set to the
+            maximum of 25 snapshots and you have created 15 manual snapshots. In this
+            example, the policy you create will be able to create and rotate 5 snapshots
+            automatically.
+          </small>
         </p>
       </div>
     </div>

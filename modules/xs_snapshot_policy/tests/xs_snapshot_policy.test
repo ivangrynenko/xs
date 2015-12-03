@@ -60,11 +60,13 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
     // Access the snapshot policies page as the user and ensure the form is
     // present.
     $this->drupalGet('node/' . $this->serverNode->nid . '/xs-snapshot-policy');
+    $this->verbose($this->drupalGetContent());
     $this->assertResponse(200);
     $this->assertFieldByName('title');
     $this->assertFieldByName('type_id');
     $this->assertFieldByName('snapshots');
     $this->assertFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->assertFieldById('edit-delete', t('Delete'));
     $this->assertFieldById('edit-cancel', t('Cancel'));
   }
 
@@ -80,14 +82,16 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
 
     // Submit the new policy form and check if this worked.
     $this->drupalPost('node/' . $this->serverNode->nid . '/xs-snapshot-policy', $edit[0], XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->verbose($this->drupalGetContent());
     $this->assertResponse(200);
     $this->assertText(t('Successfully added new snapshots policy !title', array('!title' => $edit[0]['title'])));
-    $this->assertText(t('Your server is limited to have'));
-    $this->assertNoFieldByName('title');
-    $this->assertNoFieldByName('type_id');
-    $this->assertNoFieldByName('snapshots');
-    $this->assertNoFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
-    $this->assertNoFieldById('edit-cancel', t('Cancel'));
+    $this->assertText(t('Your server is protected'));
+    $this->assertFieldByName('title');
+    $this->assertFieldByName('type_id');
+    $this->assertFieldByName('snapshots');
+    $this->assertFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->assertFieldById('edit-delete', t('Delete'));
+    $this->assertFieldById('edit-cancel', t('Cancel'));
   }
 
   /**
@@ -99,6 +103,7 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
     // Access the snapshot policies page as the user and ensure the form is
     // present.
     $this->drupalGet('node/' . $this->serverNode->nid . '/xs-snapshot-policy');
+    $this->verbose($this->drupalGetContent());
     $this->assertResponse(403);
     $this->assertNoFieldByName('title');
     $this->assertNoFieldByName('type_id');
@@ -111,6 +116,7 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
    * Tests that non-privileged user can't access policy type add/delete pages.
    */
   public function testNonAdminUserCannotDeletePolicyType() {
+    $this->drupalLogin($this->ownerUser);
     $this->drupalGet('admin/structure/xs/snapshot-policy-types/add');
     $this->verbose($this->drupalGetContent());
     $this->assertResponse(403);

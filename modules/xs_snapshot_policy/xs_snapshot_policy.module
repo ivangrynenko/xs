@@ -172,7 +172,7 @@ function xs_snapshot_policy_form_validate($form, &$form_state) {
     form_set_error('snapshots', 'Validation error. You attempted to select the number of snapshots to keep, which is greater that allowed for your server');
   }
 
-  if ($form_state['values']['target_id'] == '0') {
+  if ($form_state['values']['type_id'] == '0') {
     form_set_error('snapshots', 'Validation error. Please select the policy type.');
   }
 
