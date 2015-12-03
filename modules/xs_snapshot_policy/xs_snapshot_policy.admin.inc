@@ -47,7 +47,7 @@ function xs_snapshot_policy_type_form($form, &$form_state, $snapshot_policy_type
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Save snapshot-policy type'),
+    '#value' => t('Save'),
     '#weight' => 40,
   );
 
@@ -60,6 +60,7 @@ function xs_snapshot_policy_type_form($form, &$form_state, $snapshot_policy_type
       '#submit' => array('xs_snapshot_policy_type_form_submit_delete')
     );
   }
+
   return $form;
 }
 

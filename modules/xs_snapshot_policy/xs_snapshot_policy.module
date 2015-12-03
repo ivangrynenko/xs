@@ -220,7 +220,7 @@ function xs_snapshot_policy_entity_info() {
         'bundle' => 'type_id',
       ),
       'bundle keys' => array(
-        'bundle' => 'type_id',
+        'bundle' => 'id',
       ),
       'bundles' => array(),
       'load hook' => 'xs_snapshot_policy_load',

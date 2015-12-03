@@ -32,10 +32,6 @@
     </div>
 
     <div class="col-md-12">
-      <?php print $snapshots_table; ?>
-    </div>
-
-    <div class="col-md-12">
       <div class="help">
         <p>
           The automated snapshots policy helps you to set your server protection

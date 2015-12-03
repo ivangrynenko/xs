@@ -11,13 +11,11 @@ abstract class XenServerTestCase extends DrupalWebTestCase {
   /**
    * The administrative user to use for tests.
    */
-  protected $adminUser;
 
   /**
    * {@inheritdoc}
    */
   protected function setUp() {
-    parent::setUp('entity', 'field_ui');
-    $this->adminUser = $this->drupalCreateUser(array('administer xenserver pool', 'administer permissions', 'administer users'));
+    parent::setUp();
   }
 }
