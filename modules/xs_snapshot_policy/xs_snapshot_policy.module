@@ -2,6 +2,36 @@
 define('XS_SNAPSHOT_MAX_POLICIES_PER_USER', 1);
 
 /**
+ * Implements hook_cron().
+ */
+function xs_snapshot_policy_cron() {
+  $policies = entity_load('xs_snapshot_policy');
+  $policy_types = entity_load('xs_snapshot_policy_type');
+
+  if (empty($policies) || empty($policy_types)) {
+    return;
+  }
+
+  foreach ($policies as $policy) {
+    $interval = $policy_types[$policy->type_id]->time;
+    if ((REQUEST_TIME - $policy->last_run) > $interval - 600) {
+      $vm_node = node_load($policy->target_id);
+      $uuid = xs_get_vm_uuid_by_node($vm_node);
+      $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
+      $snapshot_title = '[auto]-' . date(DATE_ISO8601, REQUEST_TIME) . '-' . $policy->title;
+      // Check if the policy maximum snapshots could be satisfied.
+      $snapshots = xs_get_vm_snapshots_from_node($vm_node);
+      try {
+        xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
+        // @todo: Add snapshot creation SUCCESS log row.
+      }
+      catch (Exception $e) {
+        // @todo: Add snapshot creation FAIL log row.
+      }
+    }
+  }
+}
+/**
  * Defines drop-down select element for snapshot policies.
  *
  * @return array

@@ -31,6 +31,11 @@ function xs_actions_snapshots_callback($node) {
  *   Array of fully loaded shapshot arrays, keyed by snapshot reference.
  */
 function xs_get_vm_snapshots($vm) {
+  $full_snapshots = &drupal_static(__FUNCTION__ . $vm['uuid']);
+  if (!empty($full_snapshots)) {
+    return $full_snapshots;
+  }
+
   $full_snapshots = array();
   if (!empty($vm['snapshots'])) {
     foreach ($vm['snapshots'] as $snapshot_ref) {
@@ -214,7 +219,12 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   $vm_uuid = xs_get_vm_uuid_by_node($form_state['storage']['xs_snapshot_create']['node']);
   $vm_ref = xs_api_get_vm_ref_by_uuid($vm_uuid);
 
-  xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
+  try {
+    xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
+  }
+  catch (Exception $e) {
+    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
+  }
 
   $form_state['redirect'] = 'node/' . $form_state['storage']['xs_snapshot_create']['node']->nid . '/xs-snapshots';
 }
@@ -228,7 +238,12 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
  *   Title of the snapshot.
  */
 function xs_snapshot_create_snapshot($vm_ref, $title) {
-  return xs_api_create_snapshot($vm_ref, $title);
+  try {
+    xs_api_create_snapshot($vm_ref, $title);
+  }
+  catch (Exception $e) {
+    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
+  }
 }
 
 /**

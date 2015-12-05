@@ -56,6 +56,12 @@ function xs_snapshot_policy_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'last_run' => array(
+        'description' => 'The Unix timestamp of the last time this policy was executed.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'indexes' => array(
       'policy_changed'        => array('changed'),

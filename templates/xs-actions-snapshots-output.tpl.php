@@ -53,14 +53,6 @@
           </p>
           <?php print $new_snapshot_form; ?>
 
-          <p>
-            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#new_snapshot_policy_form">
-              <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
-              <?php print t('Create Snapshot Policy'); ?>
-            </button>
-          </p>
-          <?php print $new_snapshot_policy_form; ?>
-
         </div>
 
         <div class="col-md-12">
