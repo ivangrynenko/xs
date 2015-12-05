@@ -90,7 +90,7 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
       $i,
       '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . $snapshot_date->format("d M Y h:i:sA"),
       $snapshot['name_label'],
-      $is_current_state ? '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span> ' : '',
+      $is_current_state ? '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>' : '',
       theme('xs_links_dropdown', array('links' => $links, 'label' => t('Actions'))),
     );
     $i++;

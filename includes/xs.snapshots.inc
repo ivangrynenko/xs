@@ -388,7 +388,12 @@ function xs_actions_snapshot_destroy($snapshot_ref) {
   $snapshot = xs_api_get_snapshot_by_ref($snapshot_ref);
   xs_action_snapshot_vbd_destroy($snapshot);
 
-  return xs_api_destroy_snapshot($snapshot_ref);
+  try {
+    return xs_api_destroy_snapshot($snapshot_ref);
+  }
+  catch (Exception $e) {
+    throw new Exception($e->getMessage());
+  }
 }
 
 /**

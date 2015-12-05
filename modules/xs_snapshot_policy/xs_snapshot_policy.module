@@ -12,6 +12,8 @@ function xs_snapshot_policy_cron() {
     return;
   }
 
+  module_load_include('inc', 'xs', 'includes/xs.snapshots');
+
   foreach ($policies as $policy) {
     $interval = $policy_types[$policy->type_id]->time;
     if ((REQUEST_TIME - $policy->last_run) > $interval - 600) {
@@ -20,13 +22,41 @@ function xs_snapshot_policy_cron() {
       $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
       $snapshot_title = '[auto]-' . date(DATE_ISO8601, REQUEST_TIME) . '-' . $policy->title;
       // Check if the policy maximum snapshots could be satisfied.
-      $snapshots = xs_get_vm_snapshots_from_node($vm_node);
+
+      // Load all snapshots for the VM.
+      $server_snapshots = xs_get_vm_snapshots_from_node($vm_node);
+      // Count the number of VMs for the VM.
+      $server_snapshots_count = count($server_snapshots);
+      // Get the limit of snapshots allowed for the VM.
+      $server_snapshots_limit = xs_get_snapshots_limit($vm_node);
+      if ($server_snapshots_count >= $policy->snapshots) {
+        // @todo: Write log entry about it.
+        $snapshots_number_to_delete = $server_snapshots_count - $policy->snapshots + 1;
+        xs_snapshot_policy_delete_last_snapshots($server_snapshots, $snapshots_number_to_delete);
+      }
       try {
         xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
         // @todo: Add snapshot creation SUCCESS log row.
       }
       catch (Exception $e) {
         // @todo: Add snapshot creation FAIL log row.
+      }
+    }
+  }
+}
+
+function xs_snapshot_policy_delete_last_snapshots($server_snapshots, $n) {
+  // Reorder snapshots by created timestamp, oldest snapshots go first.
+  $server_snapshots = xs_snapshots_reorder($server_snapshots, TRUE);
+
+  $snapshots_to_delete = array_slice($server_snapshots, 0, $n, TRUE);
+  if (!empty($snapshots_to_delete)) {
+    foreach ($snapshots_to_delete as $snapshot) {
+      try {
+        xs_actions_snapshot_destroy($snapshot['ref']);
+      }
+      catch (Exception $e) {
+        watchdog('XS_SNAPSHOT_POLICY', 'Unable to delete snapshot !title', array('!title' => $snapshot['name_label']), WATCHDOG_ERROR);
       }
     }
   }

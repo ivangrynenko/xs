@@ -270,14 +270,6 @@ function xs_theme($existing, $type, $theme, $path) {
 /**
  * Implements hook_preprocess_HOOK().
  */
-function xs_preprocess_page(&$variables) {
-  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css', array('weight' => 999));
-  drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
 function xs_preprocess_node(&$variables) {
   if ($variables['node']->type == 'xs_vps') {
     drupal_page_is_cacheable(FALSE);
@@ -603,6 +595,7 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
   // For snapshots page, check if snapshot limit is set. Restrict access to the
   // snapshots tab if no snapshots allowed ($snapshots_limit = 0).
   if ($snapshots) {
+    module_load_include('inc', 'xs', 'includes/xs.snapshots');
     $snapshots_limit = xs_get_snapshots_limit($node);
     if (empty($snapshots_limit)) {
       return FALSE;
