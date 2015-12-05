@@ -56,6 +56,9 @@
         </div>
 
         <div class="col-md-12">
+          <p>
+            Showing the most resent snapshot at the top of the table. Snapshots are ordered by created date in descending order.
+          </p>
           <?php print $snapshots_table; ?>
         </div>
 

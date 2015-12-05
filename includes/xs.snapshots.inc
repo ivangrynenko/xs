@@ -53,11 +53,13 @@ function xs_get_vm_snapshots($vm) {
  *
  * @param array $snapshots
  *   Array of loaded snapshot objects.
+ * @param bool $ascending
+ *   Whether to sort ascending (TRUE).
  *
  * @return array
  *   Reordered snapshots.
  */
-function xs_snapshots_reorder($snapshots) {
+function xs_snapshots_reorder($snapshots, $ascending = FALSE) {
   if (empty($snapshots)) {
     return $snapshots;
   };
@@ -69,7 +71,13 @@ function xs_snapshots_reorder($snapshots) {
     $remapped_snapshots[$snapshot['snapshot_time']->timestamp] = $snapshot;
   }
 
-  ksort($remapped_snapshots);
+  if ($ascending) {
+    ksort($remapped_snapshots, SORT_STRING);
+  }
+  else {
+    krsort($remapped_snapshots, SORT_STRING);
+  }
+
 
   foreach ($remapped_snapshots as $snapshot) {
     $ordered_snapshots[$snapshot['ref']] = $snapshot;

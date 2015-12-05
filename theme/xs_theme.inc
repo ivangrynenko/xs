@@ -24,7 +24,7 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
 
   $variables['link'] = l('> Create new snapshot', format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
   $variables['link_url'] = url(format_string('node/!nid/xs-snapshots/create', array('!nid' => $variables['node']->nid)));
-  // $variables['new_snapshot_form'] = drupal_render(drupal_get_form('xs_snapshots_create_snapshot_form', $variables['node']->nid));
+  $variables['new_snapshot_form'] = drupal_render(drupal_get_form('xs_snapshots_create_snapshot_form', $variables['node']->nid));
 
   $snapshots_qty = count($snapshots);
   $variables['snapshots_qty'] = format_plural($snapshots_qty, '@count snapshot', '@count snapshots');
@@ -53,13 +53,17 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
  *   Exception.
  */
 function xs_snapshots_page_output_render($snapshots, $node, $vm) {
+  global $user;
+
   drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
+
+  $date_timezone = new DateTimeZone($user->timezone);
 
   $headers = array (
     '#',
     'Snapshot date',
     'Name',
-    'State',
+    'Last',
     'Actions',
   );
 
@@ -68,6 +72,8 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
   $i = 1;
   foreach ($snapshots as $snap_ref => $snapshot) {
+    $snapshot_date = new DateTime($snapshot['snapshot_time']->scalar, $date_timezone);
+
     $is_current_state = $vm['parent'] == $snap_ref;
 
     // Detect if any snapshot is the parent of current server state.
@@ -77,14 +83,14 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
     // Prepare actions link.
     $links = array();
-    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> ' . l('Trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l('Revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> ' . l('Delete', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l('Revert to', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
 
     $rows[] = array(
       $i,
-      '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
+      '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . $snapshot_date->format("d M Y h:i:sA"),
       $snapshot['name_label'],
-      $is_current_state ? t('Last reverted to') : '',
+      $is_current_state ? '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span> ' : '',
       theme('xs_links_dropdown', array('links' => $links, 'label' => t('Actions'))),
     );
     $i++;
