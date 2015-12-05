@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function xs_snapshot_policy_schema() {
+  $schema = array();
+
+  $schema['xs_snapshot_policy'] = array(
+    'description' => 'The base table for XenServer Snapshot Policies.',
+    'fields' => array(
+      'spid' => array(
+        'description' => 'The primary identifier for the snapshot-policy.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type_id' => array(
+        'description' => 'The type (bundle) id of this snapshot-policy.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'description' => 'The title of the snapshot-policy.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'description' => 'ID of Drupal user creator.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'target_id' => array(
+        'description' => 'Node ID of the server the policy is for.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'snapshots' => array(
+        'description' => 'Maximum number of snapshots to keep for this policy.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the snapshot-policy was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the snapshot-policy was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'policy_changed'        => array('changed'),
+      'policy_created'        => array('created'),
+      'policy_type_target_node'    => array('target_id', 'type_id'),
+      'uid'                 => array('uid'),
+      'type_id'                => array('type_id'),
+    ),
+    'unique keys' => array(
+      'target_id' => array('target_id'),
+    ),
+    'foreign keys' => array(
+      'server_nid' => array(
+        'table' => 'node',
+        'columns' => array('target_id' => 'nid'),
+      ),
+      'policy_author' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+      'policy_id' => array(
+        'table' => 'xs_snapshot_policy_type',
+        'columns' => array('type_id' => 'id'),
+      ),
+    ),
+    'primary key' => array('spid'),
+  );
+
+  $schema['xs_snapshot_policy_type'] = array(
+    'description' => 'Stores information about all defined snapshot-policy types.',
+    'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => 'Primary Key: Unique snapshot-policy type ID.',
+        ),
+        'type' => array(
+          'description' => 'The machine-readable name of this type.',
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+        ),
+        'time' => array(
+          'description' => 'Time in seconds between runs.',
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+        ),
+        'label' => array(
+          'description' => 'The human-readable name of this type.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+      ) + entity_exportable_schema_fields(),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
