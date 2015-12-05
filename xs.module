@@ -6,6 +6,7 @@
 
 include_once 'xs.features.inc';
 
+define('XS_DATE_FORMAT', 'd M Y h:i:sA');
 define('XS_POWERSTATE_VM_DOWN', 'Down');
 define('XS_API_ERROR', 'API Error. Unable to get the status.');
 define('XS_API_VPS_CONTENT_TYPE', 'xs_vps');
@@ -263,6 +264,11 @@ function xs_theme($existing, $type, $theme, $path) {
       'file' => 'theme/xs_theme.inc',
       'function' => 'xs_links_dropdown_theme',
       'variables' => array('links' => NULL),
+    ),
+    'xs_snapshot_title_cell_theme' => array(
+      'file' => 'theme/xs_theme.inc',
+      'function' => 'xs_snapshot_title_cell_theme',
+      'variables' => array('snapshot' => NULL),
     ),
   );
 }

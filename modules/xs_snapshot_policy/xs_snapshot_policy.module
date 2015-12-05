@@ -21,7 +21,7 @@ function xs_snapshot_policy_cron() {
       $vm_node = node_load($policy->target_id);
       $uuid = xs_get_vm_uuid_by_node($vm_node);
       $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
-      $snapshot_title = '[auto-' . $policy->spid . ']-["' . $policy->title . '"]-' . date(DATE_ISO8601, REQUEST_TIME) . '.snap';
+      $snapshot_title = '[auto]-("' . $policy->title . '")-' . '.snap';
       // Check if the policy maximum snapshots could be satisfied.
 
       // Load all snapshots for the VM.
@@ -33,7 +33,7 @@ function xs_snapshot_policy_cron() {
       if ($server_snapshots_count >= $policy->snapshots) {
         foreach ($server_snapshots as $server_snapshot) {
           // We only delete snapshots created by this policy.
-          if (!strstr($server_snapshot['name_label'], '[auto-' . $policy->spid . ']-')) {
+          if (!xs_snapshot_policy_is_automated_snapshot($server_snapshot, $policy)) {
             // Skip manual snapshots.
             continue;
           }
@@ -45,7 +45,8 @@ function xs_snapshot_policy_cron() {
             '!policy_title' => $policy->title,
             '!policy_limit' => $policy->snapshots,
             '!server_snapshots' => $server_snapshots_count,
-          )));
+          )),
+          'policy-remove');
 
           xs_snapshot_policy_delete_last_snapshots($server_snapshots, $snapshots_number_to_delete);
         }
@@ -55,21 +56,39 @@ function xs_snapshot_policy_cron() {
         xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot !snap_name for !policy_title', array(
           '!snap_name' => $snapshot_title,
           '!policy_title' => $policy->title,
-        )));
+        )), 'policy-create');
       }
       catch (Exception $e) {
-        xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot !snap_name for !policy_title', array(
+        xs_snapshot_policy_log_write($policy->spid, t('Snapshot !snap_name failed for !policy_title', array(
           '!snap_name' => $snapshot_title,
           '!policy_title' => $policy->title,
-        )));
+        )), 'policy-fail');
         watchdog('XS_SNAPTHOS_POLICY', 'Failed to create new snapshot for !vm_name', array('!vm_name' => $vm_node->title), WATCHDOG_ERROR);
       }
     }
     // Update last_run flag.
     $policy->last_run = REQUEST_TIME;
     $policy->save();
-    xs_snapshot_policy_log_write($policy->type_id, t('Run !policy_name complete', array('!policy_name' => $policy->title)));
   }
+}
+
+/**
+ * Checks if the snapshot is automatically created by a policy.
+ *
+ * @param array $server_snapshot
+ *   Snapshot object from XenApi.
+ *
+ * @return bool
+ *   TRUE if automated snapshot, or FALSE.
+ */
+function xs_snapshot_policy_is_automated_snapshot($server_snapshot) {
+  $label = '[auto]';
+  $length = strlen($label);
+  if (substr($server_snapshot['name_label'], 0, $length) == $label) {
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 /**
@@ -155,6 +174,13 @@ function xs_snapshot_policy_theme($existing, $type, $theme, $path) {
       'template' => 'templates/xs-snapshot-policy-output',
       'file' => 'theme/xs_snapshot_policy.theme.inc',
       'preprocess functions' => array('xs_snapshot_policy_output_preprocess'),
+      'variables' => array(
+        'node' => NULL,
+      ),
+    ),
+    'xs_snapshot_policy_log' => array(
+      'file' => 'theme/xs_snapshot_policy.theme.inc',
+      'function' => 'xs_snapshot_policy_log',
       'variables' => array(
         'node' => NULL,
       ),

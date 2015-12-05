@@ -278,7 +278,7 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
 
   $snapshot_created_time = xs_get_snapshot_created_time($snapshot_uuid);
 
-  $date = date('d M Y h:i:sA', $snapshot_created_time);
+  $date = date(XS_DATE_FORMAT, $snapshot_created_time);
   $form['warning'] = array(
     '#markup' => t('You about to !action the snapshot, created at !date. This action cannot be undone!', array(
       '!action' => strtoupper($action),
@@ -453,7 +453,7 @@ function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapsh
       $prefix = $snapshot['name_label'];
     }
 
-    $options[$ref] = $prefix . ' [' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . '] ' . $active;
+    $options[$ref] = $prefix . ' [' . date(XS_DATE_FORMAT, $snapshot['snapshot_time']->timestamp) . '] ' . $active;
   }
 
   return $options;

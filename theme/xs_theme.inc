@@ -61,7 +61,7 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
   $headers = array (
     '#',
-    'Snapshot date',
+    'Date Taken',
     'Name',
     'Last',
     'Actions',
@@ -86,10 +86,26 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
     $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> ' . l('Delete', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
     $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l('Revert to', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
 
+    $time = format_interval((time() - $snapshot_date->getTimestamp()) , 2) . t(' ago');
+
+    // Build rows in the table.
     $rows[] = array(
       $i,
-      '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . $snapshot_date->format("d M Y h:i:sA"),
-      $snapshot['name_label'],
+      theme('html_tag', array(
+          'element' => array(
+            '#tag' => 'span',
+            '#attributes' => array(
+              'class' => 'text-left',
+              'data-toggle' => 'tooltip',
+              'data-placement' => 'top',
+              'title' => $snapshot_date->format(XS_DATE_FORMAT),
+            ),
+            '#value' => $time,
+            '#value_prefix' => '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ',
+          ),
+        )
+      ),
+      theme('xs_snapshot_title_cell_theme', $snapshot),
       $is_current_state ? '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>' : '',
       theme('xs_links_dropdown', array('links' => $links, 'label' => t('Actions'))),
     );
@@ -105,6 +121,39 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
   $return_variables['form'] = render($form);
 
   return $return_variables;
+}
+
+/**
+ * Theme callback for 'xs_snapshot_row_theme' to render name in snapshot table.
+ *
+ * @param array $snapshot
+ *   Snapshot array from XenApi.
+ *
+ * @return string
+ *   HTML.
+ */
+function xs_snapshot_title_cell_theme($snapshot) {
+  // Prepare snapshot wrapper class and tooltip.
+  $class = 'text-primary';
+  $tooltip_text = t('This snapshot was created manually');
+  if (xs_snapshot_policy_is_automated_snapshot($snapshot)) {
+    $class = 'text-success';
+    $tooltip_text = t('This snapshot was created by an automated policy.');
+  }
+
+  return theme('html_tag', array(
+      'element' => array(
+        '#tag' => 'span',
+        '#attributes' => array(
+          'class' => 'text-left',
+          'data-toggle' => 'tooltip',
+          'data-placement' => 'top',
+          'title' => $tooltip_text,
+        ),
+        '#value' => $snapshot['name_label'],
+      ),
+    )
+  );
 }
 
 /**

@@ -11,7 +11,7 @@
 <section class="node node-snapshots">
   <div class="row">
 
-    <div class="col-md-8">
+    <div class="col-md-4">
 
       <h3>Manage Automated Server Snapshot Policy</h3>
 
@@ -33,6 +33,14 @@
             <div>
               Snapshots limit: <?php print $policy_snapshots; ?>
             </div>
+          <div>
+              Last run:
+              <?php if ($policy_last_run) : ?>
+              <?php print $policy_last_run; ?>
+              <?php else: ?>
+              This policy never run
+              <?php endif; ?>
+            </div>
           </p>
         </div>
       <?php else: ?>
@@ -50,6 +58,11 @@
     </div>
 
     <div class="col-md-8">
+      <h5>Recent Policy Events</h5>
+      <?php print $policy_log_table; ?>
+    </div>
+
+    <div class="col-md-4">
       <div>
         <p>
           <small class="text-muted">
