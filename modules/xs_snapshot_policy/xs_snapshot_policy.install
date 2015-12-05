@@ -87,6 +87,30 @@ function xs_snapshot_policy_schema() {
         'columns' => array('type_id' => 'id'),
       ),
     ),
+    'indexes' => array(
+      'policy_changed'        => array('changed'),
+      'policy_created'        => array('created'),
+      'policy_type_target_node'    => array('target_id', 'type_id'),
+      'uid'                 => array('uid'),
+      'type_id'                => array('type_id'),
+    ),
+    'unique keys' => array(
+      'target_id' => array('target_id'),
+    ),
+    'foreign keys' => array(
+      'server_nid' => array(
+        'table' => 'node',
+        'columns' => array('target_id' => 'nid'),
+      ),
+      'policy_author' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+      'policy_id' => array(
+        'table' => 'xs_snapshot_policy_type',
+        'columns' => array('type_id' => 'id'),
+      ),
+    ),
     'primary key' => array('spid'),
   );
 
