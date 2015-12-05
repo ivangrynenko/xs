@@ -15,12 +15,13 @@ function xs_snapshot_policy_cron() {
   module_load_include('inc', 'xs', 'includes/xs.snapshots');
 
   foreach ($policies as $policy) {
+    xs_snapshot_policy_clear_log($policy);
     $interval = $policy_types[$policy->type_id]->time;
     if ((REQUEST_TIME - $policy->last_run) > $interval - 600) {
       $vm_node = node_load($policy->target_id);
       $uuid = xs_get_vm_uuid_by_node($vm_node);
       $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
-      $snapshot_title = '[auto]-' . date(DATE_ISO8601, REQUEST_TIME) . '-' . $policy->title;
+      $snapshot_title = '[auto-' . $policy->spid . ']-["' . $policy->title . '"]-' . date(DATE_ISO8601, REQUEST_TIME) . '.snap';
       // Check if the policy maximum snapshots could be satisfied.
 
       // Load all snapshots for the VM.
@@ -30,19 +31,83 @@ function xs_snapshot_policy_cron() {
       // Get the limit of snapshots allowed for the VM.
       $server_snapshots_limit = xs_get_snapshots_limit($vm_node);
       if ($server_snapshots_count >= $policy->snapshots) {
-        // @todo: Write log entry about it.
-        $snapshots_number_to_delete = $server_snapshots_count - $policy->snapshots + 1;
-        xs_snapshot_policy_delete_last_snapshots($server_snapshots, $snapshots_number_to_delete);
+        foreach ($server_snapshots as $server_snapshot) {
+          // We only delete snapshots created by this policy.
+          if (!strstr($server_snapshot['name_label'], '[auto-' . $policy->spid . ']-')) {
+            // Skip manual snapshots.
+            continue;
+          }
+
+          $snapshots_number_to_delete = $server_snapshots_count - $policy->snapshots + 1;
+          $log_snapshots_number = format_plural($snapshots_number_to_delete, '@num excessive snapshot', '@num excessive snapshots', array('@num' => $snapshots_number_to_delete));
+          xs_snapshot_policy_log_write($policy->spid, t('Removed !number. Reason: policy !policy_title is limited to have !policy_limit snapshots, but the server had !server_snapshots snapshots', array(
+            '!number' => $log_snapshots_number,
+            '!policy_title' => $policy->title,
+            '!policy_limit' => $policy->snapshots,
+            '!server_snapshots' => $server_snapshots_count,
+          )));
+
+          xs_snapshot_policy_delete_last_snapshots($server_snapshots, $snapshots_number_to_delete);
+        }
       }
       try {
         xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
-        // @todo: Add snapshot creation SUCCESS log row.
+        xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot !snap_name for !policy_title', array(
+          '!snap_name' => $snapshot_title,
+          '!policy_title' => $policy->title,
+        )));
       }
       catch (Exception $e) {
-        // @todo: Add snapshot creation FAIL log row.
+        xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot !snap_name for !policy_title', array(
+          '!snap_name' => $snapshot_title,
+          '!policy_title' => $policy->title,
+        )));
+        watchdog('XS_SNAPTHOS_POLICY', 'Failed to create new snapshot for !vm_name', array('!vm_name' => $vm_node->title), WATCHDOG_ERROR);
       }
     }
+    // Update last_run flag.
+    $policy->last_run = REQUEST_TIME;
+    $policy->save();
+    xs_snapshot_policy_log_write($policy->type_id, t('Run !policy_name complete', array('!policy_name' => $policy->title)));
   }
+}
+
+/**
+ * Deletes log rows.
+ *
+ * @param object $policy
+ *   Entity.
+ */
+function xs_snapshot_policy_clear_log($policy) {
+  $query = db_select('xs_snapshot_policy_log', 'l');
+  $query->fields('l', array('id'));
+  $query->condition('policy_id', $policy->spid, '=');
+  $query->range($policy->log_limit, 1000000000);
+  $query->orderBy('created', 'DESC');
+  $result = $query->execute();
+  while ($row = $result->fetchAssoc()) {
+    entity_delete('xs_snapshot_policy_log', $row['id']);
+  }
+}
+
+/**
+ * Writes log entry.
+ *
+ * @param int $policy_id
+ *  Policy ID.
+ * @param string $message
+ *   Log message.
+ * @param string $type
+ *   Type of log entry.
+ */
+function xs_snapshot_policy_log_write($policy_id, $message, $type = 'cron') {
+  $log = entity_create('xs_snapshot_policy_log', array(
+    'policy_id' => $policy_id,
+    'log' => $message,
+    'type' => $type,
+    'created' => REQUEST_TIME,
+  ));
+  $log->save();
 }
 
 function xs_snapshot_policy_delete_last_snapshots($server_snapshots, $n) {
@@ -172,6 +237,24 @@ function xs_snapshot_policy_form($form, &$form_state, $nid, $spid = NULL) {
     ),
   );
 
+  $form['log_limit'] = array(
+    '#type' => 'select',
+    '#title' => t('Log limit'),
+    '#options' => array(
+      '1000' => t('1,000 rows'),
+      '10000' => t('10,000 rows'),
+      '100000' => t('100,000 rows'),
+    ),
+    '#description' => t('How many log entries to keep'),
+    '#default_value' => '1000',
+    '#required' => TRUE,
+    '#prefix' => '<div class="modal-body"><div class="form-group">',
+    '#suffix' => '</div></div>',
+    '#attributes' => array(
+      'classes' => array('form-control'),
+    ),
+  );
+
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -270,6 +353,7 @@ function xs_snapshot_policy_form_submit($form, &$form_state) {
     $policy->title = $form_state['values']['title'];
     $policy->snapshots = $form_state['values']['snapshots'];
     $policy->type_id = $form_state['values']['type_id'];
+    $policy->log_limit = $form_state['values']['log_limit'];
     // Save and go back.
     $policy->save();
 
@@ -352,34 +436,33 @@ function xs_snapshot_policy_get_policies_count_per_user($uid, $nid) {
  * Implements hook_entity_info().
  */
 function xs_snapshot_policy_entity_info() {
-  $return = array(
-    'xs_snapshot_policy' => array(
-      'label' => t('Snapshot Policy'),
-      'entity class' => 'SnapshotPolicy',
-      'controller class' => 'SnapshotPolicyController',
-      'base table' => 'xs_snapshot_policy',
-      'fieldable' => TRUE,
-      'entity keys' => array(
-        'id' => 'spid',
-        'bundle' => 'type_id',
-      ),
-      'bundle keys' => array(
-        'bundle' => 'id',
-      ),
-      'bundles' => array(),
-      'load hook' => 'xs_snapshot_policy_load',
-      'view modes' => array(
-        'full' => array(
-          'label' => t('Default'),
-          'custom settings' => FALSE,
-        ),
-      ),
-      'label callback' => 'entity_class_label',
-      'uri callback' => 'entity_class_uri',
-      'module' => 'xs_snapshot_policy',
-      'access callback' => 'xs_snapshot_policy_access',
+  $return['xs_snapshot_policy'] = array(
+    'label' => t('Snapshot Policy'),
+    'entity class' => 'SnapshotPolicy',
+    'controller class' => 'SnapshotPolicyController',
+    'base table' => 'xs_snapshot_policy',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'spid',
+      'bundle' => 'type_id',
     ),
+    'bundle keys' => array(
+      'bundle' => 'id',
+    ),
+    'bundles' => array(),
+    'load hook' => 'xs_snapshot_policy_load',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Default'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'module' => 'xs_snapshot_policy',
+    'access callback' => 'xs_snapshot_policy_access',
   );
+
   $return['xs_snapshot_policy_type'] = array(
     'label' => t('Snapshot Policy Type'),
     'entity class' => 'SnapshotPolicyType',
@@ -398,9 +481,24 @@ function xs_snapshot_policy_entity_info() {
     'admin ui' => array(
       'path' => 'admin/structure/xs/snapshot-policy-types',
       'file' => 'xs_snapshot_policy.admin.inc',
-      'controller class' => 'ExampleTaskTypeUIController',
+      'controller class' => 'SnapshotPolicyTypeUIController',
     ),
     'access callback' => 'xs_snapshot_policy_type_access',
+  );
+
+  $return['xs_snapshot_policy_log'] = array(
+    'label' => t('Snapshot Policy Log'),
+    'entity class' => 'SnapshotPolicyLog',
+    'controller class' => 'SnapshotPolicyLogController',
+    'base table' => 'xs_snapshot_policy_log',
+    'fieldable' => FALSE,
+    'bundle of' => 'xs_snapshot_policy',
+    'exportable' => FALSE,
+    'entity keys' => array(
+      'id' => 'id',
+    ),
+    'module' => 'xs_snapshot_policy',
+//    'access callback' => 'xs_snapshot_policy_type_access',
   );
 
   return $return;
@@ -484,6 +582,11 @@ function xs_snapshot_policy_permission() {
     'edit own xs_snapshot_policy entities' => array(
       'title' => t('Edit own XenServer Snapshot Policies'),
       'description' => t('Allows users to edit own XenServer Snapshot Policies.'),
+      'restrict access' => TRUE,
+    ),
+    'view xs_snapshot_policy log' => array(
+      'title' => t('View log entries for Snapshot Policies log'),
+      'description' => t('Allows users to View log entries for Snapshot Policies log.'),
       'restrict access' => TRUE,
     ),
   );
@@ -642,6 +745,13 @@ function xs_snapshot_policy_delete_multiple($snapshot_policy_ids) {
  */
 function xs_snapshot_policy_type_access($op, $entity = NULL) {
   return user_access('administer xs_snapshot_policy types');
+}
+
+/**
+ * Access callback for snapshot-policy Type.
+ */
+function xs_snapshot_policy_log_access($op, $entity = NULL) {
+  return user_access('view xs_snapshot_policy log');
 }
 
 /**

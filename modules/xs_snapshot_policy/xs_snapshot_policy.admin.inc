@@ -104,6 +104,13 @@ function xs_snapshot_policy_type_form_delete_confirm($form, &$form_state, $snaps
 }
 
 /**
+ * Snapshot Policy type delete form validate handler.
+ */
+function xs_snapshot_policy_type_form_delete_confirm_validate($form, &$form_state) {
+  
+}
+
+/**
  * Snapshot Policy type delete form submit handler.
  */
 function xs_snapshot_policy_type_form_delete_confirm_submit($form, &$form_state) {

@@ -1,10 +1,14 @@
 <?php
+/**
+ * @file
+ * xs_snapshot_policy entity classes.
+ */
 
+/**
+ * Class SnapshotPolicyController
+ */
 class SnapshotPolicyController extends EntityAPIController {
-
   public function create(array $values = array()) {
-    global $user;
-
     $values += array(
       'title' => '',
       'created' => REQUEST_TIME,
@@ -26,12 +30,16 @@ class SnapshotPolicyController extends EntityAPIController {
   }
 }
 
- class SnapshotPolicyTypeController extends EntityAPIControllerExportable {
-   public function create(array $values = array()) {
+/**
+ * Class SnapshotPolicyTypeController
+ */
+class SnapshotPolicyTypeController extends EntityAPIControllerExportable {
+  public function create(array $values = array()) {
     $values += array(
       'label' => '',
       'time' => '',
     );
+
     return parent::create($values);
   }
 
@@ -48,16 +56,17 @@ class SnapshotPolicyController extends EntityAPIController {
 }
 
 /**
- * UI controller for Snapshot Policy Type.
+ * Class SnapshotPolicyLogController
  */
-class ExampleTaskTypeUIController extends EntityDefaultUIController {
-  /**
-   * Overrides hook_menu() defaults.
-   */
-  public function hook_menu() {
-    $items = parent::hook_menu();
-    $items[$this->path]['description'] = 'Manage Snapshot Policy types.';
-    return $items;
+class SnapshotPolicyLogController extends EntityAPIControllerExportable {
+  public function create(array $values = array()) {
+    $values += array(
+      'policy_id' => '',
+      'log' => '',
+      'created' => REQUEST_TIME,
+    );
+
+    return parent::create($values);
   }
 }
 
@@ -65,12 +74,18 @@ class ExampleTaskTypeUIController extends EntityDefaultUIController {
  * Snapshot Policy class.
  */
 class SnapshotPolicy extends Entity {
+  public $spid;
+  public $type_id;
+  public $title;
+  public $uid;
+  public $target_id;
+  public $snapshots;
+  public $created;
+  public $changed;
+  public $last_run;
+
   protected function defaultLabel() {
     return $this->title;
-  }
-
-  protected function defaultUri() {
-    return array('path' => 'snapshot-policy/' . $this->identifier());
   }
 }
 
@@ -78,9 +93,10 @@ class SnapshotPolicy extends Entity {
  * Snapshot Policy Type class.
  */
 class SnapshotPolicyType extends Entity {
+  public $id;
   public $type;
+  public $time;
   public $label;
-  public $weight = 0;
 
   public function __construct($values = array()) {
     parent::__construct($values, 'xs_snapshot_policy_type');
@@ -88,5 +104,30 @@ class SnapshotPolicyType extends Entity {
 
   function isLocked() {
     return isset($this->status) && empty($this->is_new) && (($this->status & ENTITY_IN_CODE) || ($this->status & ENTITY_FIXED));
+  }
+}
+
+/**
+ * Snapshot Policy Type class.
+ */
+class SnapshotPolicyLog extends Entity {
+  public $id;
+  public $policy_id;
+  public $log;
+  public $created;
+
+  public function __construct($values = array()) {
+    parent::__construct($values, 'xs_snapshot_policy_log');
+  }
+}
+
+class SnapshotPolicyTypeUIController extends EntityDefaultUIController {
+  /**
+   * Overrides hook_menu() defaults.
+   */
+  public function hook_menu() {
+    $items = parent::hook_menu();
+    $items[$this->path]['description'] = 'Manage Snapshot Policy types.';
+    return $items;
   }
 }
