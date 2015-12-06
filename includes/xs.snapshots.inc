@@ -31,6 +31,11 @@ function xs_actions_snapshots_callback($node) {
  *   Array of fully loaded shapshot arrays, keyed by snapshot reference.
  */
 function xs_get_vm_snapshots($vm) {
+  $full_snapshots = &drupal_static(__FUNCTION__ . $vm['uuid']);
+  if (!empty($full_snapshots)) {
+    return $full_snapshots;
+  }
+
   $full_snapshots = array();
   if (!empty($vm['snapshots'])) {
     foreach ($vm['snapshots'] as $snapshot_ref) {
@@ -48,11 +53,13 @@ function xs_get_vm_snapshots($vm) {
  *
  * @param array $snapshots
  *   Array of loaded snapshot objects.
+ * @param bool $ascending
+ *   Whether to sort ascending (TRUE).
  *
  * @return array
  *   Reordered snapshots.
  */
-function xs_snapshots_reorder($snapshots) {
+function xs_snapshots_reorder($snapshots, $ascending = FALSE) {
   if (empty($snapshots)) {
     return $snapshots;
   };
@@ -64,7 +71,12 @@ function xs_snapshots_reorder($snapshots) {
     $remapped_snapshots[$snapshot['snapshot_time']->timestamp] = $snapshot;
   }
 
-  ksort($remapped_snapshots);
+  if ($ascending) {
+    ksort($remapped_snapshots, SORT_STRING);
+  }
+  else {
+    krsort($remapped_snapshots, SORT_STRING);
+  }
 
   foreach ($remapped_snapshots as $snapshot) {
     $ordered_snapshots[$snapshot['ref']] = $snapshot;
@@ -113,6 +125,10 @@ function xs_get_vm_snapshots_count_from_node($node) {
  *   Number of snapshots or FALSE.
  */
 function xs_get_snapshots_limit($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
   if (!empty($node->field_xs_vps_snapshots_limit)) {
     return (int) $node->field_xs_vps_snapshots_limit[LANGUAGE_NONE][0]['value'];
   }
@@ -137,7 +153,6 @@ function xs_snapshots_create_snapshot_title_callback($node) {
  * Snapshot create form.
  */
 function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
-
   $form['#prefix'] = '<div id="myModal" class="modal fade" role="dialog" aria-labelledby="gridSystemModalLabel"><div class="modal-dialog" role="document"><div class="modal-content">';
   $form['#suffix'] = '</div></div></div>';
 
@@ -147,6 +162,46 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
                   <h4 class="modal-title" id="gridSystemModalLabel">Create new snapshot</h4>
                 </div>',
   );
+
+  // Check if the user can add more snapshots.
+  $limit = xs_get_snapshots_limit($node);
+  $current_snapshots = xs_get_vm_snapshots_count_from_node($node);
+  if ($current_snapshots >= $limit) {
+    // Server snapshots exceeded. Remove the create form with a message.
+    $form['message_error'] = array(
+      '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12"><p class="text-danger">',
+      '#suffix' => '</p></div></div></div>',
+      '#markup' => t('Your server is limited to have !num snapshots, but you have !snaps snapshots available.', array(
+        '!num' => $limit,
+        '!snaps' => $current_snapshots,
+      )),
+    );
+
+    $form['message_details'] = array(
+      '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12">',
+      '#suffix' => '</div></div></div>',
+      '#markup' => t('Your server exceeded the maximum number of snapshots allowed. Remove older snapshots and try again.'),
+    );
+
+    $form['actions'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('modal-footer'),
+      ),
+    );
+
+    $form['actions']['cancel'] = array(
+      '#type' => 'button',
+      '#attributes' => array(
+        'type' => 'button',
+        'class' => array('btn btn-default'),
+        'data-dismiss' => 'modal',
+      ),
+      '#value' => t('Okay'),
+    );
+
+    return $form;
+  }
 
   $form['title'] = array(
     '#type' => 'textfield',
@@ -214,7 +269,12 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   $vm_uuid = xs_get_vm_uuid_by_node($form_state['storage']['xs_snapshot_create']['node']);
   $vm_ref = xs_api_get_vm_ref_by_uuid($vm_uuid);
 
-  xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
+  try {
+    xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
+  }
+  catch (Exception $e) {
+    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
+  }
 
   $form_state['redirect'] = 'node/' . $form_state['storage']['xs_snapshot_create']['node']->nid . '/xs-snapshots';
 }
@@ -228,7 +288,12 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
  *   Title of the snapshot.
  */
 function xs_snapshot_create_snapshot($vm_ref, $title) {
-  return xs_api_create_snapshot($vm_ref, $title);
+  try {
+    xs_api_create_snapshot($vm_ref, $title);
+  }
+  catch (Exception $e) {
+    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
+  }
 }
 
 /**
@@ -255,7 +320,7 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
 
   $snapshot_created_time = xs_get_snapshot_created_time($snapshot_uuid);
 
-  $date = date('d M Y h:i:sA', $snapshot_created_time);
+  $date = date(XS_DATE_FORMAT, $snapshot_created_time);
   $form['warning'] = array(
     '#markup' => t('You about to !action the snapshot, created at !date. This action cannot be undone!', array(
       '!action' => strtoupper($action),
@@ -365,7 +430,12 @@ function xs_actions_snapshot_destroy($snapshot_ref) {
   $snapshot = xs_api_get_snapshot_by_ref($snapshot_ref);
   xs_action_snapshot_vbd_destroy($snapshot);
 
-  return xs_api_destroy_snapshot($snapshot_ref);
+  try {
+    return xs_api_destroy_snapshot($snapshot_ref);
+  }
+  catch (Exception $e) {
+    throw new Exception($e->getMessage());
+  }
 }
 
 /**
@@ -425,7 +495,7 @@ function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapsh
       $prefix = $snapshot['name_label'];
     }
 
-    $options[$ref] = $prefix . ' [' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp) . '] ' . $active;
+    $options[$ref] = $prefix . ' [' . date(XS_DATE_FORMAT, $snapshot['snapshot_time']->timestamp) . '] ' . $active;
   }
 
   return $options;

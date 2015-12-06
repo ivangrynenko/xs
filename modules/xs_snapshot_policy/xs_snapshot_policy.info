@@ -1,0 +1,15 @@
+name = XenServer Snapshot Policy
+description = Manage Snapshot Automated Policies by users.
+package = XS
+version = 7.x-1.0
+core = 7.x
+
+dependencies[] = xs
+dependencies[] = entity
+dependencies[] = views
+
+files[] = xs_snapshot_policy.controller.inc
+files[] = xs_snapshot_policy.admin.inc
+files[] = xs_snapshot_policy.pages.inc
+files[] = xs_snapshot_policy.views_default.inc
+files[] = tests/xs_snapshot_policy.test

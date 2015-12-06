@@ -46,8 +46,8 @@
           <p>You have <?php print $snapshots_qty; ?> snapshots available. Your server is limited to have the maximum <?php print $snapshots_max; ?> snapshots.</p>
 
           <p>
-            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
-              <span class="glyphicon glyphicon-time" aria-hidden="true"></span>&nbsp;
+            <button type="button" class="btn <?php print $link_class; ?>" data-toggle="modal" data-target="#myModal">
+              <span class="glyphicon <?php print $link_glyphicon_class; ?>" aria-hidden="true"></span>&nbsp;
               <?php print t('Create a Snapshot'); ?>
             </button>
           </p>
@@ -56,6 +56,9 @@
         </div>
 
         <div class="col-md-12">
+          <p>
+            Showing the most resent snapshot at the top of the table. Snapshots are ordered by created date in descending order.
+          </p>
           <?php print $snapshots_table; ?>
         </div>
 

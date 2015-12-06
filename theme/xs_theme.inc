@@ -8,6 +8,11 @@
  * Implementation of hook_preprocess.
  */
 function xs_preproces_xs_actions_snapshots_output(&$variables) {
+  $variables['classes_array'] = array();
+  $variables['attributes_array'] = array();
+  $variables['title_attributes_array'] = array();
+  $variables['content_attributes_array'] = array();
+
   // Prepare variables.
   $vm = xs_get_vm_by_node($variables['node']);
 
@@ -34,6 +39,9 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
   $variables['snapshots_max'] = (int) xs_get_snapshots_limit($variables['node']);
   $variables['snapshots_table'] = $page_variables['table'];
   $variables['snapshots_actions_form'] = $page_variables['form'];
+
+  $variables['link_class'] = $snapshots_qty >= $variables['snapshots_max'] ? 'btn-warning' : 'btn-success';
+  $variables['link_glyphicon_class'] = $snapshots_qty >= $variables['snapshots_max'] ? 'glyphicon-warning-sign' : 'glyphicon-time';
 }
 
 /**
@@ -53,13 +61,17 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
  *   Exception.
  */
 function xs_snapshots_page_output_render($snapshots, $node, $vm) {
+  global $user;
+
   drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
+
+  $date_timezone = new DateTimeZone($user->timezone);
 
   $headers = array (
     '#',
-    'Snapshot date',
+    'Date Taken',
     'Name',
-    'State',
+    'Last',
     'Actions',
   );
 
@@ -68,6 +80,8 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
   $i = 1;
   foreach ($snapshots as $snap_ref => $snapshot) {
+    $snapshot_date = new DateTime($snapshot['snapshot_time']->scalar, $date_timezone);
+
     $is_current_state = $vm['parent'] == $snap_ref;
 
     // Detect if any snapshot is the parent of current server state.
@@ -77,14 +91,30 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
 
     // Prepare actions link.
     $links = array();
-    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> ' . l('Trash', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
-    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l('Revert', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> ' . l('Delete', 'node/' . $node->nid . '/xs-snapshots/destroy/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
+    $links[] = '<div class="dropdown-links"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> ' . l('Revert to', 'node/' . $node->nid . '/xs-snapshots/revert/' . $snapshot['uuid'], array('attributes' => array('class' => 'xs-glyphicon-link'))) . '</div>';
 
+    $time = format_interval((time() - $snapshot_date->getTimestamp()) , 2) . t(' ago');
+
+    // Build rows in the table.
     $rows[] = array(
       $i,
-      '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ' . date("d M Y h:i:sA", $snapshot['snapshot_time']->timestamp),
-      $snapshot['name_label'],
-      $is_current_state ? t('Last reverted to') : '',
+      theme('html_tag', array(
+          'element' => array(
+            '#tag' => 'span',
+            '#attributes' => array(
+              'class' => 'text-left',
+              'data-toggle' => 'tooltip',
+              'data-placement' => 'bottom',
+              'title' => $snapshot_date->format(XS_DATE_FORMAT),
+            ),
+            '#value' => $time,
+            '#value_prefix' => '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ',
+          ),
+        )
+      ),
+      theme('xs_snapshot_title_cell_theme', $snapshot),
+      $is_current_state ? '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>' : '',
       theme('xs_links_dropdown', array('links' => $links, 'label' => t('Actions'))),
     );
     $i++;
@@ -99,6 +129,39 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
   $return_variables['form'] = render($form);
 
   return $return_variables;
+}
+
+/**
+ * Theme callback for 'xs_snapshot_row_theme' to render name in snapshot table.
+ *
+ * @param array $snapshot
+ *   Snapshot array from XenApi.
+ *
+ * @return string
+ *   HTML.
+ */
+function xs_snapshot_title_cell_theme($snapshot) {
+  // Prepare snapshot wrapper class and tooltip.
+  $class = 'text-primary';
+  $tooltip_text = t('This snapshot was created manually');
+  if (xs_snapshot_policy_is_automated_snapshot($snapshot)) {
+    $class = 'text-success';
+    $tooltip_text = t('This snapshot was created by an automated policy.');
+  }
+
+  return theme('html_tag', array(
+      'element' => array(
+        '#tag' => 'span',
+        '#attributes' => array(
+          'class' => 'text-left ' . $class,
+          'data-toggle' => 'tooltip',
+          'data-placement' => 'bottom',
+          'title' => $tooltip_text,
+        ),
+        '#value' => $snapshot['name_label'],
+      ),
+    )
+  );
 }
 
 /**

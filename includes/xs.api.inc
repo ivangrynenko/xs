@@ -340,6 +340,12 @@ function xs_get_all_vms($host = NULL) {
  * @return mixed
  */
 function xs_api_get_vm_by_uuid($uuid) {
+  $vm = &drupal_static(__FUNCTION__ . '-' . $uuid);
+
+  if (!empty($vm)) {
+    return $vm;
+  }
+
   try {
     $xs_api = xs_get_xs_api();
   }
@@ -798,7 +804,8 @@ function xs_api_create_snapshot($vm_ref, $title) {
     $xs_api = xs_get_xs_api();
   }
   catch (Exception $e) {
-    return xs_log($e);
+    xs_log($e);
+    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
   }
 
   $xs_api->VM_snapshot($vm_ref, $title);

@@ -1,0 +1,21 @@
+<?php
+/**
+ * @file
+ * Common test class file.
+ */
+
+/**
+ * Common Simpletest class for all xenserver tests.
+ */
+abstract class XenServerTestCase extends DrupalWebTestCase {
+  /**
+   * The administrative user to use for tests.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp() {
+    parent::setUp();
+  }
+}

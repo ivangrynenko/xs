@@ -6,6 +6,7 @@
 
 include_once 'xs.features.inc';
 
+define('XS_DATE_FORMAT', 'd M Y h:i:sA');
 define('XS_POWERSTATE_VM_DOWN', 'Down');
 define('XS_API_ERROR', 'API Error. Unable to get the status.');
 define('XS_API_VPS_CONTENT_TYPE', 'xs_vps');
@@ -24,6 +25,10 @@ define('XS_API_SNAPSHOT_CREATE_BUTTON_TITLE', 'Create');
 // Other constants definitions.
 define('XS_API_EMPTY_REF', 'OpaqueRef:NULL');
 
+// Define hard shapshots number limit (due to xenserver issues with large
+// snapshot chains.
+define('XS_API_SNAPSHOTS_MAX', 25);
+
 /**
  * Implements hook_permission().
  */
@@ -31,6 +36,7 @@ function xs_permission() {
   return array(
     'administer xenserver pool' => array(
       'title' => t('Administer Xenserver Pool'),
+      'description' => t('Administer xenserver pool'),
     ),
     'perform own vm actions' => array(
       'title' => t('Perform own VPS actions'),
@@ -47,6 +53,15 @@ function xs_permission() {
  * Implements hook_menu().
  */
 function xs_menu() {
+  $items = array();
+
+  $items['admin/structure/xs'] = array(
+    'title' => 'XenServer',
+    'access arguments' => array('administer xs_snapshot_policy types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+  );
+
   $items['admin/config/services/xs'] = array(
     'title' => 'Overview',
     'description' => 'Xenserver pool configurationand settings.',
@@ -129,6 +144,7 @@ function xs_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  // @todo: Review if this is needed.
   $items['node/%node/xs-snapshots/create'] = array(
     'title' => 'Create a Snapshot of the server',
     'title callback' => 'xs_snapshots_create_snapshot_title_callback',
@@ -195,7 +211,6 @@ function _xs_get_user_vps($account, $limit = FALSE) {
 function xs_node_load($nodes, $types) {
   foreach ($nodes as $node) {
     if ($node->type == XS_API_VPS_CONTENT_TYPE) {
-      module_load_include('inc', 'xs', 'includes/xs.actions');
       $access = xs_actions_access_callback($node);
       if (!$access) {
         drupal_not_found();
@@ -250,15 +265,12 @@ function xs_theme($existing, $type, $theme, $path) {
       'function' => 'xs_links_dropdown_theme',
       'variables' => array('links' => NULL),
     ),
+    'xs_snapshot_title_cell_theme' => array(
+      'file' => 'theme/xs_theme.inc',
+      'function' => 'xs_snapshot_title_cell_theme',
+      'variables' => array('snapshot' => NULL),
+    ),
   );
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function xs_preprocess_page(&$variables) {
-  drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css', array('weight' => 999));
-  drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
 }
 
 /**
@@ -393,13 +405,29 @@ function xs_seconds2human($seconds) {
  * @return bool|mixed
  */
 function xs_get_vm_by_node($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
   if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
     drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
 
     return FALSE;
   }
 
-  return xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+  $response = NULL;
+
+  try {
+    $response = xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to retrieve server from node !title uuid: !uuid', array(
+      '!title' => $node->title,
+      '!uuid' => $node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'],
+    ), WATCHDOG_CRITICAL);
+  }
+
+  return $response;
 }
 
 /**
@@ -596,26 +624,53 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
     }
   }
 
-  if (user_access('perform own vm actions') && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
-    return $user->uid == $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'];
+  $owner_uid = xs_get_vps_owner_uid($node);
+  if (user_access('perform own vm actions') && !empty($owner_uid)) {
+    return $user->uid == $owner_uid;
   }
 
   return FALSE;
 }
 
 /**
- * Implements hook_node_update().
+ * Implements hook_node_presave().
  *
  * @param object $node
  *   Drupal node object.
  */
-function xs_node_update($node) {
-  if ($node->type == 'xs_vps' && !empty($node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id'])) {
+function xs_node_presave($node) {
+  $owner_uid = xs_get_vps_owner_uid($node);
+  if ($node->type == 'xs_vps' && !empty($owner_uid)) {
     // If teh VPS Owner field is set to specific system user, update the node
-    // owner to that user.
-    db_update('node')
-      ->fields(array('uid' => $node->field_xs_vps_owner[LANGUAGE_NONE][0]['target_id']))
-      ->condition('nid', $node->nid)
-      ->execute();
+    // owner to that user, so that Content Access kicks in.
+    $node->uid = $owner_uid;
   }
+}
+
+/**
+ * Retrieves VPS node owner from a designated field.
+ *
+ * @param object $node
+ *   Drupal node object
+ *
+ * @return bool|int
+ *   Owner uid or FALSE.
+ */
+function xs_get_vps_owner_uid($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
+  try {
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+    $uid = $node_wrapper->field_xs_vps_owner->value()->uid;
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to load server node !title. The error was: !message', array(
+      '!title' => $node->title,
+      '!message' => $e->getMessage(),
+    ), WATCHDOG_ERROR);
+  }
+
+  return !empty($uid) ? $uid : FALSE;
 }
