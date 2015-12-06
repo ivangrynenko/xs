@@ -8,6 +8,11 @@
  * Implementation of hook_preprocess.
  */
 function xs_preproces_xs_actions_snapshots_output(&$variables) {
+  $variables['classes_array'] = array();
+  $variables['attributes_array'] = array();
+  $variables['title_attributes_array'] = array();
+  $variables['content_attributes_array'] = array();
+
   // Prepare variables.
   $vm = xs_get_vm_by_node($variables['node']);
 
@@ -34,6 +39,9 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
   $variables['snapshots_max'] = (int) xs_get_snapshots_limit($variables['node']);
   $variables['snapshots_table'] = $page_variables['table'];
   $variables['snapshots_actions_form'] = $page_variables['form'];
+
+  $variables['link_class'] = $snapshots_qty >= $variables['snapshots_max'] ? 'btn-warning' : 'btn-success';
+  $variables['link_glyphicon_class'] = $snapshots_qty >= $variables['snapshots_max'] ? 'glyphicon-warning-sign' : 'glyphicon-time';
 }
 
 /**

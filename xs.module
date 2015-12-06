@@ -405,13 +405,29 @@ function xs_seconds2human($seconds) {
  * @return bool|mixed
  */
 function xs_get_vm_by_node($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
   if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
     drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
 
     return FALSE;
   }
 
-  return xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+  $response = NULL;
+
+  try {
+    $response = xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to retrieve server from node !title uuid: !uuid', array(
+      '!title' => $node->title,
+      '!uuid' => $node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'],
+    ), WATCHDOG_CRITICAL);
+  }
+
+  return $response;
 }
 
 /**

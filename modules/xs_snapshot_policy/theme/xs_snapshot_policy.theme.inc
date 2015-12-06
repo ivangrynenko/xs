@@ -60,6 +60,9 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
  */
 function xs_snapshot_policy_log_theme($variables) {
   $policy = $variables['policy'];
+  if (empty($policy)) {
+    return '';
+  }
 
   $row_entities = xs_snapshot_policy_get_log_for_policy($policy);
   if (empty($row_entities)) {

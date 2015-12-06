@@ -18,54 +18,57 @@ function xs_snapshot_policy_cron() {
   foreach ($policies as $policy) {
     xs_snapshot_policy_clear_log($policy);
     $interval = $policy_types[$policy->type_id]->time;
-    if ((REQUEST_TIME - $policy->last_run) > $interval - 600) {
-      $vm_node = node_load($policy->target_id);
-      $uuid = xs_get_vm_uuid_by_node($vm_node);
-      $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
-      $snapshot_title = XS_SNAPSHOT_NAME_LABEL . ' ' . $policy->title;
-      // Check if the policy maximum snapshots could be satisfied.
+    // Check if the current policy could run. Give it 60 seconds grace period.
+    if (!((REQUEST_TIME - $policy->last_run) > ($interval - 60))) {
+      // Skip policy.
+      continue;
+    }
 
-      // Load all snapshots for the VM.
-      $server_snapshots = xs_get_vm_snapshots_from_node($vm_node);
-      // Count the number of VMs for the VM.
-      $server_snapshots_count = count($server_snapshots);
-      // Get the limit of snapshots allowed for the VM.
-      $server_snapshots_limit = xs_get_snapshots_limit($vm_node);
-      if ($server_snapshots_count >= $policy->snapshots) {
-        foreach ($server_snapshots as $server_snapshot) {
-          // We only delete snapshots created by this policy.
-          if (!xs_snapshot_policy_is_automated_snapshot($server_snapshot)) {
-            // Skip manual snapshots.
-            continue;
-          }
+    $vm_node = node_load($policy->target_id);
+    $uuid = xs_get_vm_uuid_by_node($vm_node);
+    $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
+    $snapshot_title = XS_SNAPSHOT_NAME_LABEL . ' ' . $policy->title;
+    // Check if the policy maximum snapshots could be satisfied.
 
-          $snapshots_number_to_delete = $server_snapshots_count - $policy->snapshots + 1;
-          $log_snapshots_number = format_plural($snapshots_number_to_delete, '@num excessive snapshot', '@num excessive snapshots', array('@num' => $snapshots_number_to_delete));
-          xs_snapshot_policy_log_write($policy->spid, t('Removed !number. Reason: policy !policy_title is limited to have !policy_limit snapshots, but the server had !server_snapshots snapshots', array(
-            '!number' => $log_snapshots_number,
-            '!policy_title' => $policy->title,
-            '!policy_limit' => $policy->snapshots,
-            '!server_snapshots' => $server_snapshots_count,
-          )),
+    // Load all snapshots for the VM.
+    $server_snapshots = xs_get_vm_snapshots_from_node($vm_node);
+    // Count the number of VMs for the VM.
+    $server_snapshots_count = count($server_snapshots);
+    // Get the limit of snapshots allowed for the VM.
+    $server_snapshots_limit = xs_get_snapshots_limit($vm_node);
+    if ($server_snapshots_count >= $policy->snapshots) {
+      foreach ($server_snapshots as $server_snapshot) {
+        // We only delete snapshots created by this policy.
+        if (!xs_snapshot_policy_is_automated_snapshot($server_snapshot)) {
+          // Skip manual snapshots.
+          continue;
+        }
+
+        $snapshots_number_to_delete = $server_snapshots_count - $policy->snapshots + 1;
+        $log_snapshots_number = format_plural($snapshots_number_to_delete, '@num excessive snapshot', '@num excessive snapshots', array('@num' => $snapshots_number_to_delete));
+        xs_snapshot_policy_log_write($policy->spid, t('Removed !number. Reason: policy !policy_title is limited to have !policy_limit snapshots, but the server had !server_snapshots snapshots', array(
+          '!number' => $log_snapshots_number,
+          '!policy_title' => $policy->title,
+          '!policy_limit' => $policy->snapshots,
+          '!server_snapshots' => $server_snapshots_count,
+        )),
           'policy-remove');
 
-          xs_snapshot_policy_delete_last_snapshots($server_snapshots, $snapshots_number_to_delete);
-        }
+        xs_snapshot_policy_delete_last_snapshots($server_snapshots, $snapshots_number_to_delete);
       }
-      try {
-        xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
-        xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot !snap_name for !policy_title', array(
-          '!snap_name' => $snapshot_title,
-          '!policy_title' => $policy->title,
-        )), 'policy-create');
-      }
-      catch (Exception $e) {
-        xs_snapshot_policy_log_write($policy->spid, t('Snapshot !snap_name failed for !policy_title', array(
-          '!snap_name' => $snapshot_title,
-          '!policy_title' => $policy->title,
-        )), 'policy-fail');
-        watchdog('XS_SNAPTHOS_POLICY', 'Failed to create new snapshot for !vm_name', array('!vm_name' => $vm_node->title), WATCHDOG_ERROR);
-      }
+    }
+    try {
+      xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
+      xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot for !policy_title policy', array(
+        '!policy_title' => $policy->title,
+      )), 'policy-create');
+    }
+    catch (Exception $e) {
+      xs_snapshot_policy_log_write($policy->spid, t('Snapshot !snap_name failed for !policy_title', array(
+        '!snap_name' => $snapshot_title,
+        '!policy_title' => $policy->title,
+      )), 'policy-fail');
+      watchdog('XS_SNAPTHOS_POLICY', 'Failed to create new snapshot for !vm_name', array('!vm_name' => $vm_node->title), WATCHDOG_ERROR);
     }
     // Update last_run flag.
     $policy->last_run = REQUEST_TIME;
@@ -329,6 +332,11 @@ function xs_snapshot_policy_form_validate($form, &$form_state) {
   $linked_node = node_load($form_state['storage']['node_nid']);
   if (!xs_snapshot_policy_access_callback('create', $linked_node)) {
     return form_set_error(NULL, 'Validation error. You cannot add policy for this server.');
+  }
+
+  $vm = xs_get_vm_by_node($linked_node);
+  if (empty($vm)) {
+    return form_set_error(NULL, '339: Validation error. Unable to create automation policy.');
   }
 
   $form_state['storage']['linked_node'] = $linked_node;

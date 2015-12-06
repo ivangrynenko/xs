@@ -78,7 +78,6 @@ function xs_snapshots_reorder($snapshots, $ascending = FALSE) {
     krsort($remapped_snapshots, SORT_STRING);
   }
 
-
   foreach ($remapped_snapshots as $snapshot) {
     $ordered_snapshots[$snapshot['ref']] = $snapshot;
   }
@@ -126,6 +125,10 @@ function xs_get_vm_snapshots_count_from_node($node) {
  *   Number of snapshots or FALSE.
  */
 function xs_get_snapshots_limit($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
   if (!empty($node->field_xs_vps_snapshots_limit)) {
     return (int) $node->field_xs_vps_snapshots_limit[LANGUAGE_NONE][0]['value'];
   }
@@ -150,7 +153,6 @@ function xs_snapshots_create_snapshot_title_callback($node) {
  * Snapshot create form.
  */
 function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
-
   $form['#prefix'] = '<div id="myModal" class="modal fade" role="dialog" aria-labelledby="gridSystemModalLabel"><div class="modal-dialog" role="document"><div class="modal-content">';
   $form['#suffix'] = '</div></div></div>';
 
@@ -160,6 +162,46 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
                   <h4 class="modal-title" id="gridSystemModalLabel">Create new snapshot</h4>
                 </div>',
   );
+
+  // Check if the user can add more snapshots.
+  $limit = xs_get_snapshots_limit($node);
+  $current_snapshots = xs_get_vm_snapshots_count_from_node($node);
+  if ($current_snapshots >= $limit) {
+    // Server snapshots exceeded. Remove the create form with a message.
+    $form['message_error'] = array(
+      '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12"><p class="text-danger">',
+      '#suffix' => '</p></div></div></div>',
+      '#markup' => t('Your server is limited to have !num snapshots, but you have !snaps snapshots available.', array(
+        '!num' => $limit,
+        '!snaps' => $current_snapshots,
+      )),
+    );
+
+    $form['message_details'] = array(
+      '#prefix' => '<div class="modal-body"><div class="row"><div class="col-md-12">',
+      '#suffix' => '</div></div></div>',
+      '#markup' => t('Your server exceeded the maximum number of snapshots allowed. Remove older snapshots and try again.'),
+    );
+
+    $form['actions'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('modal-footer'),
+      ),
+    );
+
+    $form['actions']['cancel'] = array(
+      '#type' => 'button',
+      '#attributes' => array(
+        'type' => 'button',
+        'class' => array('btn btn-default'),
+        'data-dismiss' => 'modal',
+      ),
+      '#value' => t('Okay'),
+    );
+
+    return $form;
+  }
 
   $form['title'] = array(
     '#type' => 'textfield',
