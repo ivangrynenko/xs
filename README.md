@@ -11,7 +11,7 @@ Using REST/Curl with XML-RPC Xen API to access VPS status and configuration opti
 
 ### Screenshots ###
 For few screenshots, visit this page
-[https://www.redy.host/blog/announcing-automated-snapshot-backup-policies](Link URL)
+https://www.redy.host/blog/announcing-automated-snapshot-backup-policies
 
 ### Features ###
 
