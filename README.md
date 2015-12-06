@@ -9,6 +9,10 @@ Aims to provide customer access to manage their VPS via Drupal.
 
 Using REST/Curl with XML-RPC Xen API to access VPS status and configuration options.
 
+### Screenshots ###
+For few screenshots, visit this page
+[https://www.redy.host/blog/announcing-automated-snapshot-backup-policies](Link URL)
+
 ### Features ###
 
 * Provides custom content type for XenServer DOMu/VPS
@@ -19,6 +23,8 @@ Using REST/Curl with XML-RPC Xen API to access VPS status and configuration opti
 * Ability to create snapshot policy, allowing customers to select automated snapshots frequency and retention policy
 * Administrator creates VM and assigns UUID to enable XenApi operations
 * Administrator limits each VM node to limit maximum number of snapshots that could be created per VM (hard limit to 25 to avoid XenServer's "Snapshot chain is too long" errors.
+* Integrates with Bootstrap Drupal theme
+* Fully responsive.
 
 ## Planned features ##
 
