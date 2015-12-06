@@ -28,7 +28,21 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
     $variables['policy_snapshots'] = '';
     $variables['policy_type'] = '';
   }
-  $variables['policy_last_run'] = !empty($policy->last_run) ? date(XS_DATE_FORMAT, $policy->last_run) : NULL;
+
+  $variables['policy_last_run'] = theme('html_tag', array(
+      'element' => array(
+        '#tag' => 'span',
+        '#attributes' => array(
+          'class' => 'text-left',
+          'data-toggle' => 'tooltip',
+          'data-placement' => 'bottom',
+          'title' => date(XS_DATE_FORMAT, $policy->last_run),
+        ),
+        '#value' => format_interval((time() - $policy->last_run) , 2) . t(' ago'),
+        '#value_prefix' => '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ',
+      ),
+    )
+  );
   $variables['policies_exceeded'] = xs_snapshot_policy_get_policies_count_per_user($author_uid, $variables['node']->nid) >= XS_SNAPSHOT_MAX_POLICIES_PER_USER;
 
   $spid = !empty($policy->spid) ? $policy->spid : NULL;
@@ -37,28 +51,14 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
   $variables['policy_log_table'] = theme('xs_snapshot_policy_log', array('policy' => $policy));
 }
 
-function xs_snapshot_policy_get_log_for_policy($policy) {
-  $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'xs_snapshot_policy_log')
-    ->propertyCondition('policy_id', $policy->spid, '=')
-    ->propertyOrderBy('created', 'DESC')
-    ->range(0, 50);
-
-  $result = $query->execute();
-
-  if (empty($result['xs_snapshot_policy_log'])) {
-    return array();
-  }
-
-  $rows = array();
-  foreach ($result['xs_snapshot_policy_log'] as $log) {
-    $rows[] = entity_load('xs_snapshot_policy_log', array($log->id));
-  }
-
-  return $rows;
-}
-
-function xs_snapshot_policy_log($variables) {
+/**
+ * Theme callback for xs_snapshot_policy_log_theme
+ * @param $variables
+ *
+ * @return string
+ * @throws \Exception
+ */
+function xs_snapshot_policy_log_theme($variables) {
   $policy = $variables['policy'];
 
   $row_entities = xs_snapshot_policy_get_log_for_policy($policy);

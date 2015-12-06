@@ -31,7 +31,7 @@
               Type: <?php print $policy_type; ?>
             </div>
             <div>
-              Snapshots limit: <?php print $policy_snapshots; ?>
+              Policy limit: <?php print format_plural($policy_snapshots, '@count Snapshot', '@count Snapshots', array('@count' => $policy_snapshots)); ?>
             </div>
           <div>
               Last run:
@@ -62,7 +62,7 @@
       <?php print $policy_log_table; ?>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-12">
       <div>
         <p>
           <small class="text-muted">

@@ -1,5 +1,6 @@
 <?php
 define('XS_SNAPSHOT_MAX_POLICIES_PER_USER', 1);
+define('XS_SNAPSHOT_NAME_LABEL', '[auto]:');
 
 /**
  * Implements hook_cron().
@@ -21,7 +22,7 @@ function xs_snapshot_policy_cron() {
       $vm_node = node_load($policy->target_id);
       $uuid = xs_get_vm_uuid_by_node($vm_node);
       $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
-      $snapshot_title = '[auto]-("' . $policy->title . '")-' . '.snap';
+      $snapshot_title = XS_SNAPSHOT_NAME_LABEL . ' ' . $policy->title;
       // Check if the policy maximum snapshots could be satisfied.
 
       // Load all snapshots for the VM.
@@ -33,7 +34,7 @@ function xs_snapshot_policy_cron() {
       if ($server_snapshots_count >= $policy->snapshots) {
         foreach ($server_snapshots as $server_snapshot) {
           // We only delete snapshots created by this policy.
-          if (!xs_snapshot_policy_is_automated_snapshot($server_snapshot, $policy)) {
+          if (!xs_snapshot_policy_is_automated_snapshot($server_snapshot)) {
             // Skip manual snapshots.
             continue;
           }
@@ -82,7 +83,7 @@ function xs_snapshot_policy_cron() {
  *   TRUE if automated snapshot, or FALSE.
  */
 function xs_snapshot_policy_is_automated_snapshot($server_snapshot) {
-  $label = '[auto]';
+  $label = XS_SNAPSHOT_NAME_LABEL;
   $length = strlen($label);
   if (substr($server_snapshot['name_label'], 0, $length) == $label) {
     return TRUE;
@@ -180,7 +181,7 @@ function xs_snapshot_policy_theme($existing, $type, $theme, $path) {
     ),
     'xs_snapshot_policy_log' => array(
       'file' => 'theme/xs_snapshot_policy.theme.inc',
-      'function' => 'xs_snapshot_policy_log',
+      'function' => 'xs_snapshot_policy_log_theme',
       'variables' => array(
         'node' => NULL,
       ),
@@ -248,7 +249,7 @@ function xs_snapshot_policy_form($form, &$form_state, $nid, $spid = NULL) {
 
   $form['snapshots'] = array(
     '#type' => 'select',
-    '#title' => t('Snapshots limit'),
+    '#title' => t('Policy Snapshots limit'),
     '#options' => xs_snapshot_policy_get_snapshot_max($nid),
     '#default_value' => !empty($policy->snapshots) ? $policy->snapshots : '0',
     '#description' => '<small class="text-muted">' . t('Select the maximum number of snapshots to keep.
@@ -407,7 +408,7 @@ function xs_snapshot_policy_get_snapshot_max($nid) {
 
   $options = array(0 => '- Select -');
   $i = 1;
-  while ($i <= $limit) {
+  while ($i < $limit) {
     $options[$i] = format_plural($i, '@count Snapshot', '@count Snapshots', array('@count' => $i));
     $i++;
   }
@@ -830,3 +831,34 @@ function xs_snapshot_policy_views_api() {
   );
 }
 
+/**
+ * Gets log entries for a policy
+ *
+ * @param \SnapshotPolicy $policy
+ *   Policy entity.
+ * @param int $limit
+ *   Limits the query range.
+ *
+ * @return array
+ *   Array of loaded entities.
+ */
+function xs_snapshot_policy_get_log_for_policy(SnapshotPolicy $policy, $limit = 25) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'xs_snapshot_policy_log')
+    ->propertyCondition('policy_id', $policy->spid, '=')
+    ->propertyOrderBy('created', 'DESC')
+    ->range(0, $limit);
+
+  $result = $query->execute();
+
+  if (empty($result['xs_snapshot_policy_log'])) {
+    return array();
+  }
+
+  $rows = array();
+  foreach ($result['xs_snapshot_policy_log'] as $log) {
+    $rows[] = entity_load('xs_snapshot_policy_log', array($log->id));
+  }
+
+  return $rows;
+}

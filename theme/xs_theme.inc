@@ -97,7 +97,7 @@ function xs_snapshots_page_output_render($snapshots, $node, $vm) {
             '#attributes' => array(
               'class' => 'text-left',
               'data-toggle' => 'tooltip',
-              'data-placement' => 'top',
+              'data-placement' => 'bottom',
               'title' => $snapshot_date->format(XS_DATE_FORMAT),
             ),
             '#value' => $time,
@@ -145,9 +145,9 @@ function xs_snapshot_title_cell_theme($snapshot) {
       'element' => array(
         '#tag' => 'span',
         '#attributes' => array(
-          'class' => 'text-left',
+          'class' => 'text-left ' . $class,
           'data-toggle' => 'tooltip',
-          'data-placement' => 'top',
+          'data-placement' => 'bottom',
           'title' => $tooltip_text,
         ),
         '#value' => $snapshot['name_label'],
