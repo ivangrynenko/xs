@@ -16,4 +16,4 @@
       $('[data-toggle="popover"]').popover();
     }
   }
-}(jQuery));
+})(jQuery);
