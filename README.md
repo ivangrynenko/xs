@@ -1,33 +1,39 @@
 # README #
 
-Summary
+### Summary ###
 
-Integrates Drupal with XenServer pool of servers to allow client access to the VMs hosted in XenServer environment.
+Drupal module that integrates Drupal with XenServer pool of servers to allow client access to the VMs hosted in XenServer environment.
+This module is for hosting companies that use XenServer for virtualisation and need to give their customers access to perform power actions on their virtual servers, as well as manage server snapshots.
+
 Aims to provide customer access to manage their VPS via Drupal.
+
 Using REST/Curl with XML-RPC Xen API to access VPS status and configuration options.
 
-Features
+### Features ###
 
-Provides custom content type for XenServer DOMu/VPS
-Allows site administrator to manage XenServer guests
-Provides customer management page to browse VM configuration and status (Running or Down)
-Provides VPS management page to power on/off VM, restart VM, force-restart VM
-Provides snapshots management page to browse available snapshots, revert VPS status to any snapshot available, destroy any existing snapshot
-Planned features
+- Provides custom content type for XenServer DOMu/VPS
+- Allows site administrator to manage XenServer guests
+- Provides customer management page to browse VM configuration and power state (Running or Down)
+- Provides VPS management page to power on/off VM, restart VM, force-restart VM
+- Provides snapshots management page to browse available snapshots, revert VPS status to any snapshot available, destroy any existing snapshot
+- Ability to create snapshot policy, allowing customers to select automated snapshots frequency and retention policy
 
-Currently in development
+## Planned features ##
 
-Automated snapshot policy, allowing customers to select snapshots frequency and retention policy
-Jave web-based console
-Next on the roadmap
+### Currently in development ###
 
-To be implemented in 2016
+* Jave web-based console
+* Next on the roadmap
 
-VPS power events history. Overview of VPS power events (time and date of all of the following: reboot, power off, power on, force shutdown, force reboot
-VPS traffic/bandwidth usage for selected time period
-Stats for the VPS resource usage: CPU, RAM, HDD, Network. Stats available as graphs with date range selector
-Ability to template VPS, allowing to easily revert to the initial state
+### To be implemented in 2016 ###
+
+* VPS power events history. Overview of VPS power events (time and date of all of the following: reboot, power off, power on, force shutdown, force reboot
+* VPS traffic/bandwidth usage for selected time period
+* Stats for the VPS resource usage: CPU, RAM, HDD, Network. Stats available as graphs with date range selector
+* Ability to template VPS, allowing to easily revert to the initial state
+
 Full feature set is coming. Planned public release by the end of 2015.
+
 The development of this module is sponsored by https://www.redy.host If you are interested to sponsor the development or become a co-maintainer of this project (to get it's release quicker), please contact us.
 
 ### How do I get set up? ###
