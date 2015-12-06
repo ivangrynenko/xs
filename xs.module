@@ -33,7 +33,7 @@ define('XS_API_SNAPSHOTS_MAX', 25);
  * Implements hook_init().
  */
 function xs_init() {
-//  drupal_add_css(drupal_get_path('module', 'xs'), '/assets/css/xs.node.css');
+  drupal_add_css(drupal_get_path('module', 'xs'), '/assets/css/xs.node.css');
   drupal_add_js(drupal_get_path('module', 'xs'), '/assets/js/xs.js');
 }
 
