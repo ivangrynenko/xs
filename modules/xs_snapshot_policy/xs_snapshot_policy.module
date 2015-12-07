@@ -17,6 +17,7 @@ function xs_snapshot_policy_cron() {
 
   foreach ($policies as $policy) {
     xs_snapshot_policy_clear_log($policy);
+    $policy_type = xs_snapshot_policy_type_load($policy->type_id);
     $interval = $policy_types[$policy->type_id]->time;
     // Check if the current policy could run. Give it 60 seconds grace period.
     if (!((REQUEST_TIME - $policy->last_run) > ($interval - 60))) {
@@ -25,11 +26,19 @@ function xs_snapshot_policy_cron() {
     }
 
     $vm_node = node_load($policy->target_id);
+    // Do not run further checks if the VM is down.
+    $vm = xs_get_vm_by_node($vm_node);
+    if (!preg_match('/running/i', $vm['power_state'])) {
+      xs_snapshot_policy_log_write($policy->spid, t('Skipping snapshots for !policy_title (!type). The server is not running', array(
+        '!policy_title' => $policy->title,
+        '!type' => $policy_type->label,
+      )),
+        'policy-skip');
+      continue;
+    }
     $uuid = xs_get_vm_uuid_by_node($vm_node);
     $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
-    $snapshot_title = XS_SNAPSHOT_NAME_LABEL . ' ' . $policy->title;
     // Check if the policy maximum snapshots could be satisfied.
-
     // Load all snapshots for the VM.
     $server_snapshots = xs_get_vm_snapshots_from_node($vm_node);
     // Count the number of VMs for the VM.
@@ -46,9 +55,10 @@ function xs_snapshot_policy_cron() {
 
         $snapshots_number_to_delete = $server_snapshots_count - $policy->snapshots + 1;
         $log_snapshots_number = format_plural($snapshots_number_to_delete, '@num excessive snapshot', '@num excessive snapshots', array('@num' => $snapshots_number_to_delete));
-        xs_snapshot_policy_log_write($policy->spid, t('Removed !number. Reason: policy !policy_title is limited to have !policy_limit snapshots, but the server had !server_snapshots snapshots', array(
+        xs_snapshot_policy_log_write($policy->spid, t('Removed !number. Reason: policy !policy_title (!type) is limited to have !policy_limit snapshots, but the server had !server_snapshots snapshots', array(
           '!number' => $log_snapshots_number,
           '!policy_title' => $policy->title,
+          '!type' => $policy_type->label,
           '!policy_limit' => $policy->snapshots,
           '!server_snapshots' => $server_snapshots_count,
         )),
@@ -58,15 +68,21 @@ function xs_snapshot_policy_cron() {
       }
     }
     try {
-      xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
-      xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot for !policy_title policy', array(
+      xs_snapshot_create_snapshot($vm_ref, format_string('!tag !policy_name (!policy_type)', array(
+        '!tag' => XS_SNAPSHOT_NAME_LABEL,
+        '!policy_name' => $policy->title,
+        '!policy_type' => $policy_type->label,
+      )));
+      xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot for !policy_title policy (!type)', array(
         '!policy_title' => $policy->title,
+        '!type' => $policy_type->label,
       )), 'policy-create');
     }
     catch (Exception $e) {
-      xs_snapshot_policy_log_write($policy->spid, t('Snapshot !snap_name failed for !policy_title', array(
-        '!snap_name' => $snapshot_title,
+      xs_snapshot_policy_log_write($policy->spid, t('Snapshot !snap_name failed  (!type)', array(
+        '!snap_name' => XS_SNAPSHOT_NAME_LABEL,
         '!policy_title' => $policy->title,
+        '!type' => $policy_type->label,
       )), 'policy-fail');
       watchdog('XS_SNAPTHOS_POLICY', 'Failed to create new snapshot for !vm_name', array('!vm_name' => $vm_node->title), WATCHDOG_ERROR);
     }
@@ -432,8 +448,8 @@ function xs_snapshot_policy_get_snapshot_max($nid) {
  * @param int $nid
  *   Parent VM Node nid.
  *
- * @return array
- *   Array of entity objects.
+ * @return array|\SnapshotPolicy
+ *   Single snapshot policy or Array of entity objects.
  */
 function xs_snapshot_policy_get_policies_per_user($uid, $nid) {
   if (XS_SNAPSHOT_MAX_POLICIES_PER_USER == 1) {
@@ -800,9 +816,15 @@ function xs_snapshot_policy_log_access($op, $entity = NULL) {
 
 /**
  * Load snapshot-policy Type.
+ *
+ * @param int $type_id
+ *   Policy type id.
+ *
+ * @return \SnapshotPolicyType
+ *   Policy Type entity object.
  */
-function xs_snapshot_policy_type_load($snapshot_policy_type) {
-  return xs_snapshot_policy_types($snapshot_policy_type);
+function xs_snapshot_policy_type_load($type_id) {
+  return xs_snapshot_policy_types($type_id);
 }
 
 /**
