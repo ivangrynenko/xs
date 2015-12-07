@@ -599,6 +599,11 @@ function xs_snapshot_policy_permission() {
       'description' => t('Allows users to configure snapshot-policy types and their fields.'),
       'restrict access' => TRUE,
     ),
+    'administer xs_snapshot_policy entities' => array(
+      'title' => t('Administer Snapshot Policy Entities'),
+      'description' => t('Allows users to manage snapshot-policy entities and their fields.'),
+      'restrict access' => TRUE,
+    ),
     'create xs_snapshot_policy entities' => array(
       'title' => t('Create XenServer Snapshot Policies'),
       'description' => t('Allows users to create XenServer Snapshot Policies.'),
@@ -672,6 +677,10 @@ function xs_snapshot_policy_entity_property_info_alter(&$info) {
  */
 function xs_snapshot_policy_access_callback($op, $node) {
   global $user;
+
+  if (empty($node) || $node->type != XS_API_VPS_CONTENT_TYPE) {
+    return FALSE;
+  }
 
   switch ($op) {
     case 'view':
