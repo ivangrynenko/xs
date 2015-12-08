@@ -30,6 +30,20 @@ define('XS_API_EMPTY_REF', 'OpaqueRef:NULL');
 define('XS_API_SNAPSHOTS_MAX', 25);
 
 /**
+ * Implements hook_init().
+ */
+function xs_init() {
+  $allowed_themes = array(
+    'startupgrowth',
+    'bootstrap',
+  );
+  if (in_array($GLOBALS['theme_key'], $allowed_themes)) {
+    drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
+    drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function xs_permission() {
@@ -606,7 +620,7 @@ function xs_actions_action_form_submit($form, &$form_state) {
 function xs_actions_access_callback($node, $snapshots = FALSE) {
   global $user;
 
-  if (empty($node)) {
+  if (empty($node) || $node->type != XS_API_VPS_CONTENT_TYPE) {
     return FALSE;
   }
 
