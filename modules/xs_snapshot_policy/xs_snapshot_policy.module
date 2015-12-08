@@ -430,9 +430,16 @@ function xs_snapshot_policy_get_snapshot_max($nid) {
   $node = node_load($nid);
   $limit = xs_get_snapshots_limit($node);
 
+  if ($limit > 5) {
+    $limit = $limit - 5;
+  }
+  else {
+    $limit = 1;
+  }
+
   $options = array(0 => '- Select -');
   $i = 1;
-  while ($i < $limit) {
+  while ($i <= $limit) {
     $options[$i] = format_plural($i, '@count Snapshot', '@count Snapshots', array('@count' => $i));
     $i++;
   }
