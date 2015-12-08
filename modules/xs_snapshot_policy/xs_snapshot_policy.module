@@ -28,8 +28,8 @@ function xs_snapshot_policy_cron() {
     $vm_node = node_load($policy->target_id);
     // Do not run further checks if the VM is down.
     $vm = xs_get_vm_by_node($vm_node);
-    if (!preg_match('/running/i', $vm['power_state'])) {
-      xs_snapshot_policy_log_write($policy->spid, t('Skipping snapshots for !policy_title (!type). The server is not running', array(
+    if (!empty($vm) && !preg_match('/running/i', $vm['power_state'])) {
+      xs_snapshot_policy_log_write($policy->spid, t('Skipping snapshots for !policy_title (!type). The server is not running. Could only take a snapshot of a running server.', array(
         '!policy_title' => $policy->title,
         '!type' => $policy_type->label,
       )),
