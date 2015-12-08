@@ -7,13 +7,7 @@
 /**
  * Common Simpletest class for all xenserver tests.
  */
-class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
-  protected $adminUser;
-  protected $policyTypes;
-  protected $ownerUser;
-  protected $wrongUser;
-  protected $serverNode;
-
+class XenServerSnapshotPolicyTestCase extends XenServerTestCase {
   /**
    * {@inheritdoc}
    */
@@ -30,32 +24,20 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
    */
   protected function setUp() {
     // Create values for policy types.
-    parent::setUp('xs_snapshot_policy');
-
-    $permissions = array(
-      'access content',
-      'administer xenserver pool',
-      'perform any vm actions',
-      'administer permissions',
-      'administer users',
-      'administer site configuration',
-      'administer xs_snapshot_policy types',
-      'edit any xs_snapshot_policy entities',
-    );
-
-    $this->getAdminUser($permissions);
-    $this->drupalLogin($this->adminUser);
-
-    $this->createPolicyTypes();
-    $this->getOwnerUser();
-    $this->getWrongUser();
+    parent::setUp(array('xs', 'xs_snapshot_policy'));
   }
 
   /**
    * Test that user owning the server node can access policy page.
    */
   public function testUserAccessPolicyEntity() {
-    $this->drupalLogin($this->ownerUser);
+    $user = $this->drupalCreateUser(array(
+      'view own xs_snapshot_policy entities',
+      'perform own vm actions',
+    ));
+    $this->getServerNode($user);
+
+    $this->drupalLogin($user);
 
     // Access the snapshot policies page as the user and ensure the form is
     // present.
@@ -66,7 +48,6 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
     $this->assertFieldByName('type_id');
     $this->assertFieldByName('snapshots');
     $this->assertFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
-    $this->assertFieldById('edit-delete', t('Delete'));
     $this->assertFieldById('edit-cancel', t('Cancel'));
   }
 
@@ -74,11 +55,23 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
    * Test that user owning the server node can create policy.
    */
   public function testUserCreatePolicyEntity() {
-    $this->drupalLogin($this->ownerUser);
+    $this->createPolicyTypes();
 
-    $edit[0]['title'] = $this->randomName();
-    $edit[0]['type_id'] = 1;
-    $edit[0]['snapshots'] = rand(1, 9);
+    $user = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'view own xs_snapshot_policy entities',
+      'perform own vm actions',
+    ));
+
+    $this->getServerNode($user);
+
+    $this->drupalLogin($user);
+
+
+    $policy_type = array_pop($this->policyTypes);
+    $edit[0]['title'] = 'Policy ' . $policy_type->label;
+    $edit[0]['type_id'] = $policy_type->id;
+    $edit[0]['snapshots'] = 10;
 
     // Submit the new policy form and check if this worked.
     $this->drupalPost('node/' . $this->serverNode->nid . '/xs-snapshot-policy', $edit[0], XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
@@ -89,7 +82,7 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
     $this->assertFieldByName('title');
     $this->assertFieldByName('type_id');
     $this->assertFieldByName('snapshots');
-    $this->assertFieldById('edit-submit', XS_API_SNAPSHOT_CREATE_BUTTON_TITLE);
+    $this->assertFieldById('edit-submit', t('Update'));
     $this->assertFieldById('edit-delete', t('Delete'));
     $this->assertFieldById('edit-cancel', t('Cancel'));
   }
@@ -98,7 +91,27 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
    * Assert that wrong user cannot access somebody else's policy entity.
    */
   public function testWrongUserUnableAccessPolicyEntityPage() {
-    $this->drupalLogin($this->wrongUser);
+    $this->createPolicyTypes();
+
+    $user = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'view own xs_snapshot_policy entities',
+      'edit own xs_snapshot_policy entities',
+      'perform own vm actions',
+      'view xs_snapshot_policy log',
+    ));
+
+    $wrong_user = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'view own xs_snapshot_policy entities',
+      'edit own xs_snapshot_policy entities',
+      'perform own vm actions',
+      'view xs_snapshot_policy log',
+    ));
+
+    $this->getServerNode($user);
+
+    $this->drupalLogin($wrong_user);
 
     // Access the snapshot policies page as the user and ensure the form is
     // present.
@@ -116,94 +129,33 @@ class XenServerSnapshotPolicyTestCase extends DrupalWebTestCase {
    * Tests that non-privileged user can't access policy type add/delete pages.
    */
   public function testNonAdminUserCannotDeletePolicyType() {
-    $this->drupalLogin($this->ownerUser);
+    $this->createPolicyTypes();
+
+    $user = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'view own xs_snapshot_policy entities',
+      'edit own xs_snapshot_policy entities',
+      'perform own vm actions',
+      'view xs_snapshot_policy log',
+    ));
+    $this->drupalLogin($user);
+
     $this->drupalGet('admin/structure/xs/snapshot-policy-types/add');
     $this->verbose($this->drupalGetContent());
     $this->assertResponse(403);
 
-    $i = 0;
-    while ($i < 3) {
-      $edit[$i]['label'] = $this->randomName();
-      $edit[$i]['time'] = rand(1, 10) * 3600;
-      $edit[$i]['type'] = strtolower($edit[$i]['label']);
-
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $edit[$i]['type'] . '/delete');
+    foreach ($this->policyTypes as $i => $type) {
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $type->type . '/delete');
       $this->verbose($this->drupalGetContent());
       $this->assertResponse(403);
 
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $edit[$i]['type'] . '/edit');
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $type->type . '/edit');
       $this->verbose($this->drupalGetContent());
       $this->assertResponse(403);
 
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $edit[$i]['type'] . '/clone');
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $type->type . '/clone');
       $this->verbose($this->drupalGetContent());
       $this->assertResponse(403);
-
-      $i++;
     }
-  }
-
-  /**
-   * Creates several policy types.
-   *
-   * @param int $num
-   *   The number of policy types to create.
-   */
-  public function createPolicyTypes($num = 3) {
-    $i = 0;
-    while ($i < $num) {
-      $edit[$i]['label'] = $this->randomName();
-      $edit[$i]['time'] = rand(1, 10) * 3600;
-      $edit[$i]['type'] = strtolower($edit[$i]['label']);
-
-      $this->drupalPost('admin/structure/xs/snapshot-policy-types/add', $edit[$i], 'Save');
-      $this->verbose($this->drupalGetContent());
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types');
-      $this->assertResponse(200);
-      $this->assertText($edit[$i]['label']);
-      $this->assertLink('edit', $i);
-      $this->clickLink('edit', $i);
-      $this->assertResponse(200);
-      $this->assertText('The human-readable name of this snapshot-policy type');
-      $i++;
-    }
-  }
-
-  /**
-   * Creates server owner user.
-   */
-  public function getOwnerUser() {
-    $this->ownerUser = $this->drupalCreateUser(array(
-      'create xs_snapshot_policy entities',
-      'view own xs_snapshot_policy entities',
-      'edit own xs_snapshot_policy entities',
-      'perform any vm actions',
-      'perform own vm actions',
-    ));
-
-    $this->serverNode = $this->drupalCreateNode(array(
-      'type' => XS_API_VPS_CONTENT_TYPE,
-      'field_xs_vps_owner' => array(LANGUAGE_NONE => array(array('target_id' => $this->ownerUser->uid))),
-    ));
-  }
-
-  /**
-   * Creates wrong server owner user.
-   */
-  public function getWrongUser() {
-    $this->wrongUser = $this->drupalCreateUser(array(
-      'create xs_snapshot_policy entities',
-      'view own xs_snapshot_policy entities',
-      'edit own xs_snapshot_policy entities',
-      'perform any vm actions',
-      'perform own vm actions',
-    ));
-  }
-
-  /**
-   * Creates admin user.
-   */
-  public function getAdminUser($permissions) {
-    $this->adminUser = $this->drupalCreateUser($permissions);
   }
 }
