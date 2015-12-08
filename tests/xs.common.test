@@ -35,10 +35,6 @@ abstract class XenServerTestCase extends DrupalWebTestCase {
     );
 
     $this->getAdminUser($permissions);
-
-//    $this->createPolicyTypes();
-//    $this->getOwnerUser();
-//    $this->getWrongUser();
   }
 
   /**
