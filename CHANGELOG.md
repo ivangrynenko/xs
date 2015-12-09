@@ -1,7 +1,18 @@
 # CHANGELOG #
 
+### 1.01 ###
+2015-12-08
+- Template improvements
+- Added bypass to the server snapshot by an automated policy when the VM is down.
+- Fixed number of tests.
+- Added missing permission, that was preventing administrator from accessing
+  snapshot policy pages.
+- Updated snapshot policy snapshots selector to be server max less 5.
+- Fixed Snapshots page layout bug in mobile devices preventing snapshot actions.
+- Other bug fixes and improvements.
+
 ### 1.0 ###
-2015-05-12
+2015-12-05
 
 - Automated snapshot policies as entities.
 - Entity Policy type.
