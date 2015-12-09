@@ -157,3 +157,7 @@
 #block-system-user-menu ul.menu ul.menu {
   display: none;
 }
+
+.node-snapshots .table-responsive {
+  overflow: visible;
+}

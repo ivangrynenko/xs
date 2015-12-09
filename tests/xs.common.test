@@ -8,14 +8,109 @@
  * Common Simpletest class for all xenserver tests.
  */
 abstract class XenServerTestCase extends DrupalWebTestCase {
-  /**
-   * The administrative user to use for tests.
-   */
+  protected $adminUser;
+  protected $policyTypes;
+  protected $ownerUser;
+  protected $wrongUser;
+  protected $serverNode;
+  protected $serverUuud = '9937cc3c-84e2-ccab-a206-858d3cae5c62';
+  protected $poolUuid = '283e03ee-226e-3e58-cd35-d9dcf1359a16';
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
-    parent::setUp();
+  protected function setUp($modules) {
+    parent::setUp($modules);
+
+    $permissions = array(
+      'access content',
+      'administer xenserver pool',
+      'perform any vm actions',
+      'administer permissions',
+      'administer users',
+      'administer site configuration',
+      'administer xs_snapshot_policy types',
+      'administer xs_snapshot_policy entities',
+      'edit any xs_snapshot_policy entities',
+    );
+
+    $this->getAdminUser($permissions);
+  }
+
+  /**
+   * Creates several policy types.
+   *
+   * @param int $num
+   *   The number of policy types to create.
+   */
+  public function createPolicyTypes($num = 3) {
+    $this->drupalLogin($this->adminUser);
+    $i = 0;
+    while ($i < $num) {
+      $edit[$i]['label'] = ($i + 1) . ' Hourly';
+      $edit[$i]['time'] = ($i + 1) * 3600;
+      $edit[$i]['type'] = ($i + 1) . '_hourly';
+
+      $this->drupalPost('admin/structure/xs/snapshot-policy-types/add', $edit[$i], 'Save');
+      $this->verbose($this->drupalGetContent());
+      $this->drupalGet('admin/structure/xs/snapshot-policy-types');
+      $this->assertResponse(200);
+      $this->assertText($edit[$i]['label']);
+      $this->assertLink('edit', $i);
+      $this->clickLink('edit', $i);
+      $this->assertResponse(200);
+      $this->assertText('The human-readable name of this snapshot-policy type');
+      $created_entity = entity_load('xs_snapshot_policy_type', FALSE, array('type' => $edit[$i]['type']));
+      $created_entity = reset($created_entity);
+      $this->policyTypes[] = $created_entity;
+      $i++;
+    }
+  }
+
+  /**
+   * Creates server owner user.
+   */
+  public function getOwnerUser() {
+    $this->drupalLogin($this->adminUser);
+
+    $this->ownerUser = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'view own xs_snapshot_policy entities',
+      'edit own xs_snapshot_policy entities',
+      'perform own vm actions',
+    ));
+  }
+
+  /**
+   * Creates single server node.
+   */
+  public function getServerNode($user) {
+    $this->serverNode = $this->drupalCreateNode(array(
+      'type' => XS_API_VPS_CONTENT_TYPE,
+      'field_xs_vps_owner' => array(LANGUAGE_NONE => array(array('target_id' => $user->uid))),
+      'field_xs_vps_uuid' => array(LANGUAGE_NONE => array(array('value' => $this->serverUuud))),
+      'field_xs_pool_uuid' => array(LANGUAGE_NONE => array(array('value' => $this->poolUuid))),
+      'field_xs_vps_snapshots_limit' => array(LANGUAGE_NONE => array(array('value' => rand(15, 25)))),
+    ));
+  }
+
+  /**
+   * Creates wrong server owner user.
+   */
+  public function getWrongUser() {
+    $this->drupalLogin($this->adminUser);
+    $this->wrongUser = $this->drupalCreateUser(array(
+      'create xs_snapshot_policy entities',
+      'view own xs_snapshot_policy entities',
+      'edit own xs_snapshot_policy entities',
+      'perform own vm actions',
+    ));
+  }
+
+  /**
+   * Creates admin user.
+   */
+  public function getAdminUser($permissions) {
+    $this->adminUser = $this->drupalCreateUser($permissions);
   }
 }
