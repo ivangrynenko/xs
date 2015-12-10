@@ -63,7 +63,7 @@
         </div>
 
         <div class="col-md-12">
-          <div class="help">
+          <small class="text-muted">
             <p>
               Snapshots are the fastest way to backup and revert your entire server.
               Whether you need to revert last configuration changes or had an unsuccessful
@@ -86,7 +86,7 @@
               Note! To avoid harmful actions to your server, a confirmation
               dialogue will appear after you select an action.
             </p>
-          </div>
+          </small>
         </div>
 
       <?php endif; ?>

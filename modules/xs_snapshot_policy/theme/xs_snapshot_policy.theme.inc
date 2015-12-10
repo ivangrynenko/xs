@@ -36,7 +36,7 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
     $variables['policy_snapshots'] = $policy->snapshots;
     $policy_type = xs_snapshot_policy_type_load($policy->type_id);
     $variables['policy_type'] = $policy_type->label;
-    $variables['policy_last_run'] = theme('html_tag', array(
+    $variables['policy_last_run'] = !empty($policy->last_run) ? theme('html_tag', array(
         'element' => array(
           '#tag' => 'span',
           '#attributes' => array(
@@ -49,7 +49,7 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
           '#value_prefix' => '<span class="glyphicon glyphicon-time" aria-hidden="true"></span> ',
         ),
       )
-    );
+    ) : t('Never');
     $variables['policies_exceeded'] = xs_snapshot_policy_get_policies_count_per_user($author_uid, $variables['node']->nid) >= XS_SNAPSHOT_MAX_POLICIES_PER_USER;
 
     $variables['policy_log_table'] = theme('xs_snapshot_policy_log', array('policy' => $policy));
