@@ -506,6 +506,17 @@ function xs_snapshot_policy_get_snapshots_max_for_policy($nid) {
   return $limit - $snapshots_count;
 }
 
+/**
+ * Filters automated snapshots from the array of all snapshots for the server.
+ *
+ * @param array $snapshots
+ *   Array of snapshot objects from XenApi.
+ * @param bool|TRUE $reorder
+ *   Reorder snapshots by creation time, ASCENDING.
+ *
+ * @return array
+ *   Array of snapshots, created by an automated policy.
+ */
 function xs_snapshot_policy_filter_automated_snapshots($snapshots, $reorder = TRUE) {
   $snapshots = $reorder ? xs_snapshots_reorder($snapshots, TRUE) : $snapshots;
 
@@ -629,7 +640,6 @@ function xs_snapshot_policy_entity_info() {
       'id' => 'id',
     ),
     'module' => 'xs_snapshot_policy',
-//    'access callback' => 'xs_snapshot_policy_type_access',
   );
 
   return $return;
