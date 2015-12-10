@@ -1,6 +1,9 @@
 <?php
 define('XS_SNAPSHOT_MAX_POLICIES_PER_USER', 1);
 define('XS_SNAPSHOT_NAME_LABEL', '[auto]:');
+define('XS_SNAPSHOT_MIN_FREE_SLOTS_FOR_POLICY', 2);
+define('XS_SNAPSHOT_DEFAULT_SELECT_LABEL', '- Select -');
+define('XS_SNAPSHOT_DEFAULT_NO_FREE_SLOTS_SELECT_LABEL', '- Too many manual snapshots -');
 
 /**
  * Implements hook_cron().
@@ -36,12 +39,13 @@ function xs_snapshot_policy_cron() {
         'policy-skip');
       continue;
     }
+
     $uuid = xs_get_vm_uuid_by_node($vm_node);
     $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
     // Check if the policy maximum snapshots could be satisfied.
     // Load all snapshots for the VM.
     $server_snapshots = xs_get_vm_snapshots_from_node($vm_node);
-    // Count the number of VMs for the VM.
+    // Count the number of snapshots for the VM.
     $server_snapshots_count = count($server_snapshots);
     // Get the limit of snapshots allowed for the VM.
     $server_snapshots_limit = xs_get_snapshots_limit($vm_node);
@@ -209,6 +213,25 @@ function xs_snapshot_policy_theme($existing, $type, $theme, $path) {
 }
 
 /**
+ * Identifies if the server has free snapshot slots for policy creation.
+ *
+ * @param int $nid
+ *   Server node nid.
+ *
+ * @return bool
+ *   TRUE if the server has free slots or FALSE.
+ */
+function xs_snapshot_policy_has_free_slots_left($nid) {
+  $manual_snapshots_count = xs_snapshot_policy_get_snapshots_max_per_server($nid);
+  $server_snapshots_limit = xs_get_snapshots_limit($nid);
+  if (($server_snapshots_limit - $manual_snapshots_count) <= XS_SNAPSHOT_MIN_FREE_SLOTS_FOR_POLICY) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
  * Form definition for 'xs_snapshot_policy_form'.
  */
 function xs_snapshot_policy_form($form, &$form_state, $nid, $spid = NULL) {
@@ -229,6 +252,21 @@ function xs_snapshot_policy_form($form, &$form_state, $nid, $spid = NULL) {
                   <h4 class="modal-title" id="gridSystemModalLabel">' . $title . '</h4>
                 </div>',
   );
+
+  // If we do not have free snapshot slots available, return error message.
+  if (!xs_snapshot_policy_has_free_slots_left($nid)) {
+    $form['message'] = array(
+      '#markup' => t('Unable to create policy. Your existing snapshots count is !count approaching server limit !limit. You need to remove some snapshots first to free at least !slots snapshot slots.', array(
+        '!count' => xs_snapshot_policy_get_snapshots_max_per_server($nid),
+        '!limit' => xs_get_snapshots_limit($nid),
+        '!slots' => XS_SNAPSHOT_MIN_FREE_SLOTS_FOR_POLICY,
+      )),
+      '#prefix' => '<div class="modal-body"><div class="form-group"><span class="text-danger">',
+      '#suffix' => '</span></div></div>',
+    );
+
+    return $form;
+  }
 
   $form['title'] = array(
     '#type' => 'textfield',
@@ -266,15 +304,19 @@ function xs_snapshot_policy_form($form, &$form_state, $nid, $spid = NULL) {
     );
   }
 
+  $snapshots_options = xs_snapshot_policy_get_snapshot_form_element_selection($nid);
+
+  $snapshots_description = '<small class="text-danger">' . t('Select the maximum number of snapshots to keep.
+      Once this limit is reached, snapshots will be rotated. Refer to the help text
+      at the bottom of this page to understand how manually created snapshots and
+      snapshots created by this policy are rotated.') . '</small>';
+
   $form['snapshots'] = array(
     '#type' => 'select',
     '#title' => t('Policy Snapshots limit'),
-    '#options' => xs_snapshot_policy_get_snapshot_max($nid),
+    '#options' => $snapshots_options,
     '#default_value' => !empty($policy->snapshots) ? $policy->snapshots : '0',
-    '#description' => '<small class="text-muted">' . t('Select the maximum number of snapshots to keep.
-      Once this limit is reached, snapshots will be rotated. Refer to the help text
-      at the bottom of this page to understand how manually created snapshots and
-      snapshots created by this policy are rotated.') . '</small>',
+    '#description' => $snapshots_description,
     '#required' => TRUE,
     '#prefix' => '<div class="modal-body"><div class="form-group">',
     '#suffix' => '</div></div>',
@@ -419,32 +461,59 @@ function xs_snapshot_policy_form_submit($form, &$form_state) {
  * Prepares options for the drop-down select of maximum snapshots.
  *
  * @param int $nid
- *   Node id.
+ *   Server node id.
  *
  * @return array
  *   Array of options as required for the form select element.
  */
-function xs_snapshot_policy_get_snapshot_max($nid) {
-  module_load_include('inc', 'xs', 'includes/xs.snapshots');
+function xs_snapshot_policy_get_snapshot_form_element_selection($nid) {
+  $max = xs_snapshot_policy_get_snapshots_max_per_server($nid);
 
-  $node = node_load($nid);
-  $limit = xs_get_snapshots_limit($node);
-
-  if ($limit > 5) {
-    $limit = $limit - 5;
-  }
-  else {
-    $limit = 1;
-  }
-
-  $options = array(0 => '- Select -');
+  $options = array(0 => XS_SNAPSHOT_DEFAULT_SELECT_LABEL);
+  
   $i = 1;
-  while ($i <= $limit) {
+  while ($i <= $max) {
     $options[$i] = format_plural($i, '@count Snapshot', '@count Snapshots', array('@count' => $i));
     $i++;
   }
 
   return $options;
+}
+
+/**
+ * Assesses the maximum number of free snapshot slots available.
+ *
+ * Every server has it's own unique maximum number of snapshots that could be
+ * created. When a policy is created, we not allow to exceed this limit by the
+ * total of existing snapshots and policy max. For example, a server may have
+ * limit of 20 snapshots, but have 15 existing snapshots. In which case this
+ * function return 5.
+ *
+ * @param int $nid
+ *   Server node nid.
+ *
+ * @return bool|int
+ */
+function xs_snapshot_policy_get_snapshots_max_per_server($nid) {
+  module_load_include('inc', 'xs', 'includes/xs.snapshots');
+
+  $node = node_load($nid);
+  $limit = xs_get_snapshots_limit($node);
+
+  // Make snapshots limit for policy as half of the total snapshots for the
+  // server.
+  $server_snapshots = xs_get_vm_snapshots_from_node($node);
+  $snapshots_count = 0;
+  if (!empty($server_snapshots)) {
+    foreach ($server_snapshots as $server_snapshot) {
+      // Only count snapshots not created by a policy.
+      if (!xs_snapshot_policy_is_automated_snapshot($server_snapshot)) {
+        $snapshots_count++;
+      }
+    }
+  }
+
+  return $limit - $snapshots_count;
 }
 
 /**
