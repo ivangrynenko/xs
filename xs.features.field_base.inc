@@ -102,15 +102,7 @@ function xs_field_default_field_bases() {
     'settings' => array(
       'allowed_values' => array(
         0 => 'Not allowed',
-        1 => '1 Snapshot',
-        2 => '2 Snapshot',
-        3 => '3 Snapshot',
-        4 => '4 Snapshot',
         5 => '5 Snapshot',
-        6 => '6 Snapshot',
-        7 => '7 Snapshot',
-        8 => '8 Snapshot',
-        9 => '9 Snapshot',
         10 => '10 Snapshot',
         15 => '15 Snapshot',
         20 => '20 Snapshot',

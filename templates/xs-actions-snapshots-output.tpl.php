@@ -45,12 +45,12 @@
 
           <p>You have <?php print $snapshots_qty; ?> snapshots available. Your server is limited to have the maximum <?php print $snapshots_max; ?> snapshots.</p>
 
-          <p>
+          <h2>
             <button type="button" class="btn <?php print $link_class; ?>" data-toggle="modal" data-target="#myModal">
               <span class="glyphicon <?php print $link_glyphicon_class; ?>" aria-hidden="true"></span>&nbsp;
               <?php print t('Create a Snapshot'); ?>
             </button>
-          </p>
+          </h2>
           <?php print $new_snapshot_form; ?>
 
         </div>
@@ -63,7 +63,7 @@
         </div>
 
         <div class="col-md-12">
-          <div class="help">
+          <small class="text-muted">
             <p>
               Snapshots are the fastest way to backup and revert your entire server.
               Whether you need to revert last configuration changes or had an unsuccessful
@@ -86,7 +86,7 @@
               Note! To avoid harmful actions to your server, a confirmation
               dialogue will appear after you select an action.
             </p>
-          </div>
+          </small>
         </div>
 
       <?php endif; ?>

@@ -112,14 +112,14 @@ function xs_get_vm_snapshots_from_node($node) {
 function xs_get_vm_snapshots_count_from_node($node) {
   $vm = xs_get_vm_by_node($node);
 
-  return !empty($vm['snapshots']) ? count($vm['snapshots']) : FALSE;
+  return !empty($vm['snapshots']) ? count($vm['snapshots']) : 0;
 }
 
 /**
  * Gets the snapshots limit for the VPS.
  *
- * @param object $node
- *   Drupal node object.
+ * @param object|int $node
+ *   Drupal node object or nid.
  *
  * @return int|bool
  *   Number of snapshots or FALSE.
