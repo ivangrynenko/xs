@@ -120,6 +120,294 @@ function xs_views_default_views() {
   $export['all_xs_vps_clients'] = $view;
 
   $view = new view();
+  $view->name = 'xs_policy_log_runs_per_user';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'xs_snapshot_policy_log';
+  $view->human_name = 'XS Policy Log Runs for User';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Recent Policy Events';
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'administer xs_snapshot_policy entities';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
+  $handler->display->display_options['exposed_form']['options']['autosubmit'] = TRUE;
+  $handler->display->display_options['exposed_form']['options']['autosubmit_hide'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options'] = '10, 20, 40, 60';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'uid' => 'uid',
+    'id' => 'id',
+    'log' => 'log',
+    'created' => 'created',
+    'type' => 'type',
+  );
+  $handler->display->display_options['style_options']['default'] = 'created';
+  $handler->display->display_options['style_options']['info'] = array(
+    'uid' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'log' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'type' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  $handler->display->display_options['style_options']['sticky'] = TRUE;
+  /* Header: Global: Result summary */
+  $handler->display->display_options['header']['result']['id'] = 'result';
+  $handler->display->display_options['header']['result']['table'] = 'views';
+  $handler->display->display_options['header']['result']['field'] = 'result';
+  /* No results behavior: Global: Text area */
+  $handler->display->display_options['empty']['area']['id'] = 'area';
+  $handler->display->display_options['empty']['area']['table'] = 'views';
+  $handler->display->display_options['empty']['area']['field'] = 'area';
+  $handler->display->display_options['empty']['area']['empty'] = TRUE;
+  $handler->display->display_options['empty']['area']['content'] = 'The policy has not run yet.';
+  $handler->display->display_options['empty']['area']['format'] = 'full_html';
+  /* Relationship: Snapshot Policy Log: Snapshot Policy */
+  $handler->display->display_options['relationships']['policy_id']['id'] = 'policy_id';
+  $handler->display->display_options['relationships']['policy_id']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['relationships']['policy_id']['field'] = 'policy_id';
+  $handler->display->display_options['relationships']['policy_id']['required'] = TRUE;
+  /* Field: Snapshot Policy: Author */
+  $handler->display->display_options['fields']['uid']['id'] = 'uid';
+  $handler->display->display_options['fields']['uid']['table'] = 'xs_snapshot_policy';
+  $handler->display->display_options['fields']['uid']['field'] = 'uid';
+  $handler->display->display_options['fields']['uid']['relationship'] = 'policy_id';
+  $handler->display->display_options['fields']['uid']['label'] = 'Owner';
+  $handler->display->display_options['fields']['uid']['exclude'] = TRUE;
+  /* Field: Snapshot Policy Log: Snapshot policy log ID */
+  $handler->display->display_options['fields']['id']['id'] = 'id';
+  $handler->display->display_options['fields']['id']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['fields']['id']['field'] = 'id';
+  $handler->display->display_options['fields']['id']['exclude'] = TRUE;
+  /* Field: Snapshot Policy Log: Log */
+  $handler->display->display_options['fields']['log']['id'] = 'log';
+  $handler->display->display_options['fields']['log']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['fields']['log']['field'] = 'log';
+  $handler->display->display_options['fields']['log']['label'] = 'Message';
+  /* Field: Snapshot Policy Log: Created */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Date/Time';
+  $handler->display->display_options['fields']['created']['date_format'] = 'today time ago';
+  $handler->display->display_options['fields']['created']['second_date_format'] = 'medium';
+  /* Field: Snapshot Policy Log: Type */
+  $handler->display->display_options['fields']['type']['id'] = 'type';
+  $handler->display->display_options['fields']['type']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['fields']['type']['field'] = 'type';
+  /* Sort criterion: Snapshot Policy Log: Created */
+  $handler->display->display_options['sorts']['created']['id'] = 'created';
+  $handler->display->display_options['sorts']['created']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['sorts']['created']['field'] = 'created';
+  $handler->display->display_options['sorts']['created']['order'] = 'DESC';
+  /* Sort criterion: Snapshot Policy Log: Type */
+  $handler->display->display_options['sorts']['type']['id'] = 'type';
+  $handler->display->display_options['sorts']['type']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['sorts']['type']['field'] = 'type';
+  /* Contextual filter: Snapshot Policy: Target_id */
+  $handler->display->display_options['arguments']['target_id']['id'] = 'target_id';
+  $handler->display->display_options['arguments']['target_id']['table'] = 'xs_snapshot_policy';
+  $handler->display->display_options['arguments']['target_id']['field'] = 'target_id';
+  $handler->display->display_options['arguments']['target_id']['relationship'] = 'policy_id';
+  $handler->display->display_options['arguments']['target_id']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['target_id']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['target_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['target_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['target_id']['summary_options']['items_per_page'] = '25';
+  /* Contextual filter: Snapshot Policy: Author */
+  $handler->display->display_options['arguments']['uid']['id'] = 'uid';
+  $handler->display->display_options['arguments']['uid']['table'] = 'xs_snapshot_policy';
+  $handler->display->display_options['arguments']['uid']['field'] = 'uid';
+  $handler->display->display_options['arguments']['uid']['relationship'] = 'policy_id';
+  $handler->display->display_options['arguments']['uid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['uid']['default_argument_type'] = 'current_user';
+  $handler->display->display_options['arguments']['uid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['uid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['uid']['summary_options']['items_per_page'] = '25';
+  /* Filter criterion: Snapshot Policy Log: Log */
+  $handler->display->display_options['filters']['log']['id'] = 'log';
+  $handler->display->display_options['filters']['log']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['filters']['log']['field'] = 'log';
+  $handler->display->display_options['filters']['log']['operator'] = 'contains';
+  $handler->display->display_options['filters']['log']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['log']['expose']['operator_id'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['label'] = 'Search log message text';
+  $handler->display->display_options['filters']['log']['expose']['operator'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['identifier'] = 'log';
+  $handler->display->display_options['filters']['log']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+  );
+  /* Filter criterion: Snapshot Policy Log: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'xs_snapshot_policy_log';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['operator'] = 'contains';
+  $handler->display->display_options['filters']['type']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['type']['expose']['operator_id'] = 'type_op';
+  $handler->display->display_options['filters']['type']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type']['expose']['operator'] = 'type_op';
+  $handler->display->display_options['filters']['type']['expose']['identifier'] = 'type';
+  $handler->display->display_options['filters']['type']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+  );
+  $handler->display->display_options['filters']['type']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['type']['group_info']['label'] = 'Type';
+  $handler->display->display_options['filters']['type']['group_info']['identifier'] = 'type';
+  $handler->display->display_options['filters']['type']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => 'Skipped',
+      'operator' => 'contains',
+      'value' => 'skip',
+    ),
+    2 => array(
+      'title' => 'Deleted',
+      'operator' => 'contains',
+      'value' => 'delete',
+    ),
+    3 => array(
+      'title' => 'Created',
+      'operator' => 'contains',
+      'value' => 'create',
+    ),
+    4 => array(
+      'title' => 'Failed',
+      'operator' => 'contains',
+      'value' => 'fail',
+    ),
+  );
+
+  /* Display: Block */
+  $handler = $view->new_display('block', 'Block', 'user_block');
+  $handler->display->display_options['defaults']['access'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'role';
+  $handler->display->display_options['access']['role'] = array(
+    4 => '4',
+  );
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '5';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
+  $handler->display->display_options['block_description'] = 'XenServer User/Server Policy Log';
+
+  /* Display: Admin Page */
+  $handler = $view->new_display('page', 'Admin Page', 'page_1');
+  $handler->display->display_options['display_description'] = 'Admin page to display all policy runs';
+  $handler->display->display_options['defaults']['access'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'role';
+  $handler->display->display_options['access']['role'] = array(
+    3 => '3',
+  );
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['path'] = 'admin/structure/xs/policy-log';
+  $handler->display->display_options['menu']['type'] = 'tab';
+  $handler->display->display_options['menu']['title'] = 'Policies log';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
+
+  /* Display: Page 2 */
+  $handler = $view->new_display('page', 'Page 2', 'page_2');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Search Policy Events Log';
+  $handler->display->display_options['defaults']['access'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'role';
+  $handler->display->display_options['access']['role'] = array(
+    4 => '4',
+  );
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '5';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: Text area */
+  $handler->display->display_options['header']['area']['id'] = 'area';
+  $handler->display->display_options['header']['area']['table'] = 'views';
+  $handler->display->display_options['header']['area']['field'] = 'area';
+  $handler->display->display_options['header']['area']['empty'] = TRUE;
+  $handler->display->display_options['header']['area']['content'] = '<span class="glyphicon glyphicon-arrow-left"></span> <a href="/node/%1/xs-snapshot-policy">Back</a> to Policy overview page';
+  $handler->display->display_options['header']['area']['format'] = 'full_html';
+  $handler->display->display_options['header']['area']['tokenize'] = TRUE;
+  /* Header: Global: Result summary */
+  $handler->display->display_options['header']['result']['id'] = 'result';
+  $handler->display->display_options['header']['result']['table'] = 'views';
+  $handler->display->display_options['header']['result']['field'] = 'result';
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  /* Contextual filter: Snapshot Policy: Target_id */
+  $handler->display->display_options['arguments']['target_id']['id'] = 'target_id';
+  $handler->display->display_options['arguments']['target_id']['table'] = 'xs_snapshot_policy';
+  $handler->display->display_options['arguments']['target_id']['field'] = 'target_id';
+  $handler->display->display_options['arguments']['target_id']['relationship'] = 'policy_id';
+  $handler->display->display_options['arguments']['target_id']['default_action'] = 'empty';
+  $handler->display->display_options['arguments']['target_id']['exception']['value'] = '';
+  $handler->display->display_options['arguments']['target_id']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['target_id']['default_argument_skip_url'] = TRUE;
+  $handler->display->display_options['arguments']['target_id']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['target_id']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['target_id']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['path'] = 'node/%/xs-snapshot-policy/policies-log';
+  $export['xs_policy_log_runs_per_user'] = $view;
+
+  $view = new view();
   $view->name = 'xs_pools_servers';
   $view->description = '';
   $view->tag = 'default';

@@ -110,112 +110,113 @@
 
       <?php else: ?>
 
-        <?php print render($content); ?>
+      <?php print render($content); ?>
 
-
-        <div class="col-md-12 align-right">
-          <div class="text-right action-links">
+      <div class="col-md-12 align-right">
+        <div class="text-right action-links">
+          <h2>
             <?php print $action_links_dropdown; ?>
+          </h2>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Server Status</h3>
+          </div>
+
+          <div class="panel-body">
+            <p>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">Power state</label>:
+              <span class="vm-config-value"><?php print $vm_power_state; ?></span>
+              <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
+            </div>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">CPUs</label>
+              <span class="vm-config-value label label-primary"><?php print $vm_cpu; ?></span>
+              <label class="display-inline">RAM</label>
+              <span class="vm-config-value label label-primary"><?php print $vm_memory; ?>GB</span>
+              <label class="display-inline">HDD</label>
+              <span class="vm-config-value label label-primary"><?php print $disk_size; ?>GB</span>
+            </div>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">Start time</label>:
+              <span class="vm-config-value"><?php print $start_time; ?></span>
+            </div>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">Server uptime</label>:
+              <span class="vm-config-value"><?php print $server_uptime; ?></span>
+            </div>
+
           </div>
         </div>
+      </div>
 
-        <div class="col-md-4">
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Server Status</h3>
-            </div>
-
-            <div class="panel-body">
-              <p>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Power state</label>:
-                <span class="vm-config-value"><?php print $vm_power_state; ?></span>
-                <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">CPUs</label>
-                <span class="vm-config-value label label-primary"><?php print $vm_cpu; ?></span>
-                <label class="display-inline">RAM</label>
-                <span class="vm-config-value label label-primary"><?php print $vm_memory; ?>GB</span>
-                <label class="display-inline">HDD</label>
-                <span class="vm-config-value label label-primary"><?php print $disk_size; ?>GB</span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Start time</label>:
-                <span class="vm-config-value"><?php print $start_time; ?></span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Server uptime</label>:
-                <span class="vm-config-value"><?php print $server_uptime; ?></span>
-              </div>
-
-            </div>
+      <div class="col-md-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Server Configuration</h3>
           </div>
-        </div>
 
-        <div class="col-md-4">
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Server Configuration</h3>
-            </div>
+          <div class="panel-body">
+            <div class="xs-vm-row">
+              <label class="display-inline">Network cards</label>:
 
-            <div class="panel-body">
-              <div class="xs-vm-row">
-                <label class="display-inline">Network cards</label>:
-
-                <?php if (!empty($vm_vifs)) : ?>
-                  <ol>
-                    <?php foreach ($vm_vifs as $delta => $vif) : ?>
-                      <li>
-                        <label class="display-inline"><?php print $vif['device']; ?></label>: <?php if (!empty($network['ips'])) : ?><?php print !empty($network['ips'][$delta]) ? 'IPv4: <span class="label label-primary">' . $network['ips'][$delta] . '</span>' : 'Unconfigured'; ?><?php endif; ?> MAC:
-                        <span class="label label-primary"><?php print $vif['mac']; ?></span>
-                      </li>
-                    <?php endforeach; ?>
-                  </ol>
-                <?php endif; ?>
-              </div>
-
-              <?php if (!empty($vbds)) : ?>
-                <div class="xs-vm-row">
-                <label class="display-inline">Attached HDDs</label>
-                <?php foreach ($vbds as $uuid => $vbd) : ?>
-                  <ol>
+              <?php if (!empty($vm_vifs)) : ?>
+                <ol>
+                  <?php foreach ($vm_vifs as $delta => $vif) : ?>
                     <li>
-                      <label class="display-inline"><?php print $vbd['name_label']; ?> (<?php print $vbd['type']; ?>)</label>: Size
-                      <span class="label label-primary"><?php print $vbd['virtual_size']; ?> GB</span>
-                      <br/>Current utilisation: <?php print $vbd['percent_physical_utilisation']; ?> or <?php print $vbd['physical_utilisation']; ?> GB
+                      <label class="display-inline"><?php print $vif['device']; ?></label>: <?php if (!empty($network['ips'])) : ?><?php print !empty($network['ips'][$delta]) ? 'IPv4: <span class="label label-primary">' . $network['ips'][$delta] . '</span>' : 'Unconfigured'; ?><?php endif; ?> MAC:
+                      <span class="label label-primary"><?php print $vif['mac']; ?></span>
                     </li>
-                  </ol>
-                  </div>
-                <?php endforeach; ?>
+                  <?php endforeach; ?>
+                </ol>
               <?php endif; ?>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Server Name</label>:
-                <span class="description"><?php print $vm_name; ?></span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Server Description</label>:
-                <span class="description"><?php print $vm_description; ?></span>
-              </div>
-              </p>
-
             </div>
+
+            <?php if (!empty($vbds)) : ?>
+              <div class="xs-vm-row">
+              <label class="display-inline">Attached HDDs</label>
+              <?php foreach ($vbds as $uuid => $vbd) : ?>
+                <ol>
+                  <li>
+                    <label class="display-inline"><?php print $vbd['name_label']; ?> (<?php print $vbd['type']; ?>)</label>: Size
+                    <span class="label label-primary"><?php print $vbd['virtual_size']; ?> GB</span>
+                    <br/>Current utilisation: <?php print $vbd['percent_physical_utilisation']; ?> or <?php print $vbd['physical_utilisation']; ?> GB
+                  </li>
+                </ol>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">Server Name</label>:
+              <span class="description"><?php print $vm_name; ?></span>
+            </div>
+
+            <div class="xs-vm-row">
+              <label class="display-inline">Server Description</label>:
+              <span class="description"><?php print $vm_description; ?></span>
+            </div>
+            </p>
+
           </div>
         </div>
+      </div>
 
-        <div class="col-md-4">
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Operating System</h3>
-            </div>
+      <div class="col-md-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Operating System</h3>
+          </div>
 
-            <div class="panel-body">
+          <div class="panel-body">
 
             <ul>
               <?php if (!empty($os['version'])) : ?>
@@ -252,8 +253,8 @@
             </ul>
           </div>
         </div>
-      <?php endif; ?>
-    </div>
+        <?php endif; ?>
+      </div>
 
+    </div>
   </div>
-</div>
