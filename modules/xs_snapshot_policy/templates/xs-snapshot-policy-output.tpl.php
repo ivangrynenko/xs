@@ -58,7 +58,8 @@
     </div>
 
     <div class="col-md-8">
-      <h5>Recent Policy Events</h5>
+      <h3>Recent Policy Events</h3>
+      <?php print $policy_log_table_exposed_form; ?>
       <?php print $policy_log_table; ?>
     </div>
 

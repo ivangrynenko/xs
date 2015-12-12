@@ -419,6 +419,11 @@ function xs_seconds2human($seconds) {
  * @return bool|mixed
  */
 function xs_get_vm_by_node($node) {
+  $response = &drupal_static(__FUNCTION__ . '-' . $node->nid);
+  if (!empty($response)) {
+    return $response;
+  }
+
   if (is_numeric($node)) {
     $node = node_load($node);
   }
