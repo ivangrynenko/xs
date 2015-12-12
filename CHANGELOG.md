@@ -1,30 +1,34 @@
 # CHANGELOG #
 
-### 1.01 ###
-2015-12-08
-- Template improvements
-- Added bypass to the server snapshot by an automated policy when the VM is down.
-- Fixed number of tests.
-- Added missing permission, that was preventing administrator from accessing
-  snapshot policy pages.
-- Updated snapshot policy snapshots selector to be server max less 5.
-- Fixed Snapshots page layout bug in mobile devices preventing snapshot actions.
-- Other bug fixes and improvements.
+xs 7.x-1.3, 2015-12-12
+----------------------
+[] ig: Replaced policy events log with a view. 
+[] ig: Added date handlers for policy and policy log date fields. 
+[] ig: Cleaned up log types.
+[] ig: Added administrative view to give overview of all policy log entries.
 
-### 1.0 ###
-2015-12-05
+xs 7.x-1.1, 2015-12-08
+----------------------
+[] ig: Template improvements
+[] ig: Added bypass to the server snapshot by an automated policy when the VM is down.
+[] ig: Fixed number of tests.
+[] ig: Added missing permission, that was preventing administrator from accessing
+       snapshot policy pages.
+[] ig: Updated snapshot policy snapshots selector to be server max less 5.
+[] ig: Fixed Snapshots page layout bug in mobile devices preventing snapshot actions.
+[] ig: Other bug fixes and improvements.
 
-- Automated snapshot policies as entities.
-- Entity Policy type.
-- Entity Policy log.
-- One policy per server.
-- Ability to store policy events into designated log.
-- Automated cron job that manages snapshot creation and removal.
+xs 7.x-1.0, 2015-12-05
+----------------------
+[] ig: Automated snapshot policies as entities.
+[] ig: Entity Policy type.
+[] ig: Entity Policy log.
+[] ig: One policy per server.
+[] ig: Ability to store policy events into designated log.
+[] ig: Automated cron job that manages snapshot creation and removal.
 
-### RC ###
-2015-11-22
-
-Official first public release.
-- VM content type available.
-- Ability to allocate VM to Drupal users and add Dom-U uuid.
-- Ability to create manual snapshots.
+xs 7.x-1.x-RC2, 2015-11-12
+--------------------------
+[] ig: VM content type available.
+[] ig: Ability to allocate VM to Drupal users and add Dom-U uuid.
+[] ig: Ability to create manual snapshots.

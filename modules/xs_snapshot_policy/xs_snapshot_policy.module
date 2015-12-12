@@ -36,7 +36,10 @@ function xs_snapshot_policy_cron() {
         '!policy_title' => $policy->title,
         '!type' => $policy_type->label,
       )),
-        'policy-skip');
+        'skip');
+      // Update last_run flag.
+      $policy->last_run = REQUEST_TIME;
+      $policy->save();
       continue;
     }
 
@@ -56,7 +59,7 @@ function xs_snapshot_policy_cron() {
             '!name' => $automated_snapshot['name_label'],
             '!policy_title' => $policy->title,
             '!type' => $policy_type->label,
-          )), 'policy-create');
+          )), 'delete');
         }
         catch (Exception $e) {
           watchdog('XS_SNAPSHOT_POLICY', 'Unable to delete snapshot !title', array('!title' => $automated_snapshot['name_label']), WATCHDOG_ERROR);
@@ -83,14 +86,15 @@ function xs_snapshot_policy_cron() {
         '!title' => $snapshot_title,
         '!policy_title' => $policy->title,
         '!type' => $policy_type->label,
-      )), 'policy-create');
+      )), 'create');
     }
     catch (Exception $e) {
       xs_snapshot_policy_log_write($policy->spid, t('Snapshot !snap_name failed  (!type)', array(
         '!snap_name' => XS_SNAPSHOT_NAME_LABEL,
         '!policy_title' => $policy->title,
         '!type' => $policy_type->label,
-      )), 'policy-fail');
+      )), 'fail');
+
       watchdog('XS_SNAPTHOS_POLICY', 'Failed to create new snapshot !title for !vm_name', array(
         '!title' => $snapshot_title,
         '!vm_name' => $vm_node->title,

@@ -241,7 +241,7 @@ function xs_strongarm() {
     'toggle_comment_user_picture' => 1,
     'toggle_comment_user_verification' => 1,
     'toggle_favicon' => 1,
-    'toggle_main_menu' => 1,
+    'toggle_main_menu' => 0,
     'toggle_secondary_menu' => 1,
     'default_logo' => 0,
     'logo_path' => 'sites/default/files/rh-logo_02.png',
@@ -268,7 +268,7 @@ function xs_strongarm() {
     'bootstrap_breadcrumb' => '1',
     'bootstrap_breadcrumb_home' => 0,
     'bootstrap_breadcrumb_title' => 1,
-    'bootstrap_navbar_position' => '',
+    'bootstrap_navbar_position' => 'fixed-top',
     'bootstrap_navbar_inverse' => 0,
     'bootstrap_pager_first_and_last' => 1,
     'bootstrap_region_well-navigation' => '',
@@ -319,7 +319,7 @@ function xs_strongarm() {
     'bootstrap_cdn_custom_css_min' => 'https://cdn.jsdelivr.net/bootstrap/3.3.5/css/bootstrap.min.css',
     'bootstrap_cdn_custom_js' => 'https://cdn.jsdelivr.net/bootstrap/3.3.5/js/bootstrap.js',
     'bootstrap_cdn_custom_js_min' => 'https://cdn.jsdelivr.net/bootstrap/3.3.5/js/bootstrap.min.js',
-    'bootstrap_cdn_jsdelivr_version' => '3.3.5',
+    'bootstrap_cdn_jsdelivr_version' => '3.3.6',
     'bootstrap_cdn_jsdelivr_theme' => 'bootstrap',
   );
   $export['theme_bootstrap_settings'] = $strongarm;

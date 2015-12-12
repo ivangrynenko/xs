@@ -27,7 +27,6 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
   $variables['policy_snapshots'] = '';
   $variables['policy_type'] = '';
   $variables['policies_exceeded'] = 'N/A';
-  $variables['policy_log_table'] = '';
 
   $author_uid = xs_get_vps_owner_uid($variables['node']);
   $policy = xs_snapshot_policy_get_policies_per_user($author_uid, $variables['node']->nid);
@@ -52,8 +51,9 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
     ) : t('Never');
     $variables['policies_exceeded'] = xs_snapshot_policy_get_policies_count_per_user($author_uid, $variables['node']->nid) >= XS_SNAPSHOT_MAX_POLICIES_PER_USER;
 
-    $variables['policy_log_table'] = theme('xs_snapshot_policy_log', array('policy' => $policy));
   }
+
+  $variables['policy_log_table'] = views_embed_view('xs_policy_log_runs_per_user', 'page_2', $variables['node']->nid);
   $spid = !empty($policy->spid) ? $policy->spid : NULL;
   $policy_form = drupal_get_form('xs_snapshot_policy_form', $variables['node']->nid, $spid);
   $variables['policy_form'] = drupal_render($policy_form);
