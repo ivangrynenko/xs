@@ -89,6 +89,12 @@
           </small>
         </div>
 
+        <div class="col-md-12">
+          <h3 id="snapshot-log">Snapshot Actions Log</h3>
+          <a hame="snapshot-log" />
+          <?php print $xs_snapshot_actions_log; ?>
+        </div>
+
       <?php endif; ?>
     <?php endif; ?>
   </div>
