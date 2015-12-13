@@ -60,6 +60,16 @@ function xs_permission() {
       'title' => t('Perform Any VPS actions'),
       'description' => 'Use to poweroff, reboot, poweron a VPS',
     ),
+    'view own xs action log' => array(
+      'title' => t('View own server log entries Server Action log'),
+      'description' => t('Allows users to View log entries in own Server Action log.'),
+      'restrict access' => TRUE,
+    ),
+    'view any xs action log' => array(
+      'title' => t('View any serverlog entries Server Action log'),
+      'description' => t('Allows users to View log entries in any Server Action log.'),
+      'restrict access' => TRUE,
+    ),
   );
 }
 
@@ -96,16 +106,6 @@ function xs_menu() {
     'page callback' => 'xs_admin_pool_configuration',
     'access arguments' => array('administer xenserver pool'),
     'file' => 'includes/xs.pages.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
-
-  $items['admin/config/services/xs/vms'] = array(
-    'title' => 'VMs',
-    'description' => 'VMs available',
-    'page callback' => 'xs_admin_pool_vms',
-    'access arguments' => array('administer xenserver pool'),
-    'file' => 'includes/xs.pages.inc',
-    'weight' => 50,
     'type' => MENU_LOCAL_TASK,
   );
 
@@ -295,6 +295,8 @@ function xs_preprocess_node(&$variables) {
     drupal_page_is_cacheable(FALSE);
 
     drupal_set_title(t('Overview of !server', array('!server' => $variables['node']->title)));
+
+    $variables['xs_action_log'] = views_embed_view('xs_action_log', 'page_user_actions', $variables['node']->nid);
 
     $vm = xs_get_vm_by_node($variables['node']);
 
@@ -692,4 +694,56 @@ function xs_get_vps_owner_uid($node) {
   }
 
   return !empty($uid) ? $uid : FALSE;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function xs_entity_info() {
+  $return['xs_action_log'] = array(
+    'label' => t('Server Action Log'),
+    'entity class' => 'XsActionLog',
+    'controller class' => 'XsActionLogController',
+    'base table' => 'xs_action_log',
+    'fieldable' => FALSE,
+    'exportable' => FALSE,
+    'entity keys' => array(
+      'id' => 'id',
+    ),
+    'module' => 'xs',
+    'access callback' => 'xs_access',
+  );
+
+  return $return;
+}
+
+/**
+ * Access callback for xs_action_log entity.
+ */
+function xs_access($op, $xs_action_log, $account = NULL, $entity_type = NULL) {
+  switch ($op) {
+    case 'view':
+      if (user_access('view any xs action log')) {
+        return TRUE;
+      }
+      elseif (user_access('view own xs action log')) {
+        return $xs_action_log->uid == $account->uid;
+      }
+      break;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Writes action log entry.
+ *
+ * @param string $message
+ *   Message to write.
+ * @param string $type
+ *   Machine name of the message in a freeform way, max 32 characters.
+ */
+function xs_action_log_write($message, $type) {
+  $log = entity_create('xs_action_log', array('log' => $message, 'type' => $type));
+  $log->save();
 }

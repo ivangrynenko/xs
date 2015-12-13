@@ -105,20 +105,6 @@ function xs_settings_form_submit($form, &$form_state) {
 }
 
 /**
- * Renders a block of pool servers.
- *
- * @return string
- *   Rendered HTML output.
- */
-function xs_admin_pool_vms() {
-  drupal_set_title('Available Virtual Servers');
-  $view = views_get_view('xs_pools_servers');
-  $output = $view->preview('block');
-
-  return $output;
-}
-
-/**
  * Create a list of templates for administrator.
  *
  * @return array

@@ -19,6 +19,15 @@ function xs_user_default_permissions() {
     'module' => 'xs',
   );
 
+  // Exported permission: 'administer xs_snapshot_policy entities'.
+  $permissions['administer xs_snapshot_policy entities'] = array(
+    'name' => 'administer xs_snapshot_policy entities',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
+  );
+
   // Exported permission: 'administer xs_snapshot_policy types'.
   $permissions['administer xs_snapshot_policy types'] = array(
     'name' => 'administer xs_snapshot_policy types',
@@ -121,9 +130,38 @@ function xs_user_default_permissions() {
     'module' => 'xs',
   );
 
+  // Exported permission: 'view any xs action log'.
+  $permissions['view any xs action log'] = array(
+    'name' => 'view any xs action log',
+    'roles' => array(
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs',
+  );
+
+  // Exported permission: 'view own xs action log'.
+  $permissions['view own xs action log'] = array(
+    'name' => 'view own xs action log',
+    'roles' => array(
+      'XS VPS Customer' => 'XS VPS Customer',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs',
+  );
+
   // Exported permission: 'view own xs_snapshot_policy entities'.
   $permissions['view own xs_snapshot_policy entities'] = array(
     'name' => 'view own xs_snapshot_policy entities',
+    'roles' => array(
+      'XS VPS Customer' => 'XS VPS Customer',
+      'administrator' => 'administrator',
+    ),
+    'module' => 'xs_snapshot_policy',
+  );
+
+  // Exported permission: 'view xs_snapshot_policy log'.
+  $permissions['view xs_snapshot_policy log'] = array(
+    'name' => 'view xs_snapshot_policy log',
     'roles' => array(
       'XS VPS Customer' => 'XS VPS Customer',
       'administrator' => 'administrator',

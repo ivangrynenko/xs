@@ -11,120 +11,552 @@ function xs_views_default_views() {
   $export = array();
 
   $view = new view();
-  $view->name = 'all_xs_vps_clients';
+  $view->name = 'xs_action_log';
   $view->description = '';
-  $view->tag = 'default';
-  $view->base_table = 'node';
-  $view->human_name = 'All XS VPS Clients';
+  $view->tag = 'xs';
+  $view->base_table = 'xs_action_log';
+  $view->human_name = 'XS Action Log';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['title'] = 'Server Actions Log';
   $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'role';
-  $handler->display->display_options['access']['role'] = array(
-    3 => '3',
-  );
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['access']['perm'] = 'view own xs action log';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['exposed_form']['options']['reset_button'] = TRUE;
+  $handler->display->display_options['exposed_form']['options']['autosubmit_hide'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'full';
-  $handler->display->display_options['style_plugin'] = 'list';
-  $handler->display->display_options['style_options']['default_row_class'] = FALSE;
-  $handler->display->display_options['style_options']['row_class_special'] = FALSE;
-  $handler->display->display_options['row_plugin'] = 'fields';
-  /* Relationship: Content: Author */
+  $handler->display->display_options['pager']['options']['items_per_page'] = '10';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
+  $handler->display->display_options['style_plugin'] = 'table';
+  $handler->display->display_options['style_options']['columns'] = array(
+    'nid' => 'nid',
+    'id' => 'id',
+    'log' => 'log',
+    'type' => 'type',
+    'created' => 'created',
+    'name' => 'name',
+  );
+  $handler->display->display_options['style_options']['default'] = 'created';
+  $handler->display->display_options['style_options']['info'] = array(
+    'nid' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'id' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'log' => array(
+      'sortable' => 0,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'type' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'created' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'desc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+    'name' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
+  );
+  /* Header: Global: Result summary */
+  $handler->display->display_options['header']['result']['id'] = 'result';
+  $handler->display->display_options['header']['result']['table'] = 'views';
+  $handler->display->display_options['header']['result']['field'] = 'result';
+  /* Header: Global: Text area */
+  $handler->display->display_options['header']['area']['id'] = 'area';
+  $handler->display->display_options['header']['area']['table'] = 'views';
+  $handler->display->display_options['header']['area']['field'] = 'area';
+  $handler->display->display_options['header']['area']['content'] = '<span class="glyphicon glyphicon-arrow-left"></span> <a href="/node/[nid]">Back</a> to the server overview page';
+  $handler->display->display_options['header']['area']['format'] = 'full_html';
+  $handler->display->display_options['header']['area']['tokenize'] = TRUE;
+  /* Relationship: Server Action Log: Referenced Server */
+  $handler->display->display_options['relationships']['target_id']['id'] = 'target_id';
+  $handler->display->display_options['relationships']['target_id']['table'] = 'xs_action_log';
+  $handler->display->display_options['relationships']['target_id']['field'] = 'target_id';
+  /* Relationship: Server Action Log: User */
   $handler->display->display_options['relationships']['uid']['id'] = 'uid';
-  $handler->display->display_options['relationships']['uid']['table'] = 'node';
+  $handler->display->display_options['relationships']['uid']['table'] = 'xs_action_log';
   $handler->display->display_options['relationships']['uid']['field'] = 'uid';
-  /* Field: Content: Author uid */
-  $handler->display->display_options['fields']['uid']['id'] = 'uid';
-  $handler->display->display_options['fields']['uid']['table'] = 'node';
-  $handler->display->display_options['fields']['uid']['field'] = 'uid';
-  $handler->display->display_options['fields']['uid']['label'] = '';
-  $handler->display->display_options['fields']['uid']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['uid']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['uid']['link_to_user'] = FALSE;
+  $handler->display->display_options['relationships']['uid']['label'] = 'User';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'target_id';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  /* Field: Server Action Log: Server action log ID */
+  $handler->display->display_options['fields']['id']['id'] = 'id';
+  $handler->display->display_options['fields']['id']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['id']['field'] = 'id';
+  $handler->display->display_options['fields']['id']['exclude'] = TRUE;
+  /* Field: Server Action Log: Log */
+  $handler->display->display_options['fields']['log']['id'] = 'log';
+  $handler->display->display_options['fields']['log']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['log']['field'] = 'log';
+  $handler->display->display_options['fields']['log']['label'] = 'Log Message';
+  /* Field: Server Action Log: Type */
+  $handler->display->display_options['fields']['type']['id'] = 'type';
+  $handler->display->display_options['fields']['type']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['type']['field'] = 'type';
+  $handler->display->display_options['fields']['type']['label'] = 'Action Type';
+  /* Field: Server Action Log: Created */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Date/Time';
+  $handler->display->display_options['fields']['created']['date_format'] = 'today time ago';
+  $handler->display->display_options['fields']['created']['second_date_format'] = 'medium';
   /* Field: User: Name */
   $handler->display->display_options['fields']['name']['id'] = 'name';
   $handler->display->display_options['fields']['name']['table'] = 'users';
   $handler->display->display_options['fields']['name']['field'] = 'name';
   $handler->display->display_options['fields']['name']['relationship'] = 'uid';
-  $handler->display->display_options['fields']['name']['label'] = '';
-  $handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['name']['label'] = 'Action Username';
   $handler->display->display_options['fields']['name']['link_to_user'] = FALSE;
-  /* Sort criterion: User: Name */
-  $handler->display->display_options['sorts']['name']['id'] = 'name';
-  $handler->display->display_options['sorts']['name']['table'] = 'users';
-  $handler->display->display_options['sorts']['name']['field'] = 'name';
-  $handler->display->display_options['sorts']['name']['relationship'] = 'uid';
-  /* Contextual filter: User: Roles */
-  $handler->display->display_options['arguments']['rid']['id'] = 'rid';
-  $handler->display->display_options['arguments']['rid']['table'] = 'users_roles';
-  $handler->display->display_options['arguments']['rid']['field'] = 'rid';
-  $handler->display->display_options['arguments']['rid']['relationship'] = 'uid';
-  $handler->display->display_options['arguments']['rid']['default_action'] = 'default';
-  $handler->display->display_options['arguments']['rid']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['rid']['default_argument_options']['argument'] = '4';
-  $handler->display->display_options['arguments']['rid']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['rid']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['rid']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['rid']['reduce_duplicates'] = TRUE;
-  /* Filter criterion: User: Active */
-  $handler->display->display_options['filters']['status_1']['id'] = 'status_1';
-  $handler->display->display_options['filters']['status_1']['table'] = 'users';
-  $handler->display->display_options['filters']['status_1']['field'] = 'status';
-  $handler->display->display_options['filters']['status_1']['relationship'] = 'uid';
-  $handler->display->display_options['filters']['status_1']['value'] = '1';
+  /* Contextual filter: Content: Nid */
+  $handler->display->display_options['arguments']['nid']['id'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['table'] = 'node';
+  $handler->display->display_options['arguments']['nid']['field'] = 'nid';
+  $handler->display->display_options['arguments']['nid']['relationship'] = 'target_id';
+  $handler->display->display_options['arguments']['nid']['default_action'] = 'default';
+  $handler->display->display_options['arguments']['nid']['exception']['value'] = '';
+  $handler->display->display_options['arguments']['nid']['default_argument_type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['nid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['nid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['nid']['specify_validation'] = TRUE;
+  $handler->display->display_options['arguments']['nid']['validate']['type'] = 'node';
+  $handler->display->display_options['arguments']['nid']['validate_options']['types'] = array(
+    'xs_vps' => 'xs_vps',
+  );
+  $handler->display->display_options['arguments']['nid']['validate_options']['access'] = TRUE;
+  $handler->display->display_options['arguments']['nid']['validate']['fail'] = 'access denied';
+  /* Filter criterion: Server Action Log: Log */
+  $handler->display->display_options['filters']['log']['id'] = 'log';
+  $handler->display->display_options['filters']['log']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['log']['field'] = 'log';
+  $handler->display->display_options['filters']['log']['operator'] = 'contains';
+  $handler->display->display_options['filters']['log']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['log']['expose']['operator_id'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['label'] = 'Search log message text';
+  $handler->display->display_options['filters']['log']['expose']['operator'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['identifier'] = 'log';
+  $handler->display->display_options['filters']['log']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+  );
+  /* Filter criterion: Server Action Log: Type */
+  $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['type_1']['field'] = 'type';
+  $handler->display->display_options['filters']['type_1']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['expose']['operator_id'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['expose']['operator'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['group_info']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['group_info']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => 'Start',
+      'operator' => '=',
+      'value' => 'start',
+    ),
+    2 => array(
+      'title' => 'Reboot',
+      'operator' => '=',
+      'value' => 'clean_reboot',
+    ),
+    3 => array(
+      'title' => 'Shutdown',
+      'operator' => '=',
+      'value' => 'clean_shutdown',
+    ),
+    4 => array(
+      'title' => 'Hard Reboot',
+      'operator' => '=',
+      'value' => 'hard_reboot',
+    ),
+    5 => array(
+      'title' => 'Hard Shutdown',
+      'operator' => '=',
+      'value' => 'hard_shutdown',
+    ),
+  );
 
-  /* Display: Entity Reference */
-  $handler = $view->new_display('entityreference', 'Entity Reference', 'entityreference_1');
-  $handler->display->display_options['defaults']['title'] = FALSE;
-  $handler->display->display_options['title'] = 'ER';
-  $handler->display->display_options['pager']['type'] = 'some';
-  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
-  $handler->display->display_options['style_plugin'] = 'entityreference_style';
-  $handler->display->display_options['style_options']['search_fields'] = array(
-    'uid' => 'uid',
-    'name' => 0,
+  /* Display: User Page (Actions) */
+  $handler = $view->new_display('page', 'User Page (Actions)', 'page_user_actions');
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: Result summary */
+  $handler->display->display_options['header']['result']['id'] = 'result';
+  $handler->display->display_options['header']['result']['table'] = 'views';
+  $handler->display->display_options['header']['result']['field'] = 'result';
+  /* Header: Global: Text area */
+  $handler->display->display_options['header']['area']['id'] = 'area';
+  $handler->display->display_options['header']['area']['table'] = 'views';
+  $handler->display->display_options['header']['area']['field'] = 'area';
+  $handler->display->display_options['header']['area']['content'] = '<span class="glyphicon glyphicon-arrow-left"></span> <a href="/node/[nid]#server-log">Back</a> to the server overview page';
+  $handler->display->display_options['header']['area']['format'] = 'full_html';
+  $handler->display->display_options['header']['area']['tokenize'] = TRUE;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Server Action Log: Log */
+  $handler->display->display_options['filters']['log']['id'] = 'log';
+  $handler->display->display_options['filters']['log']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['log']['field'] = 'log';
+  $handler->display->display_options['filters']['log']['operator'] = 'contains';
+  $handler->display->display_options['filters']['log']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['log']['expose']['operator_id'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['label'] = 'Search log message text';
+  $handler->display->display_options['filters']['log']['expose']['operator'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['identifier'] = 'log';
+  $handler->display->display_options['filters']['log']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
   );
-  $handler->display->display_options['defaults']['style_options'] = FALSE;
-  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
-  $handler->display->display_options['row_plugin'] = 'entityreference_fields';
-  $handler->display->display_options['row_options']['inline'] = array(
-    'uid' => 'uid',
-    'name' => 'name',
+  /* Filter criterion: Server Action Log: Type */
+  $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['type_1']['field'] = 'type';
+  $handler->display->display_options['filters']['type_1']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['expose']['operator_id'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['expose']['operator'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['group_info']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['group_info']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => 'Start',
+      'operator' => '=',
+      'value' => 'start',
+    ),
+    2 => array(
+      'title' => 'Reboot',
+      'operator' => '=',
+      'value' => 'clean_reboot',
+    ),
+    3 => array(
+      'title' => 'Shutdown',
+      'operator' => '=',
+      'value' => 'clean_shutdown',
+    ),
+    4 => array(
+      'title' => 'Hard Reboot',
+      'operator' => '=',
+      'value' => 'hard_reboot',
+    ),
+    5 => array(
+      'title' => 'Hard Shutdown',
+      'operator' => '=',
+      'value' => 'hard_shutdown',
+    ),
   );
-  $handler->display->display_options['defaults']['row_options'] = FALSE;
+  /* Filter criterion: Server Action Log: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['operator'] = 'not_starts';
+  $handler->display->display_options['filters']['type']['value'] = 'snapshot';
+  $handler->display->display_options['path'] = 'node/%/action-log';
 
-  /* Display: Entity Reference 2 */
-  $handler = $view->new_display('entityreference', 'Entity Reference 2', 'entityreference_2');
-  $handler->display->display_options['defaults']['title'] = FALSE;
-  $handler->display->display_options['title'] = 'XS VPS Customers';
-  $handler->display->display_options['pager']['type'] = 'some';
-  $handler->display->display_options['defaults']['style_plugin'] = FALSE;
-  $handler->display->display_options['style_plugin'] = 'entityreference_style';
-  $handler->display->display_options['style_options']['search_fields'] = array(
-    'uid' => 'uid',
-    'name' => 0,
+  /* Display: User Page (Snapshots) */
+  $handler = $view->new_display('page', 'User Page (Snapshots)', 'page_user_snapshots');
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: Result summary */
+  $handler->display->display_options['header']['result']['id'] = 'result';
+  $handler->display->display_options['header']['result']['table'] = 'views';
+  $handler->display->display_options['header']['result']['field'] = 'result';
+  /* Header: Global: Text area */
+  $handler->display->display_options['header']['area']['id'] = 'area';
+  $handler->display->display_options['header']['area']['table'] = 'views';
+  $handler->display->display_options['header']['area']['field'] = 'area';
+  $handler->display->display_options['header']['area']['content'] = '<span class="glyphicon glyphicon-arrow-left"></span> <a href="/node/[nid]/xs-snapshots#snapshot-log">Back</a> to the snapshots overview page';
+  $handler->display->display_options['header']['area']['format'] = 'full_html';
+  $handler->display->display_options['header']['area']['tokenize'] = TRUE;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Server Action Log: Log */
+  $handler->display->display_options['filters']['log']['id'] = 'log';
+  $handler->display->display_options['filters']['log']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['log']['field'] = 'log';
+  $handler->display->display_options['filters']['log']['operator'] = 'contains';
+  $handler->display->display_options['filters']['log']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['log']['expose']['operator_id'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['label'] = 'Search log message text';
+  $handler->display->display_options['filters']['log']['expose']['operator'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['identifier'] = 'log';
+  $handler->display->display_options['filters']['log']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
   );
-  $handler->display->display_options['defaults']['style_options'] = FALSE;
-  $handler->display->display_options['defaults']['row_plugin'] = FALSE;
-  $handler->display->display_options['row_plugin'] = 'entityreference_fields';
-  $handler->display->display_options['row_options']['inline'] = array(
-    'uid' => 'uid',
+  /* Filter criterion: Server Action Log: Type */
+  $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['type_1']['field'] = 'type';
+  $handler->display->display_options['filters']['type_1']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['expose']['operator_id'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['expose']['operator'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['group_info']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['group_info']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => 'Create',
+      'operator' => '=',
+      'value' => 'snapshot-create',
+    ),
+    2 => array(
+      'title' => 'Delete',
+      'operator' => '=',
+      'value' => 'snapshot-destroy',
+    ),
+    3 => array(
+      'title' => 'Revert',
+      'operator' => '=',
+      'value' => 'snapshot-revert',
+    ),
   );
-  $handler->display->display_options['defaults']['row_options'] = FALSE;
-  $export['all_xs_vps_clients'] = $view;
+  /* Filter criterion: Server Action Log: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['operator'] = 'starts';
+  $handler->display->display_options['filters']['type']['value'] = 'snapshot';
+  $handler->display->display_options['path'] = 'node/%/snapshot-log';
+
+  /* Display: Admin Page (All) */
+  $handler = $view->new_display('page', 'Admin Page (All)', 'admin_page');
+  $handler->display->display_options['display_description'] = 'Snapshot actions + server Actions';
+  $handler->display->display_options['defaults']['pager'] = FALSE;
+  $handler->display->display_options['pager']['type'] = 'full';
+  $handler->display->display_options['pager']['options']['items_per_page'] = '50';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options'] = '25, 50, 100, 250';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: Result summary */
+  $handler->display->display_options['header']['result']['id'] = 'result';
+  $handler->display->display_options['header']['result']['table'] = 'views';
+  $handler->display->display_options['header']['result']['field'] = 'result';
+  $handler->display->display_options['defaults']['fields'] = FALSE;
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'target_id';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
+  /* Field: Server Action Log: Server action log ID */
+  $handler->display->display_options['fields']['id']['id'] = 'id';
+  $handler->display->display_options['fields']['id']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['id']['field'] = 'id';
+  $handler->display->display_options['fields']['id']['exclude'] = TRUE;
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['relationship'] = 'target_id';
+  $handler->display->display_options['fields']['title']['label'] = 'Server Name';
+  /* Field: Server Action Log: Log */
+  $handler->display->display_options['fields']['log']['id'] = 'log';
+  $handler->display->display_options['fields']['log']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['log']['field'] = 'log';
+  $handler->display->display_options['fields']['log']['label'] = 'Log Message';
+  /* Field: Server Action Log: Type */
+  $handler->display->display_options['fields']['type']['id'] = 'type';
+  $handler->display->display_options['fields']['type']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['type']['field'] = 'type';
+  $handler->display->display_options['fields']['type']['label'] = 'Action Type';
+  /* Field: Server Action Log: Created */
+  $handler->display->display_options['fields']['created']['id'] = 'created';
+  $handler->display->display_options['fields']['created']['table'] = 'xs_action_log';
+  $handler->display->display_options['fields']['created']['field'] = 'created';
+  $handler->display->display_options['fields']['created']['label'] = 'Date/Time';
+  $handler->display->display_options['fields']['created']['date_format'] = 'today time ago';
+  $handler->display->display_options['fields']['created']['second_date_format'] = 'medium';
+  /* Field: User: Name */
+  $handler->display->display_options['fields']['name']['id'] = 'name';
+  $handler->display->display_options['fields']['name']['table'] = 'users';
+  $handler->display->display_options['fields']['name']['field'] = 'name';
+  $handler->display->display_options['fields']['name']['relationship'] = 'uid';
+  $handler->display->display_options['fields']['name']['label'] = 'Action Username';
+  $handler->display->display_options['fields']['name']['link_to_user'] = FALSE;
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['defaults']['filter_groups'] = FALSE;
+  $handler->display->display_options['defaults']['filters'] = FALSE;
+  /* Filter criterion: Content: Title */
+  $handler->display->display_options['filters']['title']['id'] = 'title';
+  $handler->display->display_options['filters']['title']['table'] = 'node';
+  $handler->display->display_options['filters']['title']['field'] = 'title';
+  $handler->display->display_options['filters']['title']['relationship'] = 'target_id';
+  $handler->display->display_options['filters']['title']['operator'] = 'contains';
+  $handler->display->display_options['filters']['title']['group'] = 1;
+  $handler->display->display_options['filters']['title']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['title']['expose']['operator_id'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['label'] = 'Filter by server name';
+  $handler->display->display_options['filters']['title']['expose']['operator'] = 'title_op';
+  $handler->display->display_options['filters']['title']['expose']['identifier'] = 'title';
+  $handler->display->display_options['filters']['title']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+  );
+  /* Filter criterion: Server Action Log: Log */
+  $handler->display->display_options['filters']['log']['id'] = 'log';
+  $handler->display->display_options['filters']['log']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['log']['field'] = 'log';
+  $handler->display->display_options['filters']['log']['operator'] = 'contains';
+  $handler->display->display_options['filters']['log']['group'] = 1;
+  $handler->display->display_options['filters']['log']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['log']['expose']['operator_id'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['label'] = 'Search log message text';
+  $handler->display->display_options['filters']['log']['expose']['operator'] = 'log_op';
+  $handler->display->display_options['filters']['log']['expose']['identifier'] = 'log';
+  $handler->display->display_options['filters']['log']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+  );
+  /* Filter criterion: Server Action Log: Type */
+  $handler->display->display_options['filters']['type_1']['id'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['type_1']['field'] = 'type';
+  $handler->display->display_options['filters']['type_1']['group'] = 1;
+  $handler->display->display_options['filters']['type_1']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['expose']['operator_id'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['expose']['operator'] = 'type_1_op';
+  $handler->display->display_options['filters']['type_1']['expose']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['is_grouped'] = TRUE;
+  $handler->display->display_options['filters']['type_1']['group_info']['label'] = 'Type';
+  $handler->display->display_options['filters']['type_1']['group_info']['identifier'] = 'type_1';
+  $handler->display->display_options['filters']['type_1']['group_info']['group_items'] = array(
+    1 => array(
+      'title' => 'Start',
+      'operator' => '=',
+      'value' => 'start',
+    ),
+    2 => array(
+      'title' => 'Reboot',
+      'operator' => '=',
+      'value' => 'clean_reboot',
+    ),
+    3 => array(
+      'title' => 'Shutdown',
+      'operator' => '=',
+      'value' => 'clean_shutdown',
+    ),
+    4 => array(
+      'title' => 'Hard Reboot',
+      'operator' => '=',
+      'value' => 'hard_reboot',
+    ),
+    5 => array(
+      'title' => 'Hard Shutdown',
+      'operator' => '=',
+      'value' => 'hard_shutdown',
+    ),
+    6 => array(
+      'title' => 'Snapshot (Any)',
+      'operator' => 'starts',
+      'value' => 'snapshot',
+    ),
+    7 => array(
+      'title' => 'Snapshot Destroy',
+      'operator' => '=',
+      'value' => 'snapshot-destroy',
+    ),
+    8 => array(
+      'title' => 'Snapshot Create',
+      'operator' => '=',
+      'value' => 'snapshot-create',
+    ),
+    9 => array(
+      'title' => 'Snapshot Revert',
+      'operator' => '=',
+      'value' => 'snapshot-revert',
+    ),
+  );
+  /* Filter criterion: Server Action Log: User */
+  $handler->display->display_options['filters']['uid']['id'] = 'uid';
+  $handler->display->display_options['filters']['uid']['table'] = 'xs_action_log';
+  $handler->display->display_options['filters']['uid']['field'] = 'uid';
+  $handler->display->display_options['filters']['uid']['value'] = '';
+  $handler->display->display_options['filters']['uid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['uid']['expose']['operator_id'] = 'uid_op';
+  $handler->display->display_options['filters']['uid']['expose']['label'] = 'User';
+  $handler->display->display_options['filters']['uid']['expose']['operator'] = 'uid_op';
+  $handler->display->display_options['filters']['uid']['expose']['identifier'] = 'uid';
+  $handler->display->display_options['filters']['uid']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+    3 => 0,
+    4 => 0,
+  );
+  $handler->display->display_options['path'] = 'admin/structure/xs/action-log';
+  $handler->display->display_options['menu']['type'] = 'tab';
+  $handler->display->display_options['menu']['title'] = 'Action Log';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
+  $export['xs_action_log'] = $view;
 
   $view = new view();
-  $view->name = 'xs_policy_log_runs_per_user';
+  $view->name = 'xs_policy_log';
   $view->description = '';
-  $view->tag = 'default';
+  $view->tag = 'xs';
   $view->base_table = 'xs_snapshot_policy_log';
-  $view->human_name = 'XS Policy Log Runs for User';
+  $view->human_name = 'XS Policy Log';
   $view->core = 7;
   $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
@@ -212,6 +644,17 @@ function xs_views_default_views() {
   $handler->display->display_options['relationships']['policy_id']['table'] = 'xs_snapshot_policy_log';
   $handler->display->display_options['relationships']['policy_id']['field'] = 'policy_id';
   $handler->display->display_options['relationships']['policy_id']['required'] = TRUE;
+  /* Relationship: Snapshot Policy: The Server node for the policy */
+  $handler->display->display_options['relationships']['target_id']['id'] = 'target_id';
+  $handler->display->display_options['relationships']['target_id']['table'] = 'xs_snapshot_policy';
+  $handler->display->display_options['relationships']['target_id']['field'] = 'target_id';
+  $handler->display->display_options['relationships']['target_id']['relationship'] = 'policy_id';
+  /* Field: Content: Nid */
+  $handler->display->display_options['fields']['nid']['id'] = 'nid';
+  $handler->display->display_options['fields']['nid']['table'] = 'node';
+  $handler->display->display_options['fields']['nid']['field'] = 'nid';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'target_id';
+  $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   /* Field: Snapshot Policy: Author */
   $handler->display->display_options['fields']['uid']['id'] = 'uid';
   $handler->display->display_options['fields']['uid']['table'] = 'xs_snapshot_policy';
@@ -327,42 +770,8 @@ function xs_views_default_views() {
     ),
   );
 
-  /* Display: Block */
-  $handler = $view->new_display('block', 'Block', 'user_block');
-  $handler->display->display_options['defaults']['access'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'role';
-  $handler->display->display_options['access']['role'] = array(
-    4 => '4',
-  );
-  $handler->display->display_options['defaults']['pager'] = FALSE;
-  $handler->display->display_options['pager']['type'] = 'full';
-  $handler->display->display_options['pager']['options']['items_per_page'] = '5';
-  $handler->display->display_options['pager']['options']['offset'] = '0';
-  $handler->display->display_options['pager']['options']['id'] = '0';
-  $handler->display->display_options['pager']['options']['quantity'] = '9';
-  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
-  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
-  $handler->display->display_options['block_description'] = 'XenServer User/Server Policy Log';
-
-  /* Display: Admin Page */
-  $handler = $view->new_display('page', 'Admin Page', 'page_1');
-  $handler->display->display_options['display_description'] = 'Admin page to display all policy runs';
-  $handler->display->display_options['defaults']['access'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'role';
-  $handler->display->display_options['access']['role'] = array(
-    3 => '3',
-  );
-  $handler->display->display_options['defaults']['arguments'] = FALSE;
-  $handler->display->display_options['path'] = 'admin/structure/xs/policy-log';
-  $handler->display->display_options['menu']['type'] = 'tab';
-  $handler->display->display_options['menu']['title'] = 'Policies log';
-  $handler->display->display_options['menu']['weight'] = '0';
-  $handler->display->display_options['menu']['name'] = 'management';
-  $handler->display->display_options['menu']['context'] = 0;
-  $handler->display->display_options['menu']['context_only_inline'] = 0;
-
-  /* Display: Page 2 */
-  $handler = $view->new_display('page', 'Page 2', 'page_2');
+  /* Display: User Page */
+  $handler = $view->new_display('page', 'User Page', 'page_2');
   $handler->display->display_options['defaults']['title'] = FALSE;
   $handler->display->display_options['title'] = 'Search Policy Events Log';
   $handler->display->display_options['defaults']['access'] = FALSE;
@@ -384,7 +793,7 @@ function xs_views_default_views() {
   $handler->display->display_options['header']['area']['table'] = 'views';
   $handler->display->display_options['header']['area']['field'] = 'area';
   $handler->display->display_options['header']['area']['empty'] = TRUE;
-  $handler->display->display_options['header']['area']['content'] = '<span class="glyphicon glyphicon-arrow-left"></span> <a href="/node/%1/xs-snapshot-policy">Back</a> to Policy overview page';
+  $handler->display->display_options['header']['area']['content'] = '<span class="glyphicon glyphicon-arrow-left"></span> <a href="/node/[nid]/xs-snapshot-policy">Back</a> to Policy overview page';
   $handler->display->display_options['header']['area']['format'] = 'full_html';
   $handler->display->display_options['header']['area']['tokenize'] = TRUE;
   /* Header: Global: Result summary */
@@ -397,132 +806,53 @@ function xs_views_default_views() {
   $handler->display->display_options['arguments']['target_id']['table'] = 'xs_snapshot_policy';
   $handler->display->display_options['arguments']['target_id']['field'] = 'target_id';
   $handler->display->display_options['arguments']['target_id']['relationship'] = 'policy_id';
-  $handler->display->display_options['arguments']['target_id']['default_action'] = 'empty';
+  $handler->display->display_options['arguments']['target_id']['default_action'] = 'default';
   $handler->display->display_options['arguments']['target_id']['exception']['value'] = '';
   $handler->display->display_options['arguments']['target_id']['default_argument_type'] = 'node';
   $handler->display->display_options['arguments']['target_id']['default_argument_skip_url'] = TRUE;
   $handler->display->display_options['arguments']['target_id']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['target_id']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['target_id']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['target_id']['specify_validation'] = TRUE;
+  $handler->display->display_options['arguments']['target_id']['validate']['type'] = 'node';
+  $handler->display->display_options['arguments']['target_id']['validate_options']['types'] = array(
+    'xs_vps' => 'xs_vps',
+  );
+  $handler->display->display_options['arguments']['target_id']['validate_options']['access'] = TRUE;
+  $handler->display->display_options['arguments']['target_id']['validate']['fail'] = 'access denied';
   $handler->display->display_options['path'] = 'node/%/xs-snapshot-policy/policies-log';
-  $export['xs_policy_log_runs_per_user'] = $view;
 
-  $view = new view();
-  $view->name = 'xs_pools_servers';
-  $view->description = '';
-  $view->tag = 'default';
-  $view->base_table = 'node';
-  $view->human_name = 'XS Pools & Servers';
-  $view->core = 7;
-  $view->api_version = '3.0';
-  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
-
-  /* Display: Master */
-  $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'XS Pools & Servers';
-  $handler->display->display_options['use_more_always'] = FALSE;
-  $handler->display->display_options['access']['type'] = 'perm';
-  $handler->display->display_options['cache']['type'] = 'none';
-  $handler->display->display_options['query']['type'] = 'views_query';
-  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  /* Display: Admin Page */
+  $handler = $view->new_display('page', 'Admin Page', 'page_1');
+  $handler->display->display_options['display_description'] = 'Admin page to display all policy runs';
+  $handler->display->display_options['defaults']['access'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'role';
+  $handler->display->display_options['access']['role'] = array(
+    3 => '3',
+  );
+  $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '50';
-  $handler->display->display_options['style_plugin'] = 'table';
-  $handler->display->display_options['style_options']['grouping'] = array(
-    0 => array(
-      'field' => 'title_1',
-      'rendered' => 1,
-      'rendered_strip' => 0,
-    ),
-  );
-  $handler->display->display_options['style_options']['columns'] = array(
-    'title' => 'title',
-    'field_xs_ip_address' => 'field_xs_ip_address',
-    'title_1' => 'title_1',
-    'edit_node' => 'edit_node',
-  );
-  $handler->display->display_options['style_options']['default'] = 'field_xs_ip_address';
-  $handler->display->display_options['style_options']['info'] = array(
-    'title' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'field_xs_ip_address' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'title_1' => array(
-      'sortable' => 0,
-      'default_sort_order' => 'asc',
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-    'edit_node' => array(
-      'align' => '',
-      'separator' => '',
-      'empty_column' => 0,
-    ),
-  );
-  /* Relationship: Broken/missing handler */
-  $handler->display->display_options['relationships']['reverse_field_xs_pool_member_node']['id'] = 'reverse_field_xs_pool_member_node';
-  $handler->display->display_options['relationships']['reverse_field_xs_pool_member_node']['table'] = 'node';
-  $handler->display->display_options['relationships']['reverse_field_xs_pool_member_node']['field'] = 'reverse_field_xs_pool_member_node';
-  $handler->display->display_options['relationships']['reverse_field_xs_pool_member_node']['label'] = 'Content referencing Content from field_xs_pool_member';
-  /* Field: Content: Title */
-  $handler->display->display_options['fields']['title']['id'] = 'title';
-  $handler->display->display_options['fields']['title']['table'] = 'node';
-  $handler->display->display_options['fields']['title']['field'] = 'title';
-  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
-  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
-  /* Field: Broken/missing handler */
-  $handler->display->display_options['fields']['field_xs_ip_address']['id'] = 'field_xs_ip_address';
-  $handler->display->display_options['fields']['field_xs_ip_address']['table'] = 'field_data_field_xs_ip_address';
-  $handler->display->display_options['fields']['field_xs_ip_address']['field'] = 'field_xs_ip_address';
-  $handler->display->display_options['fields']['field_xs_ip_address']['label'] = 'IP Address';
-  /* Field: Broken/missing handler */
-  $handler->display->display_options['fields']['field_xs_vms']['id'] = 'field_xs_vms';
-  $handler->display->display_options['fields']['field_xs_vms']['table'] = 'field_data_field_xs_vms';
-  $handler->display->display_options['fields']['field_xs_vms']['field'] = 'field_xs_vms';
-  $handler->display->display_options['fields']['field_xs_vms']['label'] = 'VMs';
-  /* Field: Content: Title */
-  $handler->display->display_options['fields']['title_1']['id'] = 'title_1';
-  $handler->display->display_options['fields']['title_1']['table'] = 'node';
-  $handler->display->display_options['fields']['title_1']['field'] = 'title';
-  $handler->display->display_options['fields']['title_1']['relationship'] = 'reverse_field_xs_pool_member_node';
-  $handler->display->display_options['fields']['title_1']['label'] = 'Pool';
-  /* Field: Content: Edit link */
-  $handler->display->display_options['fields']['edit_node']['id'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['table'] = 'views_entity_node';
-  $handler->display->display_options['fields']['edit_node']['field'] = 'edit_node';
-  $handler->display->display_options['fields']['edit_node']['label'] = 'Operations';
-  /* Sort criterion: Content: Title */
-  $handler->display->display_options['sorts']['title']['id'] = 'title';
-  $handler->display->display_options['sorts']['title']['table'] = 'node';
-  $handler->display->display_options['sorts']['title']['field'] = 'title';
-  $handler->display->display_options['sorts']['title']['order'] = 'DESC';
-  /* Filter criterion: Content: Type */
-  $handler->display->display_options['filters']['type']['id'] = 'type';
-  $handler->display->display_options['filters']['type']['table'] = 'node';
-  $handler->display->display_options['filters']['type']['field'] = 'type';
-  $handler->display->display_options['filters']['type']['value'] = array(
-    'xsserver' => 'xsserver',
-  );
-
-  /* Display: Block */
-  $handler = $view->new_display('block', 'Block', 'block');
-  $export['xs_pools_servers'] = $view;
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['pager']['options']['id'] = '0';
+  $handler->display->display_options['pager']['options']['quantity'] = '9';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page'] = TRUE;
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options'] = '25, 50, 100, 250';
+  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = TRUE;
+  $handler->display->display_options['defaults']['arguments'] = FALSE;
+  $handler->display->display_options['path'] = 'admin/structure/xs/policy-log';
+  $handler->display->display_options['menu']['type'] = 'tab';
+  $handler->display->display_options['menu']['title'] = 'Policies log';
+  $handler->display->display_options['menu']['weight'] = '0';
+  $handler->display->display_options['menu']['name'] = 'management';
+  $handler->display->display_options['menu']['context'] = 0;
+  $handler->display->display_options['menu']['context_only_inline'] = 0;
+  $export['xs_policy_log'] = $view;
 
   $view = new view();
   $view->name = 'xs_user_vms';
   $view->description = '';
-  $view->tag = 'default';
+  $view->tag = 'xs';
   $view->base_table = 'node';
   $view->human_name = 'XS User VMs';
   $view->core = 7;

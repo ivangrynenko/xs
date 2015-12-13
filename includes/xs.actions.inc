@@ -130,6 +130,8 @@ function xs_actions_server_action_confirmation_form_submit($form, &$form_state) 
  * @return string
  */
 function xs_actions_action($node, $action) {
+  global $user;
+
   $vm = xs_get_vm_by_node($node);
 
   if (!in_array($action, $vm['allowed_operations'])) {
@@ -145,33 +147,47 @@ function xs_actions_action($node, $action) {
       xs_actions_action_vps_start($vm_ref);
       drupal_set_message('The server has been started. Allow 1-2 minutes before attempting to connect.');
       drupal_set_message('You may need to refresh this page in order to reflect server\'s power state or IP addresses.');
+      $log_message = t('Server started manually by !user', array('!user' => $user->name));
+      $log_type = XS_API_ACTION_START;
       break;
 
     case XS_API_ACTION_POWEROFF:
       xs_actions_action_vps_shutdown($vm_ref);
       drupal_set_message('The server is being shut down. Allow 1-2 minutes before it has shut down.');
       drupal_set_message('You may need to refresh this page in order to reflect server\'s power state');
+      $log_message = t('Server stopped manually by !user', array('!user' => $user->name));
+      $log_type = XS_API_ACTION_POWEROFF;
       break;
 
     case XS_API_ACTION_REBOOT:
       xs_actions_action_vps_clean_reboot($vm_ref);
       drupal_set_message('The server is being rebooted. Allow 1-2 minutes for the operation to complete.');
+      $log_message = t('Server rebooted manually by !user', array('!user' => $user->name));
+      $log_type = XS_API_ACTION_REBOOT;
       break;
 
     case XS_API_ACTION_REBOOT_FORCE:
       xs_actions_action_vps_hard_reboot($vm_ref);
       drupal_set_message('The server has been forcefully rebooted. Allow 1-2 minutes for the operation to complete.');
+      $log_message = t('Server force-rebooted manually by !user', array('!user' => $user->name));
+      $log_type = XS_API_ACTION_REBOOT_FORCE;
       break;
 
     case XS_API_ACTION_POWEROFF_FORCE:
       xs_actions_action_vps_hard_shutdown($vm_ref);
       drupal_set_message('The server has been forcefully shut down. Allow 1-2 minutes for the operation to complete.');
+      $log_message = t('Server force-shutdown manually by !user', array('!user' => $user->name));
+      $log_type = XS_API_ACTION_POWEROFF_FORCE;
       break;
 
     default:
       drupal_set_message('This action is not recognised', 'error');
+      $log_message = t('Unrecognised server action by !user', array('!user' => $user->name));
+      $log_type = 'error';
       break;
   }
+
+  xs_action_log_write($log_message, $log_type);
 
   drupal_goto('node/' . $node->nid);
 }

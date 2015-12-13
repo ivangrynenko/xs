@@ -13,6 +13,8 @@ function xs_preproces_xs_actions_snapshots_output(&$variables) {
   $variables['title_attributes_array'] = array();
   $variables['content_attributes_array'] = array();
 
+  $variables['xs_snapshot_actions_log'] = views_embed_view('xs_action_log', 'page_user_snapshots', $variables['node']->nid);
+
   // Prepare variables.
   $vm = xs_get_vm_by_node($variables['node']);
 
