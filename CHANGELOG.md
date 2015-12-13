@@ -1,5 +1,14 @@
 # CHANGELOG #
 
+xs 7.x-1.4, 2015-12-13
+----------------------
+[] ig: Added xs_action_log entity.
+[] ig: Added view for user to access server actions log.
+[] ig: Added view for user to access snapshot actions log.
+[] ig: Added view for admin to access server all actions log.
+[] ig: Added view for admin to access snapshot all actions log.
+[] ig: Updated policy log to assert node access permissions.
+
 xs 7.x-1.3, 2015-12-12
 ----------------------
 [] ig: Replaced policy events log with a view. 

@@ -42,7 +42,7 @@ function xs_snapshot_policy_views_data_alter(&$data) {
  * Implements hook_views_query_alter().
  */
 function xs_snapshot_policy_views_query_alter(&$view, &$query) {
-  if ($view->name == 'xs_policy_log_runs_per_user' && arg(0) == 'node' && arg(2) == 'xs-snapshot-policy' && arg(3) != 'policies-log') {
+  if ($view->name == 'xs_policy_log' && arg(0) == 'node' && arg(2) == 'xs-snapshot-policy' && arg(3) != 'policies-log') {
     // Remove views header when in policy view.
     $view->header = array();
   }
