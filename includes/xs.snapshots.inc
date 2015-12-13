@@ -214,6 +214,11 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
     '#description' => t('Give a description meaningful to you. We record the exact date and time of snapshot creation for you. Limited to 64 characters. Click Cancel to close this modal window or Create to continue with snapshot creation.'),
   );
 
+  $form['nid'] = array(
+    '#type' => 'hidden',
+    '#value' => $node,
+  );
+
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -247,12 +252,11 @@ function xs_snapshots_create_snapshot_form($form, &$form_state, $node) {
  * Validate handler for xs_snapshots_create_snapshot_form.
  */
 function xs_snapshots_create_snapshot_form_validate($form, &$form_state) {
-  $nid = is_numeric(arg(1)) ? arg(1) : FALSE;
-  if (!$nid) {
+  if (empty($form_state['values']['nid'])) {
     return form_set_error(NULL, 'Validation error. This form must be submitted in server context');
   }
 
-  $node = node_load($nid);
+  $node = node_load($form_state['values']['nid']);
   $form_state['storage']['xs_snapshot_create']['node'] = $node;
   // Check if the user can add more snapshots.
   $limit = xs_get_snapshots_limit($node);
@@ -275,6 +279,11 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   catch (Exception $e) {
     throw new Exception('Unable to create snapshot: ' . $e->getMessage());
   }
+
+  xs_action_log_write(t('Created snapshot !name for !server', array(
+    '!name' => $form_state['values']['title'],
+    '!server' => $form_state['storage']['xs_snapshot_create']['node']->title,
+  )), 'snapshot-create');
 
   $form_state['redirect'] = 'node/' . $form_state['storage']['xs_snapshot_create']['node']->nid . '/xs-snapshots';
 }
@@ -360,42 +369,57 @@ function xs_actions_confirm_snapshots_form_validate($form, &$form_state) {
   if (empty($form_state['values']['snapshot_uuid']) || empty($form_state['values']['action'])) {
     return form_set_error(NULL, 'Unable to complete the action. Validation error');
   }
+
+  // Do not allow form submission outside of node context.
+  if (!(is_numeric(arg(1)) && arg(0) == 'node')) {
+    return form_set_error(NULL, 'Validation error. Unable to submit your form outside of your server page');
+  }
 }
 
 /**
  * Submit handler for xs_actions_confirm_snapshots_form.
  */
 function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
+  $snapshot = xs_api_get_vm_by_uuid($form_state['values']['snapshot_uuid']);
+  $node = node_load($form_state['values']['nid']);
+
   switch ($form_state['values']['action']) {
     case 'destroy':
       $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
       xs_actions_snapshot_destroy($snapshot_ref);
+      xs_action_log_write(t('Deleted snapshot !name for !server', array(
+        '!name' => $snapshot['name_label'],
+        '!server' => $node->title,
+      )), 'snapshot-destroy');
       drupal_set_message('The selected snapshot was deleted successfully');
       drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots');
       break;
 
     case 'revert':
-      if (is_numeric(arg(1)) && arg(0) == 'node') {
-        $node = node_load(arg(1));
-        if (xs_actions_access_callback($node)) {
-          module_load_include('inc', 'xs', 'includes/xs.actions');
 
-          // Load the VM.
-          $uuid = xs_get_vm_uuid_by_node($node);
-          $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
+      if (xs_actions_access_callback($node)) {
+        module_load_include('inc', 'xs', 'includes/xs.actions');
 
-          // Shut down the VM.
-          xs_actions_action_vps_hard_shutdown($vm_ref);
+        // Load the VM.
+        $uuid = xs_get_vm_uuid_by_node($node);
+        $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
 
-          // Revert to the selected snapshot.
-          $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
-          xs_actions_snapshot_revert($snapshot_ref);
+        // Shut down the VM.
+        xs_actions_action_vps_hard_shutdown($vm_ref);
 
-          // Start the VM.
-          xs_actions_action_vps_start($vm_ref);
+        // Revert to the selected snapshot.
+        $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
+        xs_actions_snapshot_revert($snapshot_ref);
 
-          drupal_set_message('Your Server has been reverted to the selected snapshot and started successfully');
-        }
+        // Start the VM.
+        xs_actions_action_vps_start($vm_ref);
+
+        xs_action_log_write(t('Reverted server !server to snapshot !name', array(
+          '!name' => $snapshot['name_label'],
+          '!server' => $node->title,
+        )), 'snapshot-revert');
+
+        drupal_set_message('Your Server has been reverted to the selected snapshot and started successfully');
       }
       drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots');
       break;

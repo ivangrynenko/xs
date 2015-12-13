@@ -53,7 +53,7 @@ function xs_snapshot_policy_output_preprocess(&$variables) {
 
   }
 
-  $variables['policy_log_table'] = views_embed_view('xs_policy_log_runs_per_user', 'page_2', $variables['node']->nid);
+  $variables['policy_log_table'] = views_embed_view('xs_policy_log', 'page_2', $variables['node']->nid);
   $spid = !empty($policy->spid) ? $policy->spid : NULL;
   $policy_form = drupal_get_form('xs_snapshot_policy_form', $variables['node']->nid, $spid);
   $variables['policy_form'] = drupal_render($policy_form);

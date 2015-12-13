@@ -114,6 +114,7 @@ class SnapshotPolicyLog extends Entity {
   public $id;
   public $policy_id;
   public $log;
+  public $type;
   public $created;
 
   public function __construct($values = array()) {
