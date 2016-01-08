@@ -1,4 +1,9 @@
 # CHANGELOG #
+xs 7.x-1.5, 2016-01-08
+----------------------
+[] ig: Added xs_rrd submodule to display VM's performance graphs.
+[] ig: Updated views integration to provide mapping to custom entities.
+[] ig: Added administrative views to display action log and snapshot log.
 
 xs 7.x-1.4, 2015-12-13
 ----------------------
