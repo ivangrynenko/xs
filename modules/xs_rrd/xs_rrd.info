@@ -1,0 +1,8 @@
+name = XenServer RRD Grapsh
+description = Provides Graphs for VM performance
+package = XS
+version = 7.x-1.0
+core = 7.x
+
+dependencies[] = xs
+dependencies[] = chr

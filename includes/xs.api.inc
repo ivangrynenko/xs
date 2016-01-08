@@ -405,6 +405,68 @@ function xs_api_get_vm_ref_by_uuid($uuid) {
 }
 
 /**
+ * Gets consoles by VM ref.
+ *
+ * @param string $vm_ref
+ *   VM ref string.
+ */
+function xs_api_get_console_by_ref($vm_ref) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  try {
+    $consoles = $xs_api->VM_get_consoles($vm_ref);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  return $consoles;
+}
+
+/**
+ * Return console URL.
+ *
+ * @param array $consoles
+ *   Array of console refs.
+ */
+function xs_api_get_console_url($consoles) {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  try {
+    $console_url = $xs_api->console_get_location($consoles[0]);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  return $console_url;
+}
+
+/**
+ * Returns current xs session.
+ */
+function xs_api_get_session() {
+  try {
+    $xs_api = xs_get_xs_api();
+  }
+  catch (Exception $e) {
+    return xs_log($e);
+  }
+
+  return $xs_api->getSessionId();
+}
+
+/**
  * Gets snapshot reference string by snapshot UUID.
  *
  * @param string $uuid
@@ -465,6 +527,12 @@ function xs_get_pool_servers($pool) {
   return $servers;
 }
 
+/**
+ * Gets VIF by vif ref.
+ *
+ * @param array $vif_ref
+ *   VIF array.
+ */
 function xs_api_get_vif($vif_ref) {
   try {
     $xs_api = xs_get_xs_api();

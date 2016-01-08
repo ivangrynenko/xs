@@ -82,6 +82,46 @@ function xs_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-xs_vps-field_xs_vps_last_rrd_update'.
+  $field_instances['node-xs_vps-field_xs_vps_last_rrd_update'] = array(
+    'bundle' => 'xs_vps',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 5,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_xs_vps_last_rrd_update',
+    'label' => 'Last RRD update',
+    'required' => 0,
+    'settings' => array(
+      'max' => '',
+      'min' => '',
+      'prefix' => '',
+      'suffix' => '',
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 0,
+      'module' => 'number',
+      'settings' => array(),
+      'type' => 'number',
+      'weight' => 4,
+    ),
+  );
+
   // Exported field_instance: 'node-xs_vps-field_xs_vps_owner'.
   $field_instances['node-xs_vps-field_xs_vps_owner'] = array(
     'bundle' => 'xs_vps',
@@ -162,7 +202,7 @@ function xs_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_select',
-      'weight' => 4,
+      'weight' => 5,
     ),
   );
 
@@ -210,6 +250,7 @@ function xs_field_default_field_instances() {
   t('Comment');
   t('Enter UUID of the pool in which the VM is running.');
   t('Enter the UUID of the VPS.');
+  t('Last RRD update');
   t('Max number of snapshots');
   t('Owner');
   t('Pool UUID');

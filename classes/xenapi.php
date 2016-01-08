@@ -139,5 +139,13 @@ class XenApi {
 
     return $ret;
   }
+
+  public function getSessionId() {
+    return $this->_session_id;
+  }
+
+  public function getUrl() {
+    return $this->_url;
+  }
 }
 

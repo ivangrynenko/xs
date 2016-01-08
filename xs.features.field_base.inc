@@ -52,6 +52,21 @@ function xs_field_default_field_bases() {
     'type' => 'text',
   );
 
+  // Exported field_base: 'field_xs_vps_last_rrd_update'.
+  $field_bases['field_xs_vps_last_rrd_update'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_xs_vps_last_rrd_update',
+    'indexes' => array(),
+    'locked' => 0,
+    'module' => 'number',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'number_integer',
+  );
+
   // Exported field_base: 'field_xs_vps_owner'.
   $field_bases['field_xs_vps_owner'] = array(
     'active' => 1,
