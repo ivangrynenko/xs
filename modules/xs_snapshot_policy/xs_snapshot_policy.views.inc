@@ -36,6 +36,28 @@ function xs_snapshot_policy_views_data_alter(&$data) {
     'label' => t('VM Node'),
     'title' => t('The Server node for the policy'),
   );
+
+  $data['node']['nid']['relationship'] = array(
+    'base' => 'xs_snapshot_policy',
+    'base field' => 'target_id',
+    'handler' => 'views_handler_relationship',
+    'label' => t('VM Policy'),
+    'title' => t('The Server node for the policy'),
+    'group' => t('Entity Reference'),
+  );
+
+  $data['xs_snapshot_policy']['reverse_xs_snapshot_policy']['relationship'] = array(
+    'base' => 'node',
+    'base field' => 'nid',
+    'field_name' => 'target_id',
+    'field table' => 'xs_snapshot_policy',
+    'field field' => 'target_id',
+    'handler' => 'views_handler_relationship_entity_reverse',
+    'label' => t('Referenced Server'),
+    'title' => t('Server for the Policy'),
+    'help' => t('Links back to node table to make server node fields available'),
+    'group' => t('Entity Reference'),
+  );
 }
 
 /**
