@@ -19,8 +19,10 @@ https://www.redy.host/blog/announcing-automated-snapshot-backup-policies
 * Allows site administrator to manage XenServer guests
 * Provides customer management page to browse VM configuration and power state (Running or Down)
 * Provides VPS management page to power on/off VM, restart VM, force-restart VM
+* VPS action log (power events history). Overview of VPS power events (time and date of all of the following: reboot, power off, power on, force shutdown, force reboot
 * Provides snapshots management page to browse available snapshots, revert VPS status to any snapshot available, destroy any existing snapshot
 * Ability to create snapshot policy, allowing customers to select automated snapshots frequency and retention policy
+* Stats for the VPS resource usage: CPU, RAM, HDD, Network. Stats available as graphs with date range selector
 * Administrator creates VM and assigns UUID to enable XenApi operations
 * Administrator limits each VM node to limit maximum number of snapshots that could be created per VM (hard limit to 25 to avoid XenServer's "Snapshot chain is too long" errors.
 * Integrates with Bootstrap Drupal theme
@@ -30,15 +32,12 @@ https://www.redy.host/blog/announcing-automated-snapshot-backup-policies
 
 ### Currently in development ###
 
-* Jave web-based console
-* Next on the roadmap
+* VPS traffic/bandwidth usage for selected time period
 
 ### To be implemented in 2016 ###
 
-* VPS power events history. Overview of VPS power events (time and date of all of the following: reboot, power off, power on, force shutdown, force reboot
-* VPS traffic/bandwidth usage for selected time period
-* Stats for the VPS resource usage: CPU, RAM, HDD, Network. Stats available as graphs with date range selector
 * Ability to template VPS, allowing to easily revert to the initial state
+* Jave web-based console
 
 Full feature set is coming. Planned public release by the end of 2015.
 
