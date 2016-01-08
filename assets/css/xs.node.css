@@ -161,3 +161,25 @@
 .node-snapshots .table-responsive {
   overflow: visible;
 }
+
+.table-responsive > .table > tbody > tr > td > span,
+.table-responsive > .table > tbody > tr > th > span,
+.table-responsive > .table > tfoot > tr > td > span,
+.table-responsive > .table > tfoot > tr > th > span,
+.table-responsive > .table > thead > tr > td > span,
+.table-responsive > .table > thead > tr > th > span {
+  white-space: normal;
+}
+
+.col-md-12 {
+  margin: 10px 0;
+}
+
+.bg-warning,
+.bg-success,
+.bg-info,
+.bg-danger,
+.bg-primary {
+  padding: 10px;
+  margin: 10px 0;
+}

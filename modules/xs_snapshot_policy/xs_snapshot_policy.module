@@ -138,8 +138,15 @@ function xs_snapshot_policy_clear_log($policy) {
   $query->range($policy->log_limit, 1000000000);
   $query->orderBy('created', 'DESC');
   $result = $query->execute();
+
+  $delete_ids = array();
   while ($row = $result->fetchAssoc()) {
-    entity_delete('xs_snapshot_policy_log', $row['id']);
+    $delete_ids[] = $row['id'];
+  }
+
+  if (!empty($delete_ids)) {
+    entity_delete_multiple('xs_snapshot_policy_log', $delete_ids);
+    watchdog('XS_SNAPSHOT_POLICY', 'Removing !num excessive rows from xs_snapshot_policy_log', array('!num' => count($delete_ids)), WATCHDOG_INFO);
   }
 }
 

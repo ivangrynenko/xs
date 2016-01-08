@@ -10,6 +10,7 @@ define('XS_DATE_FORMAT', 'd M Y h:i:sA');
 define('XS_POWERSTATE_VM_DOWN', 'Down');
 define('XS_API_ERROR', 'API Error. Unable to get the status.');
 define('XS_API_VPS_CONTENT_TYPE', 'xs_vps');
+define('XS_API_USER_ROLE', 'XS VPS Customer');
 
 // Define xs actions.
 define('XS_API_ACTION_NOACTION', 'noaction');
@@ -33,6 +34,8 @@ define('XS_API_SNAPSHOTS_MAX', 25);
  * Implements hook_init().
  */
 function xs_init() {
+  global $user, $theme, $theme_key;
+
   $allowed_themes = array(
     'startupgrowth',
     'bootstrap',
@@ -40,6 +43,15 @@ function xs_init() {
   if (in_array($GLOBALS['theme_key'], $allowed_themes)) {
     drupal_add_css(drupal_get_path('module', 'xs') . '/assets/css/xs.node.css');
     drupal_add_js(drupal_get_path('module', 'xs') . '/assets/js/xs.js');
+  }
+
+  $user_role = user_role_load_by_name(XS_API_USER_ROLE);
+
+  if (in_array($user_role->name, $user->roles)) {
+    if (arg(0) == 'user') {
+      $theme = 'bootstrap';
+      $theme_key = 'bootstrap';
+    }
   }
 }
 
@@ -141,7 +153,7 @@ function xs_menu() {
     'page callback' => 'xs_actions_snapshots_callback',
     'page arguments' => array(1),
     'access callback' => 'xs_actions_access_callback',
-    'access arguments' => array(1, TRUE),
+    'access arguments' => array(1),
     'file' => 'includes/xs.snapshots.inc',
     'weight' => 60,
     'type' => MENU_LOCAL_TASK,
@@ -152,7 +164,7 @@ function xs_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('xs_actions_confirm_snapshots_form', 1, 3, 4),
     'access callback' => 'xs_actions_access_callback',
-    'access arguments' => array(1, TRUE),
+    'access arguments' => array(1),
     'file' => 'includes/xs.snapshots.inc',
     'weight' => 60,
     'type' => MENU_CALLBACK,
@@ -624,7 +636,7 @@ function xs_actions_action_form_submit($form, &$form_state) {
  * @return bool
  *   TRUE for access or FALSE for no access.
  */
-function xs_actions_access_callback($node, $snapshots = FALSE) {
+function xs_actions_access_callback($node) {
   global $user;
 
   if (empty($node) || $node->type != XS_API_VPS_CONTENT_TYPE) {
@@ -635,19 +647,8 @@ function xs_actions_access_callback($node, $snapshots = FALSE) {
     return TRUE;
   }
 
-  // For snapshots page, check if snapshot limit is set. Restrict access to the
-  // snapshots tab if no snapshots allowed ($snapshots_limit = 0).
-  if ($snapshots) {
-    module_load_include('inc', 'xs', 'includes/xs.snapshots');
-    $snapshots_limit = xs_get_snapshots_limit($node);
-    if (empty($snapshots_limit)) {
-      return FALSE;
-    }
-  }
-
-  $owner_uid = xs_get_vps_owner_uid($node);
-  if (user_access('perform own vm actions') && !empty($owner_uid)) {
-    return $user->uid == $owner_uid;
+  if (user_access('perform own vm actions')) {
+    return $user->uid == $node->uid;
   }
 
   return FALSE;
@@ -746,4 +747,175 @@ function xs_access($op, $xs_action_log, $account = NULL, $entity_type = NULL) {
 function xs_action_log_write($message, $type) {
   $log = entity_create('xs_action_log', array('log' => $message, 'type' => $type));
   $log->save();
+}
+
+function xs_get_console_url_by_node($node) {
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  $vm_ref = xs_api_get_vm_ref_by_uuid($vm_uuid);
+  $consoles = xs_api_get_console_by_ref($vm_ref);
+  $url = xs_api_get_console_url($consoles);
+
+  return $url;
+}
+
+/**
+ * Checks if the server power state is Running.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return bool
+ */
+function xs_vm_is_running($node) {
+  $vm = xs_get_vm_by_node($node);
+
+  return $vm['power_state'] == 'Running';
+}
+
+/**
+ * Gets the number of CPUs for VM.
+ *
+ * @param object $node
+ *   Drupal VM node object.
+ *
+ * @return int
+ *   The number of CPUs.
+ */
+function xs_get_vm_cpus_by_node($node) {
+  $vm = xs_get_vm_by_node($node);
+
+  return $vm['VCPUs_max'];
+}
+
+/**
+ * Gets the number of VIFs for VM.
+ *
+ * @param object $node
+ *   Drupal VM node object.
+ *
+ * @return int
+ *   The number of CPUs.
+ */
+function xs_get_vm_networks_by_node($node) {
+  $vm = xs_get_vm_by_node($node);
+
+  $vifs = array();
+  if (!empty($vm['VIFs'])) {
+    foreach ($vm['VIFs'] as $vif_ref) {
+      $vifs[] = xs_api_get_vif($vif_ref);
+    }
+  }
+
+  return $vifs;
+}
+
+/**
+ * Gets the number of disks for VM.
+ *
+ * @param object $node
+ *   Drupal VM node object.
+ *
+ * @return int
+ *   The number of CPUs.
+ */
+function xs_get_vm_disks_by_node($node) {
+  $vm = xs_get_vm_by_node($node);
+
+  $vbds = array();
+  foreach ($vm['VBDs'] as $vbd_ref) {
+    $vbd = xs_api_get_vbd($vbd_ref);
+    if (empty($vbd) || $vbd['type'] != 'Disk') {
+      continue;
+    }
+    $vbds[] = $vbd;
+  }
+
+  return $vbds;
+}
+
+/**
+ * Implements hook_cron().
+ */
+function xs_cron() {
+  xs_cron_procedures();
+}
+
+/**
+ * Runs required procedures during cron run.
+ */
+function xs_cron_procedures() {
+  // Clean up action log.
+  $server_nids = xs_get_all_active_server_nids();
+  foreach ($server_nids as $nid) {
+    xs_clear_log($nid);
+  }
+}
+
+/**
+ * Deletes log rows.
+ *
+ * @param int $server_node_nid
+ *   Server node nid.
+ */
+function xs_clear_log($server_node_nid) {
+  $query = db_select('xs_action_log', 'l');
+  $query->fields('l', array('id'));
+  $query->condition('target_id', $server_node_nid, '=');
+  $query->range(1000, 1000000000);
+  $query->orderBy('created', 'DESC');
+  $result = $query->execute();
+
+  $delete_ids = array();
+  while ($row = $result->fetchAssoc()) {
+    $delete_ids[] = $row['id'];
+  }
+
+  if (!empty($delete_ids)) {
+    entity_delete_multiple('xs_action_log', $delete_ids);
+    watchdog('XS', 'Removing !num excessive rows from xs_action_log', array('!num' => count($delete_ids)), WATCHDOG_INFO);
+  }
+}
+
+/**
+ * Gets nids for all active nodes of XS_API_VPS_CONTENT_TYPE.
+ *
+ * @return array
+ *   Nids.
+ */
+function xs_get_all_active_server_nids() {
+  $query = db_select('node', 'n');
+  $query->fields('n', array('nid'))
+    ->condition('status', '1', '=')
+    ->condition('type', XS_API_VPS_CONTENT_TYPE, '=');
+
+  $result = $query->execute();
+  $server_nids = array();
+  while ($row = $result->fetchAssoc()) {
+    $server_nids[] = $row['nid'];
+  }
+
+  return $server_nids;
+}
+
+/**
+ * Gets power state of VM identified by node.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return string
+ *   Power state.
+ */
+function xs_get_vm_power_status($node) {
+  try {
+    $vm = xs_get_vm_by_node($node);
+  }
+  catch (Exception $e) {
+    watchdog('XS', 'Unable to load server node !title. The error was: !message', array(
+      '!title' => $node->title,
+      '!message' => $e->getMessage(),
+    ), WATCHDOG_ERROR);
+  }
+
+  return $vm['power_state'];
 }

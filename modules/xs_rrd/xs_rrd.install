@@ -1,0 +1,32 @@
+<?php
+/**
+ * @file
+ * Install functions for xs_rrd module.
+ */
+
+function xs_rrd_schema() {
+  $schema['cache_xs_rrd'] = drupal_get_schema_unprocessed('system', 'cache');
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function xs_rrd_install() {
+  drupal_install_schema('cache_xs_rrd');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function xs_rrd_uninstall() {
+  drupal_uninstall_schema('cache_xs_rrd');
+}
+
+/**
+ * Installs 'xs_rrd_cache' schema.
+ */
+function xs_rrd_update_7001() {
+  drupal_install_schema('cache_xs_rrd');
+}

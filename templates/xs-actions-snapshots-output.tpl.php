@@ -91,7 +91,7 @@
 
         <div class="col-md-12">
           <h3 id="snapshot-log">Snapshot Actions Log</h3>
-          <a hame="snapshot-log" />
+          <a hame="snapshot-log"></a>
           <?php print $xs_snapshot_actions_log; ?>
         </div>
 

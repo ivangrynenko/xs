@@ -1,0 +1,537 @@
+<?php
+/**
+ * @file
+ * xs_rrd.module.
+ */
+
+define('XS_RRD_STEPS_HOURLY', '1_hour');
+define('XS_RRD_STEPS_DAILY', '1_day');
+define('XS_RRD_STEPS_WEEKLY', '7_day');
+define('XS_RRD_STEPS_MONTHLY', '1_month');
+define('XS_RRD_STEPS_YEARLY', '1_year');
+
+/**
+ * Implements hook_menu().
+ */
+function xs_rrd_menu() {
+  $intervals = xs_rrd_get_graph_steps();
+
+  $items['node/%node/xs-performance'] = array(
+    'title' => 'VPS Performance',
+    'description' => 'Access server performance metrics',
+    'page callback' => 'xs_rrd_performance_callback',
+    'page arguments' => array(1),
+    'access callback' => 'xs_actions_access_callback',
+    'access arguments' => array(1),
+    'weight' => 50,
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $i = 0;
+  foreach ($intervals as $key => $interval) {
+    $items['node/%node/xs-performance/' . $key] = array(
+      'title' => $interval['title'],
+      'description' => 'Access server performance metrics',
+      'page callback' => 'xs_rrd_performance_callback',
+      'page arguments' => array(1, $key),
+      'access callback' => 'xs_actions_access_callback',
+      'access arguments' => array(1),
+      'type' => $i == 0 ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK,
+      'weight' => 99 + $i,
+    );
+    $i++;
+  }
+
+  return $items;
+}
+
+/**
+ * Callback function for xs-performance URL.
+ *
+ * @param object $node
+ *   Drupal node object.
+ * @param string $type
+ *   Performance type, see xs_rrd_get_graph_steps() for available options.
+ *
+ * @return string
+ *   Formatted HTML.
+ *
+ * @throws \Exception
+ *   Exception.
+ */
+function xs_rrd_performance_callback($node, $type = XS_RRD_STEPS_HOURLY) {
+  return theme('xs_rrd', array('node' => $node, 'type' => $type));
+}
+
+/**
+ * Implements hook_theme().
+ */
+function xs_rrd_theme($existing, $type, $theme, $path) {
+  return array(
+    'xs_rrd' => array(
+      'template' => 'templates/xs-rrd-output',
+      'variables' => array(
+        'node' => NULL,
+        'type' => '',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function xs_rrd_preprocess_xs_rrd(&$variables) {
+  $vm_power_status = xs_get_vm_power_status($variables['node']);
+
+  if ($vm_power_status != 'Running') {
+    drupal_set_message(t('Your server is not running, unable to display latest performance updates.'), 'error');
+  }
+
+  xs_rrd_get_all_data($variables['node'], $variables['type']);
+  xs_rrd_prepare_images($variables);
+
+  $steps = xs_rrd_get_graph_steps();
+  foreach ($steps as $key => $step) {
+    if ($key == $variables['type']) {
+      $ttl = $step['ttl'];
+      if ($ttl < 3600) {
+        $ttl = $ttl / 60 . ' minutes';
+      }
+      elseif ($ttl < 86400) {
+        $ttl = $ttl / 3600;
+        $ttl = format_plural($ttl, 'hour', '@count hours', array('@count' => $ttl));
+      }
+      elseif ($ttl < 2592000) {
+        $ttl = $ttl / 86400;
+        $ttl = format_plural($ttl, 'day', '@count days', array('@count' => $ttl));
+      }
+      else {
+        $ttl = $ttl / 86400;
+        $ttl = format_plural($ttl, 'day', '@count days', array('@count' => $ttl));
+      }
+    }
+  }
+
+  $variables['ttl_message'] = t('The performance data in this page is refreshed every !ttl.', array('!ttl' => $ttl));
+  $last_updated = REQUEST_TIME - xs_rrd_get_last_updated_timestamp($variables['node']);
+  if ($last_updated < 3600) {
+    $last_updated = ceil($last_updated / 60);
+    $last_updated = format_plural($last_updated, '@count minute', '@count minutes', array('@count' => $last_updated));
+  }
+  elseif ($last_updated < 86400) {
+    $last_updated = $last_updated / 3600;
+    $last_updated = format_plural($last_updated, '@count hour', '@count hours', array('@count' => $last_updated));
+  }
+  elseif ($last_updated < 2592000) {
+    $last_updated = $last_updated / 86400;
+    $last_updated = format_plural($last_updated, '@count day', '@count days', array('@count' => $last_updated));
+  }
+  else {
+    $last_updated = $last_updated / 604800;
+    $last_updated = format_plural($last_updated, '@count week', '@count weeks', array('@count' => $last_updated));
+  }
+  $variables['last_updated'] = $last_updated;
+}
+
+/**
+ * Retrieves RRD data from xenserver pool master.
+ *
+ * @param object $node
+ *   Drupal node object.
+ * @param string $type
+ *   Metrics type.
+ *
+ * @throws \Exception
+ */
+function xs_rrd_get_all_data($node, $type) {
+  // Avoid fetching RRD database on every page load.
+  $last_updated = xs_rrd_get_last_updated_timestamp($node);
+  $steps = xs_rrd_get_graph_steps();
+  foreach ($steps as $key => $step) {
+    if ($type == $key && (REQUEST_TIME - $last_updated) < $step['ttl']) {
+      return;
+    }
+  }
+
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  // field_xs_vps_last_rrd_update
+  $xs_api = xs_get_xs_api();
+
+  $url = $xs_api->getUrl();
+  $session_id = $xs_api->getSessionId();
+
+  $url_suffix = 'vm_rrd';
+  $query = array(
+    'session_id' => $session_id,
+    'uuid' => $vm_uuid,
+  );
+
+  $url = url($url . '/' . $url_suffix, array('query' => $query));
+
+  $curl_options = array(
+    'verify_ssl' => FALSE,
+  );
+
+  $response = chr_curl_http_request($url, $curl_options);
+
+  if (xs_rrd_valid_rrd_data($response)) {
+    xs_rrd_save_data_to_file($node, $response->data);
+    xs_rrd_set_last_updated_timestamp($node);
+  }
+}
+
+/**
+ * Retrieves RRD data last updated timestamp.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return int
+ *   Timestamp of the last update or 0 if empty.
+ */
+function xs_rrd_get_last_updated_timestamp($node) {
+  $time = 0;
+  if (!empty($node->field_xs_vps_last_rrd_update)) {
+    $time = $node->field_xs_vps_last_rrd_update[LANGUAGE_NONE][0]['value'];
+  }
+
+  return $time;
+}
+
+/**
+ * Sets last updated timestamp for RRD data.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @throws \Exception
+ */
+function xs_rrd_set_last_updated_timestamp($node) {
+  $node->field_xs_vps_last_rrd_update[LANGUAGE_NONE][0]['value'] = REQUEST_TIME;
+  try {
+    node_save($node);
+  }
+  catch (Exception $e) {
+    watchdog('XS_RRD', 'Error when saving last updated timestamp: !message', array('!message' => $e->getMessage()), WATCHDOG_ERROR);
+  }
+}
+
+/**
+ * Saves RRD database to file.
+ *
+ * @param object $node
+ *   Drupal node object.
+ * @param string $rrd
+ *   RRD database content.
+ * @param string $op
+ *   Option, values:
+ *   - 'full': Full database,
+ *   - 'diff': Incremental update.
+ */
+function xs_rrd_save_data_to_file($node, $rrd, $op = 'full') {
+  $path = xs_rrd_get_rrd_file_path($node);
+
+  // Create XML file.
+  $xml_path = $path . '-' . $op . '.xml';
+  unlink($xml_path);
+
+  $handle = fopen($xml_path, 'w');
+
+  fwrite($handle, $rrd);
+
+  fclose($handle);
+
+  // Convert XML to RRD file.
+  $rrd_path = $path . '-' . $op . '.rrd';
+  unlink($rrd_path);
+  rrd_restore($xml_path, $rrd_path);
+}
+
+/**
+ * Prepares file path for storing RRD database.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return string
+ *   Path to RRD file.
+ */
+function xs_rrd_get_rrd_file_path($node) {
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+
+  $path = drupal_realpath('public://') . '/xs_rrds/vms/' . $vm_uuid;
+  file_prepare_directory($path, FILE_CREATE_DIRECTORY);
+  $path = $path . '/' . $vm_uuid;
+
+  return $path;
+}
+
+/**
+ * @param $response
+ *
+ * @return int
+ */
+function xs_rrd_valid_rrd_data($response) {
+  $valid = preg_match('/^(\<rrd\>|rrd)/i', $response->data) || preg_match('/^\<xport\>/i', $response->data);
+
+  return $valid;
+}
+
+/**
+ * Creates images from RRD database.
+ *
+ * @param object $node
+ *   Drupal node object.
+ */
+function xs_rrd_prepare_images(&$variables) {
+  // Generate CPU stats.
+  xs_rrd_create_graph_cpu($variables);
+  xs_rrd_create_graph_memory($variables);
+  xs_rrd_create_graph_network($variables);
+  xs_rrd_create_graph_disk_rw($variables);
+}
+
+/**
+ * Defines graph periods.
+ *
+ * @return array
+ *   Definition.
+ */
+function xs_rrd_get_graph_steps() {
+  return array(
+    XS_RRD_STEPS_HOURLY => array(
+      'interval' => '-1 h',
+      'title' => t('last hour'),
+      'ttl' => 300,
+    ),
+    XS_RRD_STEPS_DAILY => array(
+      'interval' => '-1 d',
+      'title' => t('last day'),
+      'ttl' => 3600,
+    ),
+    XS_RRD_STEPS_WEEKLY => array(
+      'interval' => '-7 d',
+      'title' => t('last 7 days'),
+      'ttl' => 43200,
+    ),
+    XS_RRD_STEPS_MONTHLY => array(
+      'interval' => '-1 month',
+      'title' => t('last 30 days'),
+      'ttl' => 86400,
+    ),
+    XS_RRD_STEPS_YEARLY => array(
+      'interval' => '-1 year',
+      'title' => t('last 365 days'),
+      'ttl' => 604800,
+    ),
+  );
+}
+
+/**
+ * Generates CPU graph images.
+ *
+ * @param array $variables
+ *   Variables array.
+ */
+function xs_rrd_create_graph_cpu(&$variables) {
+  $rrd_file = xs_rrd_get_rrd_file_path($variables['node']);
+
+  $cpus = xs_get_vm_cpus_by_node($variables['node']);
+  for ($i = 0; $i < $cpus; $i++) {
+    $definition[] = array(
+      'def' => 'cpu' . $i,
+      'label' => 'CPU' . $i,
+    );
+  }
+  $intervals = xs_rrd_get_graph_steps();
+
+  xs_rrd_create_graph($variables['node'], $rrd_file . '_cpu_' . $variables['type'] . '.png', $intervals[$variables['type']]['interval'], 'CPU ' . $intervals[$variables['type']]['title'], array(
+    'vertical_label' => '',
+    'definition' => $definition,
+    'metrics' => '%6.2lf %%',
+    'multiplier' => '300',
+  ));
+
+  $path_prefix = substr($rrd_file, strlen(DRUPAL_ROOT));
+  $path_prefix = substr($path_prefix, 1);
+
+  $variables['graph']['cpu'][$variables['type']] = url($path_prefix . '_cpu_' . $variables['type'] . '.png', array('query' => array('t' => REQUEST_TIME)));
+}
+
+/**
+ * Generates Memory graph images.
+ *
+ * @param array $variables
+ *   Variables array.
+ */
+function xs_rrd_create_graph_memory(&$variables) {
+  $rrd_file = xs_rrd_get_rrd_file_path($variables['node']);
+
+  $definition[] = array(
+    'def' => 'memory',
+    'label' => 'Memory',
+  );
+
+  $intervals = xs_rrd_get_graph_steps();
+
+  xs_rrd_create_graph($variables['node'], $rrd_file . '_ram_' . $variables['type'] . '.png', $intervals[$variables['type']]['interval'], 'Memory ' . $intervals[$variables['type']]['title'], array(
+    'vertical_label' => '',
+    'definition' => $definition,
+    'metrics' => '%5.2lf %s',
+    'multiplier' => '0.9765',
+  ));
+
+  $path_prefix = substr($rrd_file, strlen(DRUPAL_ROOT));
+  $path_prefix = substr($path_prefix, 1);
+
+  $variables['graph']['ram'][$variables['type']] = url($path_prefix . '_ram_' . $variables['type'] . '.png', array('query' => array('t' => REQUEST_TIME)));
+}
+
+/**
+ * Generates network graph images.
+ *
+ * @param array $variables
+ *   Variables array.
+ */
+function xs_rrd_create_graph_network(&$variables) {
+  $rrd_file = xs_rrd_get_rrd_file_path($variables['node']);
+
+  $networks = xs_get_vm_networks_by_node($variables['node']);
+
+  foreach ($networks as $network) {
+    $definition[] = array(
+      'def' => 'vif_' . $network['device'] . '_tx',
+      'label' => 'eth' . $network['device'] . ' sent',
+    );
+    $definition[] = array(
+      'def' => 'vif_' . $network['device'] . '_rx',
+      'label' => 'eth' . $network['device'] . ' received',
+    );
+  }
+
+  $intervals = xs_rrd_get_graph_steps();
+
+  xs_rrd_create_graph($variables['node'], $rrd_file . '_net_' . $variables['type'] . '.png', $intervals[$variables['type']]['interval'], 'Network ' . $intervals[$variables['type']]['title'], array(
+    'vertical_label' => '',
+    'definition' => $definition,
+    'metrics' => '%5.2lf %sBps',
+    'multiplier' => '1',
+  ));
+
+  $path_prefix = substr($rrd_file, strlen(DRUPAL_ROOT));
+  $path_prefix = substr($path_prefix, 1);
+
+  $variables['graph']['network'][$variables['type']] = url($path_prefix . '_net_' . $variables['type'] . '.png', array('query' => array('t' => REQUEST_TIME)));
+}
+
+/**
+ * Generates disk graph images.
+ *
+ * @param array $variables
+ *   Variables array.
+ */
+function xs_rrd_create_graph_disk_rw(&$variables) {
+  $rrd_file = xs_rrd_get_rrd_file_path($variables['node']);
+
+  $disks = xs_get_vm_disks_by_node($variables['node']);
+  foreach ($disks as $disk) {
+    $definition[] = array(
+      'def' => 'vbd_' . $disk['device'] . '_write',
+      'label' => $disk['device'] . ' write',
+    );
+    $definition[] = array(
+      'def' => 'vbd_' . $disk['device'] . '_read',
+      'label' => $disk['device'] . ' read',
+    );
+  }
+
+  $intervals = xs_rrd_get_graph_steps();
+
+  xs_rrd_create_graph($variables['node'], $rrd_file . '_disk_rw_' . $variables['type'] . '.png', $intervals[$variables['type']]['interval'], 'Disk R/W ' . $intervals[$variables['type']]['title'], array(
+    'vertical_label' => '',
+    'definition' => $definition,
+    'metrics' => '%5.2lf %sBps',
+    'multiplier' => '1',
+  ));
+
+  $path_prefix = substr($rrd_file, strlen(DRUPAL_ROOT));
+  $path_prefix = substr($path_prefix, 1);
+
+  $variables['graph']['disk_rw'][$variables['type']] = url($path_prefix . '_disk_rw_' . $variables['type'] . '.png', array('query' => array('t' => REQUEST_TIME)));
+}
+
+/**
+ * Creates graph.
+ *
+ * @param object $node
+ *   Drupal node object.
+ * @param string $output_file
+ *   Output file name.
+ * @param string $start
+ *   RRD-type start time.
+ * @param string $title
+ *   Image title, displayed at the top of the image.
+ * @param array $params
+ *   Additional params to be included into the image, see usage inline.
+ */
+function xs_rrd_create_graph($node, $output_file, $start, $title, $params = array()) {
+  global $user;
+
+//  date_default_timezone_set($user->timezone);
+
+  $filepath = xs_rrd_get_rrd_file_path($node);
+
+  $options = array(
+    '--slope-mode',
+    '--start',
+    $start,
+    '--end',
+    'now',
+    '--title=' . $title,
+    '--vertical-label=' . $params['vertical_label'],
+  );
+
+  // Define 17 colours.
+  $colors = array(
+    '#00FF00',
+    '#0000FF',
+    '#00FFFF',
+    '#4B0082',
+    '#800080',
+    '#A52A2A',
+    '#BA55D3',
+    '#C71585',
+    '#CD853F',
+    '#DC143C',
+    '#F08080',
+    '#FF0000',
+    '#F4A460',
+    '#FF00FF',
+    '#FFA500',
+    '#FFD700',
+    '#FFFF00',
+  );
+
+  $i = 0;
+  foreach ($params['definition'] as $param) {
+    $color = $colors[$i];
+    $definition = array(
+      'DEF:' . $param['def'] . '=' . $filepath . '-full.rrd:' . $param['def'] . ':AVERAGE',
+      'CDEF:t' . $param['def'] . '=' . $param['def'] . ',' . $params['multiplier'] . ',*',
+      'LINE1:t' . $param['def'] . $color . ':' . $param['label'],
+      'COMMENT:\g',
+      'GPRINT:t' . $param['def'] . ':MIN:Min ' . $params['metrics'],
+      'COMMENT:\g',
+      'GPRINT:t' . $param['def'] . ':MAX:Max\: ' . $params['metrics'],
+      'COMMENT:\g',
+      'GPRINT:t' . $param['def'] . ':LAST:Current\: ' . $params['metrics'],
+      "COMMENT:\\n",
+    );
+    $options = array_merge($options, $definition);
+    $i++;
+  }
+
+  $ret = rrd_graph($output_file, $options);
+  $error = rrd_error();
+}

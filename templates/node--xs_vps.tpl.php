@@ -257,7 +257,7 @@
         </div>
       <div class="col-md-12">
         <h3 id="server-log">Server Action Log</h3>
-        <a name="server-log" />
+        <a name="server-log"></a>
         <?php print $xs_action_log; ?>
       </div>
 
