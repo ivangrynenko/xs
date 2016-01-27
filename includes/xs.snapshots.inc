@@ -22,21 +22,6 @@ function xs_actions_snapshots_callback($node) {
 }
 
 /**
- * Gets available snapshots for the server, loaded from drupal node.
- *
- * @param object $node
- *   Drupal node.
- *
- * @return array
- *   Array of available snapshots.
- */
-function xs_get_vm_snapshots_from_node($node) {
-  $vm = xs_get_vm_by_node($node);
-
-  return xs_get_vm_snapshots($vm);
-}
-
-/**
  * Loads the number of available snapshots of the VM, loaded via Drupal node.
  *
  * @param array $node
@@ -228,7 +213,8 @@ function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   }
 
   if (!empty($xs_vm)) {
-    $xs_vm->createSnapshot($form_state['values']['title']);
+    $snapshot_title = check_plain($form_state['values']['title']);
+    $xs_vm->createSnapshot($snapshot_title);
     xs_action_log_write(t('Created snapshot !name for !server', array(
       '!name' => $form_state['values']['title'],
       '!server' => $form_state['storage']['xs_snapshot_create']['node']->title,
@@ -247,7 +233,7 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
   // Add hidden fields to pass over to the action submit handler.
   $form['snapshot_uuid'] = array(
     '#type' => 'hidden',
-    '#value' => $snapshot_uuid,
+    '#value' => check_plain($snapshot_uuid),
   );
 
   $form['nid'] = array(
@@ -385,38 +371,4 @@ function xs_get_snapshot_created_time($snapshot_uuid) {
   }
 
   return FALSE;
-}
-
-/**
- * Loads snapshots as list form element options.
- *
- * @param array $snapshots
- *   All snapshots for the VM.
- * @param array $current_active_snapshot
- *   The snapshot that is currently active (if any).
- *
- * @return array
- *   Array of options, ref as the key and time as value.
- */
-function DEPRECATED_xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot) {
-  $options = array();
-  if (empty($snapshots)) {
-    return $options;
-  }
-
-  $options[''] = t('Select snapshot');
-
-  foreach ($snapshots as $ref => $snapshot) {
-    // Mark the snapshot that is currently active.
-    $active = !empty($current_active_snapshot['uuid']) && $snapshot['uuid'] == $current_active_snapshot['uuid'] ? t(' (Server\'s latest status)') : '';
-
-    $prefix = '';
-    if (!empty($snapshot['name_label'])) {
-      $prefix = $snapshot['name_label'];
-    }
-
-    $options[$ref] = $prefix . ' [' . date(XS_DATE_FORMAT, $snapshot['snapshot_time']->timestamp) . '] ' . $active;
-  }
-
-  return $options;
 }

@@ -54,7 +54,7 @@ class XsVm extends XsApi {
 
     $this->data = $vm;
 
-    return $vm;
+    return $this->clear($vm);
   }
 
   /**
@@ -77,7 +77,7 @@ class XsVm extends XsApi {
     }
 
     try {
-      $this->ref = $this->xsApi->VM_get_by_uuid($this->uuid);
+      $this->ref = $this->clear($this->xsApi->VM_get_by_uuid($this->uuid));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -97,7 +97,7 @@ class XsVm extends XsApi {
     }
 
     try {
-      $this->metrics = $this->xsApi->VM_metrics_get_record($this->data['metrics']);
+      $this->metrics = $this->clear($this->xsApi->VM_metrics_get_record($this->data['metrics']));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -124,7 +124,7 @@ class XsVm extends XsApi {
    */
   protected function setVmConsoles() {
     try {
-      $this->consoles = $this->xsApi->VM_get_consoles($this->ref);
+      $this->consoles = $this->clear($this->xsApi->VM_get_consoles($this->ref));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -138,7 +138,7 @@ class XsVm extends XsApi {
     $this->setVmConsoles();
 
     try {
-      $this->consoleUrl = $this->xsApi->console_get_location($this->consoles[0]);
+      $this->consoleUrl = $this->clear($this->xsApi->console_get_location($this->consoles[0]));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -158,7 +158,7 @@ class XsVm extends XsApi {
     $hdd_size = 0;
     foreach ($vbd_refs as $vbd_ref) {
       try {
-        $vbd_type = $this->xsApi->VBD_get_type($vbd_ref);
+        $vbd_type = $this->clear($this->xsApi->VBD_get_type($vbd_ref));
       }
       catch (Exception $e) {
         xs_log($e);
@@ -166,14 +166,14 @@ class XsVm extends XsApi {
 
       if ($vbd_type == 'Disk') {
         try {
-          $vdi_ref = $this->xsApi->VBD_get_VDI($vbd_ref);
+          $vdi_ref = $this->clear($this->xsApi->VBD_get_VDI($vbd_ref));
         }
         catch (Exception $e) {
           xs_log($e);
         }
 
         try {
-          $hdd_size += intval($this->xsApi->VDI_get_virtual_size($vdi_ref));
+          $hdd_size += intval($this->clear($this->xsApi->VDI_get_virtual_size($vdi_ref)));
         }
         catch (Exception $e) {
           xs_log($e);
@@ -181,7 +181,7 @@ class XsVm extends XsApi {
       }
     }
 
-    return $hdd_size;
+    return $this->clear($hdd_size);
   }
 
   /**
@@ -200,7 +200,7 @@ class XsVm extends XsApi {
     }
 
     try {
-      $all_guest_metrics = $this->xsApi->VM_guest_metrics_get_all_records();
+      $all_guest_metrics = $this->clear($this->xsApi->VM_guest_metrics_get_all_records());
     }
     catch (Exception $e) {
       xs_log($e);
@@ -213,14 +213,14 @@ class XsVm extends XsApi {
     }
 
     try {
-      $vm_get_metrix_ref = $this->xsApi->VM_guest_metrics_get_by_uuid($all_guest_metrics[$vm['guest_metrics']]['uuid']);
+      $vm_get_metrix_ref = $this->clear($this->xsApi->VM_guest_metrics_get_by_uuid($all_guest_metrics[$vm['guest_metrics']]['uuid']));
     }
     catch (Exception $e) {
       xs_log($e);
     }
 
     try {
-      $return = $this->xsApi->VM_guest_metrics_get_record($vm_get_metrix_ref);
+      $return = $this->clear($this->xsApi->VM_guest_metrics_get_record($vm_get_metrix_ref));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -238,7 +238,7 @@ class XsVm extends XsApi {
   public function getGuestMetrics() {
     $this->setGuestMetrics();
 
-    return $this->guestMetrics;
+    return $this->clear($this->guestMetrics);
   }
 
   /**
@@ -254,14 +254,14 @@ class XsVm extends XsApi {
     if (!empty($vm['VIFs'])) {
       foreach ($vm['VIFs'] as $vif_ref) {
         try {
-          $vifs[] = $this->xsApi->VIF_get_record($vif_ref);
+          $vifs[] = $this->clear($this->xsApi->VIF_get_record($vif_ref));
         }
         catch (Exception $e) {
           xs_log($e);
         }
       }
     }
-    $this->vifs = $vifs;
+    $this->vifs = $this->clear($vifs);
   }
 
   /**
@@ -273,7 +273,7 @@ class XsVm extends XsApi {
   public function getVifs() {
     $this->setVifs();
 
-    return $this->vifs;
+    return $this->clear($this->vifs);
   }
 
   /**
@@ -292,7 +292,7 @@ class XsVm extends XsApi {
   public function getVdiByVbd($vbd_ref, $type = 'Disk') {
     $vbd = FALSE;
     try {
-      $vbd_type = $this->xsApi->VBD_get_type($vbd_ref);
+      $this->clear($vbd_type = $this->xsApi->VBD_get_type($vbd_ref));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -300,21 +300,21 @@ class XsVm extends XsApi {
 
     if ($vbd_type == $type) {
       try {
-        $vdi_ref = $this->xsApi->VBD_get_VDI($vbd_ref);
+        $vdi_ref = $this->clear($this->xsApi->VBD_get_VDI($vbd_ref));
       }
       catch (Exception $e) {
         xs_log($e);
       }
 
       try {
-        $vbd = $this->xsApi->VDI_get_record($vdi_ref);
+        $vbd = $this->clear($this->xsApi->VDI_get_record($vdi_ref));
       }
       catch (Exception $e) {
         xs_log($e);
       }
     }
 
-    return $vbd;
+    return $this->clear($vbd);
   }
 
   /**
@@ -409,7 +409,7 @@ class XsVm extends XsApi {
       $this->setStatus();
     }
 
-    return $this->status;
+    return $this->clear($this->status);
   }
 
   /**
@@ -417,7 +417,7 @@ class XsVm extends XsApi {
    */
   public function setVbds() {
     try {
-      $this->vbds = $this->xsApi->VBD_get_record($this->ref);
+      $this->vbds = $this->clear($this->xsApi->VBD_get_record($this->ref));
     }
     catch (Exception $e) {
       xs_log($e);
@@ -448,8 +448,9 @@ class XsVm extends XsApi {
     if (!empty($this->data['snapshots'])) {
       foreach ($this->data['snapshots'] as $snapshot_ref) {
         try {
-          $full_snapshots[$snapshot_ref] = $this->xsApi->VM_get_record($snapshot_ref);
+          $full_snapshots[$snapshot_ref] = $this->clear($this->xsApi->VM_get_record($snapshot_ref));
           $full_snapshots[$snapshot_ref] = new XsSnapshot($full_snapshots[$snapshot_ref]['uuid']);
+          $full_snapshots[$snapshot_ref] = $this->clear($full_snapshots[$snapshot_ref]);
         }
         catch (Exception $e) {
           xs_log($e);
@@ -457,13 +458,13 @@ class XsVm extends XsApi {
       }
     }
 
-    $this->snapshots = $this->snapshotsReorder($full_snapshots);
+    $this->snapshots = $this->clear($this->snapshotsReorder($full_snapshots));
   }
 
   public function getSnapshots() {
     $this->setSnapshots();
 
-    return $this->snapshots;
+    return $this->clear($this->snapshots);
   }
   /**
    * Reorder snapshots by snapshot date.
@@ -510,6 +511,8 @@ class XsVm extends XsApi {
    */
   public function createSnapshot($title) {
     $this->setRef();
+    $title = $this->clear($title);
+
     try {
       $this->xsApi->VM_snapshot($this->ref, $title);
     }
