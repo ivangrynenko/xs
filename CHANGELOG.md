@@ -1,4 +1,11 @@
 # CHANGELOG #
+xs 7.x-1.6, 2016-01-28
+----------------------
+[] ig: Refactored XenApi implementation to facilitate migration to Drupal 8.
+[] ig: Migrated all templates to implement Bootstrap 3.
+[] ig: Removed dependencies on other modules.
+[] ig: Major update to the user interface.
+
 xs 7.x-1.5, 2016-01-08
 ----------------------
 [] ig: Added xs_rrd submodule to display VM's performance graphs.

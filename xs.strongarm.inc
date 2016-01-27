@@ -20,55 +20,6 @@ function xs_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'comment_anonymous_xs_vps';
-  $strongarm->value = '0';
-  $export['comment_anonymous_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_default_mode_xs_vps';
-  $strongarm->value = 1;
-  $export['comment_default_mode_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_default_per_page_xs_vps';
-  $strongarm->value = '50';
-  $export['comment_default_per_page_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_form_location_xs_vps';
-  $strongarm->value = 1;
-  $export['comment_form_location_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_preview_xs_vps';
-  $strongarm->value = '1';
-  $export['comment_preview_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_subject_field_xs_vps';
-  $strongarm->value = 1;
-  $export['comment_subject_field_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_xs_vps';
-  $strongarm->value = '1';
-  $export['comment_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'content_access_xs_vps';
   $strongarm->value = array(
     'view_own' => array(
@@ -109,19 +60,19 @@ function xs_strongarm() {
     'extra_fields' => array(
       'form' => array(
         'metatags' => array(
-          'weight' => '9',
+          'weight' => '8',
         ),
         'title' => array(
           'weight' => '0',
         ),
         'path' => array(
-          'weight' => '8',
+          'weight' => '7',
         ),
         'redirect' => array(
-          'weight' => '6',
+          'weight' => '5',
         ),
         'xmlsitemap' => array(
-          'weight' => '7',
+          'weight' => '6',
         ),
       ),
       'display' => array(),
@@ -142,13 +93,6 @@ function xs_strongarm() {
   $strongarm->name = 'menu_parent_xs_vps';
   $strongarm->value = 'main-menu:0';
   $export['menu_parent_xs_vps'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'metatag_enable_node__xs_vps';
-  $strongarm->value = TRUE;
-  $export['metatag_enable_node__xs_vps'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -242,14 +186,14 @@ function xs_strongarm() {
     'toggle_comment_user_verification' => 1,
     'toggle_favicon' => 1,
     'toggle_main_menu' => 0,
-    'toggle_secondary_menu' => 1,
+    'toggle_secondary_menu' => 0,
     'default_logo' => 0,
     'logo_path' => 'sites/default/files/rh-logo_02.png',
     'logo_upload' => '',
     'default_favicon' => 1,
     'favicon_path' => '',
     'favicon_upload' => '',
-    'bootstrap__active_tab' => 'edit-general',
+    'bootstrap__active_tab' => 'edit-components',
     'bootstrap_fluid_container' => 0,
     'bootstrap_button_size' => '',
     'bootstrap_button_colorize' => 1,
@@ -265,9 +209,9 @@ function xs_strongarm() {
     'bootstrap_table_hover' => 1,
     'bootstrap_table_striped' => 1,
     'bootstrap_table_responsive' => 1,
-    'bootstrap_breadcrumb' => '1',
+    'bootstrap_breadcrumb' => '2',
     'bootstrap_breadcrumb_home' => 0,
-    'bootstrap_breadcrumb_title' => 1,
+    'bootstrap_breadcrumb_title' => 0,
     'bootstrap_navbar_position' => 'fixed-top',
     'bootstrap_navbar_inverse' => 0,
     'bootstrap_pager_first_and_last' => 1,
@@ -323,16 +267,6 @@ function xs_strongarm() {
     'bootstrap_cdn_jsdelivr_theme' => 'bootstrap',
   );
   $export['theme_bootstrap_settings'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'xmlsitemap_settings_node_xs_vps';
-  $strongarm->value = array(
-    'status' => '0',
-    'priority' => '0.5',
-  );
-  $export['xmlsitemap_settings_node_xs_vps'] = $strongarm;
 
   return $export;
 }

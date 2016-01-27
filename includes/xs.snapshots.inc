@@ -22,70 +22,6 @@ function xs_actions_snapshots_callback($node) {
 }
 
 /**
- * Loads full snapshot objects for a single $vm.
- *
- * @param array $vm
- *   A VM array.
- *
- * @return array
- *   Array of fully loaded shapshot arrays, keyed by snapshot reference.
- */
-function xs_get_vm_snapshots($vm) {
-  $full_snapshots = &drupal_static(__FUNCTION__ . $vm['uuid']);
-  if (!empty($full_snapshots)) {
-    return $full_snapshots;
-  }
-
-  $full_snapshots = array();
-  if (!empty($vm['snapshots'])) {
-    foreach ($vm['snapshots'] as $snapshot_ref) {
-      $full_snapshots[$snapshot_ref] = xs_api_get_snapshot_by_ref($snapshot_ref);
-    }
-  }
-
-  $full_snapshots = xs_snapshots_reorder($full_snapshots);
-
-  return $full_snapshots;
-}
-
-/**
- * Reorder snapshots by snapshot date.
- *
- * @param array $snapshots
- *   Array of loaded snapshot objects.
- * @param bool $ascending
- *   Whether to sort ascending (TRUE).
- *
- * @return array
- *   Reordered snapshots.
- */
-function xs_snapshots_reorder($snapshots, $ascending = FALSE) {
-  if (empty($snapshots)) {
-    return $snapshots;
-  };
-
-  $remapped_snapshots = array();
-  $ordered_snapshots = array();
-  foreach ($snapshots as $snap_ref => $snapshot) {
-    $snapshot['ref'] = $snap_ref;
-    $remapped_snapshots[$snapshot['snapshot_time']->timestamp] = $snapshot;
-  }
-
-  if ($ascending) {
-    ksort($remapped_snapshots, SORT_STRING);
-  }
-  else {
-    krsort($remapped_snapshots, SORT_STRING);
-  }
-
-  foreach ($remapped_snapshots as $snapshot) {
-    $ordered_snapshots[$snapshot['ref']] = $snapshot;
-  }
-
-  return $ordered_snapshots;
-}
-
-/**
  * Gets available snapshots for the server, loaded from drupal node.
  *
  * @param object $node
@@ -110,7 +46,20 @@ function xs_get_vm_snapshots_from_node($node) {
  *   Number of available snapshots or FALSE.
  */
 function xs_get_vm_snapshots_count_from_node($node) {
-  $vm = xs_get_vm_by_node($node);
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  if (!empty($xs_vm)) {
+    $vm = $xs_vm->getData();
+  }
 
   return !empty($vm['snapshots']) ? count($vm['snapshots']) : 0;
 }
@@ -271,38 +220,22 @@ function xs_snapshots_create_snapshot_form_validate($form, &$form_state) {
  */
 function xs_snapshots_create_snapshot_form_submit($form, &$form_state) {
   $vm_uuid = xs_get_vm_uuid_by_node($form_state['storage']['xs_snapshot_create']['node']);
-  $vm_ref = xs_api_get_vm_ref_by_uuid($vm_uuid);
-
   try {
-    xs_snapshot_create_snapshot($vm_ref, $form_state['values']['title']);
+    $xs_vm = new XsVm($vm_uuid);
   }
   catch (Exception $e) {
-    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
+    xs_log($e);
   }
 
-  xs_action_log_write(t('Created snapshot !name for !server', array(
-    '!name' => $form_state['values']['title'],
-    '!server' => $form_state['storage']['xs_snapshot_create']['node']->title,
-  )), 'snapshot-create');
+  if (!empty($xs_vm)) {
+    $xs_vm->createSnapshot($form_state['values']['title']);
+    xs_action_log_write(t('Created snapshot !name for !server', array(
+      '!name' => $form_state['values']['title'],
+      '!server' => $form_state['storage']['xs_snapshot_create']['node']->title,
+    )), 'snapshot-create');
+  }
 
   $form_state['redirect'] = 'node/' . $form_state['storage']['xs_snapshot_create']['node']->nid . '/xs-snapshots';
-}
-
-/**
- * Creates a snapshot of the VM identified by $vm_ref.
- *
- * @param string $vm_ref
- *   VM reference.
- * @param string $title
- *   Title of the snapshot.
- */
-function xs_snapshot_create_snapshot($vm_ref, $title) {
-  try {
-    xs_api_create_snapshot($vm_ref, $title);
-  }
-  catch (Exception $e) {
-    throw new Exception('Unable to create snapshot: ' . $e->getMessage());
-  }
 }
 
 /**
@@ -330,12 +263,18 @@ function xs_actions_confirm_snapshots_form($form, &$form_state, $node, $action, 
   $snapshot_created_time = xs_get_snapshot_created_time($snapshot_uuid);
 
   $date = date(XS_DATE_FORMAT, $snapshot_created_time);
+
+  drupal_set_message(t('You requested to !action the snapshot, created at !date. This action cannot be undone!', array(
+    '!action' => strtoupper($action),
+    '!date' => !empty($date) ? $date : 'N/A'
+  )), 'error');
+
   $form['warning'] = array(
-    '#markup' => t('You about to !action the snapshot, created at !date. This action cannot be undone!', array(
+    '#markup' => t('Are you sure that you want to !action the snapshot? This action cannot be undone!', array(
       '!action' => strtoupper($action),
       '!date' => !empty($date) ? $date : 'N/A'
     )),
-    '#prefix' => '<div class="red">',
+    '#prefix' => '<div class="text-default">',
     '#suffix' => '</div>',
   );
 
@@ -380,15 +319,14 @@ function xs_actions_confirm_snapshots_form_validate($form, &$form_state) {
  * Submit handler for xs_actions_confirm_snapshots_form.
  */
 function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
-  $snapshot = xs_api_get_vm_by_uuid($form_state['values']['snapshot_uuid']);
+  $snapshot = new XsSnapshot($form_state['values']['snapshot_uuid']);
   $node = node_load($form_state['values']['nid']);
 
   switch ($form_state['values']['action']) {
     case 'destroy':
-      $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
-      xs_actions_snapshot_destroy($snapshot_ref);
+      $snapshot->destroy();
       xs_action_log_write(t('Deleted snapshot !name for !server', array(
-        '!name' => $snapshot['name_label'],
+        '!name' => $snapshot->data['name_label'],
         '!server' => $node->title,
       )), 'snapshot-destroy');
       drupal_set_message('The selected snapshot was deleted successfully');
@@ -396,30 +334,35 @@ function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
       break;
 
     case 'revert':
-
       if (xs_actions_access_callback($node)) {
         module_load_include('inc', 'xs', 'includes/xs.actions');
 
         // Load the VM.
-        $uuid = xs_get_vm_uuid_by_node($node);
-        $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
+        $vm_uuid = xs_get_vm_uuid_by_node($node);
+        try {
+          $xs_vm = new XsVm($vm_uuid);
+        }
+        catch (Exception $e) {
+          xs_log($e);
+        }
 
         // Shut down the VM.
-        xs_actions_action_vps_hard_shutdown($vm_ref);
+        if (!empty($xs_vm)) {
+          $xs_vm->stopForce();
 
-        // Revert to the selected snapshot.
-        $snapshot_ref = xs_api_get_vm_ref_by_uuid($form_state['values']['snapshot_uuid']);
-        xs_actions_snapshot_revert($snapshot_ref);
+          // Revert to the selected snapshot.
+          $snapshot->revert();
 
-        // Start the VM.
-        xs_actions_action_vps_start($vm_ref);
+          // Start the VM.
+          $xs_vm->start();
 
-        xs_action_log_write(t('Reverted server !server to snapshot !name', array(
-          '!name' => $snapshot['name_label'],
-          '!server' => $node->title,
-        )), 'snapshot-revert');
+          xs_action_log_write(t('Reverted server !server to snapshot !name', array(
+            '!name' => $snapshot->data['name_label'],
+            '!server' => $node->title,
+          )), 'snapshot-revert');
 
-        drupal_set_message('Your Server has been reverted to the selected snapshot and started successfully');
+          drupal_set_message('Your Server has been reverted to the selected snapshot and started successfully');
+        }
       }
       drupal_goto('node/' . $form_state['values']['nid'] . '/xs-snapshots');
       break;
@@ -436,59 +379,12 @@ function xs_actions_confirm_snapshots_form_submit($form, &$form_state) {
  *   Snapshot created timestamp or FALSE.
  */
 function xs_get_snapshot_created_time($snapshot_uuid) {
-  $snapshot = xs_api_get_snapshot_by_uuid($snapshot_uuid);
-  if (!empty($snapshot['snapshot_time'])) {
-    return $snapshot['snapshot_time']->timestamp;
+  $snapshot = new XsSnapshot($snapshot_uuid);
+  if (!empty($snapshot->data['snapshot_time'])) {
+    return $snapshot->data['snapshot_time']->timestamp;
   }
 
   return FALSE;
-}
-
-/**
- * Destroys the snapshot.
- *
- * @param string $snapshot_ref
- *   Reference of the snapshot to destroy.
- */
-function xs_actions_snapshot_destroy($snapshot_ref) {
-  $snapshot = xs_api_get_snapshot_by_ref($snapshot_ref);
-  xs_action_snapshot_vbd_destroy($snapshot);
-
-  try {
-    return xs_api_destroy_snapshot($snapshot_ref);
-  }
-  catch (Exception $e) {
-    throw new Exception($e->getMessage());
-  }
-}
-
-/**
- * Destroys VBD for the $snapshot.
- *
- * @param array $snapshot
- *   Snapshot array.
- */
-function xs_action_snapshot_vbd_destroy($snapshot) {
-  if (empty($snapshot['VBDs'])) {
-    return;
-  }
-
-  foreach ($snapshot['VBDs'] as $vbd_ref) {
-    $vbd = xs_api_get_vbd($vbd_ref);
-    if ($vbd['VDI'] != XS_API_EMPTY_REF) {
-      xs_api_destroy_vdi($vbd['VDI']);
-    }
-  }
-}
-
-/**
- * Reverts the snapshot.
- *
- * @param string $snapshot_ref
- *   Reference of the snapshot to destroy.
- */
-function xs_actions_snapshot_revert($snapshot_ref) {
-  xs_api_revert_snapshot($snapshot_ref);
 }
 
 /**
@@ -502,7 +398,7 @@ function xs_actions_snapshot_revert($snapshot_ref) {
  * @return array
  *   Array of options, ref as the key and time as value.
  */
-function _xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot) {
+function DEPRECATED_xs_actions_snapshot_prepare_options($snapshots, $current_active_snapshot) {
   $options = array();
   if (empty($snapshots)) {
     return $options;

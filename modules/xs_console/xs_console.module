@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function xs_console_menu() {
+  $items = array();
+
+  $items['node/%node/xs-console'] = array(
+    'title' => 'Console',
+    'page callback' => 'xs_console_console_callback',
+    'page arguments' => array(1),
+    'access callback' => 'xs_console_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 70,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function xs_console_permission() {
+  return array(
+    'xs_console_access_own_console' => array(
+      'title' => 'Access own Java console',
+    ),
+    'xs_console_access_any_console' => array(
+      'title' => 'Access any Java console',
+    ),
+  );
+}
+
+/**
+ * Access callback for Java console.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return bool
+ */
+function xs_console_access($node) {
+  global $user;
+
+  if (user_access('xs_console_access_any_console')) {
+    return TRUE;
+  }
+
+  if (user_access('xs_console_access_own_console') && xs_get_vps_owner_uid($node) == $user->uid) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Callback function to display Java console.
+ *
+ * @param object $node
+ *   Drupal node object.
+ *
+ * @return null|string
+ *   Java console HTML.
+ */
+function xs_console_console_callback($node) {
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  if ($xs_vm->status != 'Running') {
+    return t('The server is shut down. Please start it before accessing the console.');
+  }
+
+  $xs_vm->setConsoleUrl();
+
+  $xs_session = $xs_vm->xsApi->getSessionId();
+
+  $output = '<applet code="com/citrix/xenserver/console/Initialize.class" archive="XenServerConsole.jar" width="800" height="600">';
+  $output .= '<PARAM NAME=SESSION VALUE="' . $xs_session . '">';
+  $output .= '<PARAM NAME=URL VALUE="' . $xs_vm->consoleUrl . '">';
+  $output .= '<PARAM NAME=USEURL VALUE="true">';
+  $output .= 'Your browser does not support Java';
+  $output .= '</applet>';
+
+  return $output;
+}

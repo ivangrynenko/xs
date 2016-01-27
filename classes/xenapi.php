@@ -37,11 +37,16 @@ class XenApi {
   private $_password;
 
   function __construct($url, $user, $password) {
-    $r = $this->xenrpc_request($url, $this->xenrpc_method('session.login_with_password', array(
-      $user,
-      $password,
-      '1.3'
-    )));
+    try {
+      $r = $this->xenrpc_request($url, $this->xenrpc_method('session.login_with_password', array(
+        $user,
+        $password,
+        '1.3'
+      )));
+    }
+    catch (Exception $e) {
+      throw new Exception('API failure:' . $e->getMessage());
+    }
 
     if (is_array($r) && $r['Status'] == 'Success') {
       $this->_session_id = $r['Value'];
@@ -50,9 +55,7 @@ class XenApi {
       $this->_password = $password;
     }
     else {
-      throw new Exception("API failure.  (" . implode(' ', $r['ErrorDescription']) . ")");
-      //echo "API failure.  (" . implode(' ', $r['ErrorDescription']) . ")\n";
-      //exit;
+      throw new Exception("API failure.  (Unable to connect to the server.)");
     }
   }
 
@@ -76,8 +79,7 @@ class XenApi {
 
   function xenrpc_parseresponse($response) {
     if (!@is_array($response) && !@$response['Status']) {
-      echo "API failure.  (500)\n";
-      exit;
+      throw new Exception("API failure.  (500)");
     }
     else {
       if ($response['Status'] == 'Success') {
@@ -85,19 +87,17 @@ class XenApi {
       }
       else {
         if ($response['ErrorDescription'][0] == 'SESSION_INVALID') {
-          $r = $this->xenrpc_request($url, $this->xenrpc_method('session.login_with_password',
+          $r = $this->xenrpc_request($this->_url, $this->xenrpc_method('session.login_with_password',
             array($this->_user, $this->_password, '1.3')));
           if (!is_array($r) && $r['Status'] == 'Success') {
             $this->_session_id = $r['Value'];
           }
           else {
-            echo "API failure.  (session)\n";
-            exit;
+            throw new Exception("API failure.  (session)");
           }
         }
         else {
-          echo "API failure.  (" . implode(' ', $response['ErrorDescription']) . ")\n";
-          exit;
+          throw new Exception("API failure.  (" . implode(' ', $response['ErrorDescription']) . ")");
         }
       }
     }
@@ -134,6 +134,10 @@ class XenApi {
 
     $resp = curl_exec($ch);
     curl_close($ch);
+
+    if (empty($resp)) {
+      throw new Exception('Unable to get response from XenServer host.');
+    }
 
     $ret = xmlrpc_decode($resp);
 

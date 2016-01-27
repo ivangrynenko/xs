@@ -89,12 +89,6 @@
   <?php endif; ?>
   <?php print render($title_suffix); ?>
 
-  <?php if ($display_submitted): ?>
-    <div class="submitted">
-      <?php print $submitted; ?>
-    </div>
-  <?php endif; ?>
-
   <div class="content"<?php print $content_attributes; ?>>
     <?php
     // We hide the comments and links now so that we can render them later.
@@ -102,6 +96,11 @@
     hide($content['links']);
     ?>
     <div class="row">
+      <div class="col-md-12 text-muted">
+        <?php print format_plural($vm_cpu, '@count CPU', '@count CPUs', array('@count' => $vm_cpu)); ?> /
+        <?php print $vm_memory; ?> GB RAM /
+        <?php print $os['version']; ?>
+      </div>
       <?php if ($error_message) : ?>
 
         <div class="col-md-12">
@@ -110,55 +109,9 @@
 
       <?php else: ?>
 
-      <?php print render($content); ?>
+        <?php print render($content); ?>
 
-      <div class="col-md-12 align-right">
-        <div class="text-right action-links">
-          <h2>
-            <?php print $action_links_dropdown; ?>
-          </h2>
-        </div>
-      </div>
-
-        <div class="col-md-4">
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Server Status</h3>
-            </div>
-
-            <div class="panel-body">
-              <p>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Power state</label>:
-                <span class="vm-config-value"><?php print $vm_power_state; ?></span>
-                <span class="vm-config-icon vm-config-icon-<?php print $vm_power_state_class; ?>">&nbsp;</span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">CPUs</label>
-                <span class="vm-config-value label label-primary"><?php print $vm_cpu; ?></span>
-                <label class="display-inline">RAM</label>
-                <span class="vm-config-value label label-primary"><?php print $vm_memory; ?>GB</span>
-                <label class="display-inline">HDD</label>
-                <span class="vm-config-value label label-primary"><?php print $disk_size; ?>GB</span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Start time</label>:
-                <span class="vm-config-value"><?php print $start_time; ?></span>
-              </div>
-
-              <div class="xs-vm-row">
-                <label class="display-inline">Server uptime</label>:
-                <span class="vm-config-value"><?php print $server_uptime; ?></span>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-4">
+        <div class="col-md-12">
           <div class="panel panel-primary">
             <div class="panel-heading">
               <h3 class="panel-title">Server Configuration</h3>
@@ -166,95 +119,47 @@
 
             <div class="panel-body">
               <div class="xs-vm-row">
-                <label class="display-inline">Network cards</label>:
-
-                <?php if (!empty($vm_vifs)) : ?>
-                  <ol>
-                    <?php foreach ($vm_vifs as $delta => $vif) : ?>
-                      <li>
-                        <label class="display-inline"><?php print $vif['device']; ?></label>: <?php if (!empty($network['ips'])) : ?><?php print !empty($network['ips'][$delta]) ? 'IPv4: <span class="label label-primary">' . $network['ips'][$delta] . '</span>' : 'Unconfigured'; ?><?php endif; ?> MAC:
-                        <span class="label label-primary"><?php print $vif['mac']; ?></span>
-                      </li>
-                    <?php endforeach; ?>
-                  </ol>
+                <?php if (!empty($network)) : ?>
+                  <label class="display-inline"><?php print format_plural(count($network), 'IP address', 'IP addresses'); ?>:</label>
+                  <?php print implode(', ', $network['ips']); ?>
                 <?php endif; ?>
               </div>
 
               <?php if (!empty($vbds)) : ?>
                 <div class="xs-vm-row">
-                <label class="display-inline">Attached HDDs</label>
-                <?php foreach ($vbds as $uuid => $vbd) : ?>
-                  <ol>
-                    <li>
-                      <label class="display-inline"><?php print $vbd['name_label']; ?> (<?php print $vbd['type']; ?>)</label>: Size
-                      <span class="label label-primary"><?php print $vbd['virtual_size']; ?> GB</span>
-                      <br/>Current utilisation: <?php print $vbd['percent_physical_utilisation']; ?> or <?php print $vbd['physical_utilisation']; ?> GB
-                    </li>
-                  </ol>
-                  </div>
-                <?php endforeach; ?>
+                  <label class="display-inline"><?php print format_plural(count($vbds), 'Disk', 'Disks'); ?></label>
+                  <?php if (count($vbds) == 1): ?>
+                    <span class="label label-primary"><?php print reset($vbds)['virtual_size']; ?> GB</span>
+                  <?php else: ?>
+                    <?php print implode(', ', $vbds_size); ?>
+                  <?php endif; ?>
+                </div>
               <?php endif; ?>
 
-              <div class="xs-vm-row">
-                <label class="display-inline">Server Name</label>:
-                <span class="description"><?php print $vm_name; ?></span>
-              </div>
+              <?php if (!empty($os)) : ?>
+                <div class="xs-vm-row">
+                  <label class="display-inline">OS:</label>
+                  <span class="field-value"><?php print $os['version']; ?></span>
+                </div>
 
-              <div class="xs-vm-row">
-                <label class="display-inline">Server Description</label>:
-                <span class="description"><?php print $vm_description; ?></span>
-              </div>
-              </p>
+                <div class="xs-vm-row">
+                  <label class="display-inline">Kernel:</label>
+                  <span class="field-value"><?php print $os['kernel']; ?></span>
+                </div>
+              <?php endif; ?>
+
+              <?php if (!empty($virtualization_state)) : ?>
+                <div class="xs-vm-row">
+                  <label class="display-inline">Tools:</label>
+                  <span class="field-value"><?php print $virtualization_state; ?> (<?php print $virtualization_uptodate; ?>)</span>
+                </div>
+              <?php endif; ?>
 
             </div>
           </div>
         </div>
 
-        <div class="col-md-4">
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">Operating System</h3>
-            </div>
-
-            <div class="panel-body">
-
-              <ul>
-                <?php if (!empty($os['version'])) : ?>
-                  <li>
-                    <label class="display-inline">Operating System</label>: <?php print $os['version']; ?>
-                  </li>
-                <?php endif; ?>
-
-                <?php if (!empty($os['kernel'])) : ?>
-                  <li>
-                    <label class="display-inline">Kernel</label>:<?php print $os['kernel']; ?>
-                  </li>
-                <?php endif; ?>
-
-                <?php if (!empty($os['distro'])) : ?>
-                  <li>
-                    <label class="display-inline">Distro</label>: <?php print $os['distro']; ?>
-                  </li>
-                <?php endif; ?>
-
-                <?php if (!empty($os['major'])) : ?>
-                  <li>
-                    <label class="display-inline">OS version</label>: <?php print $os['major'] . '.' . $os['minor']; ?>
-                  </li>
-                <?php endif; ?>
-
-                <?php if (!empty($virtualization_state)) : ?>
-                  <li>
-                    <label class="display-inline">Virtualisation State</label>:
-                    <?php print $virtualization_state; ?>
-                    <?php print !empty($virtualization_uptodate) ? ' (' . $virtualization_uptodate . ')' : ''; ?>
-                  </li>
-                <?php endif; ?>
-              </ul>
-            </div>
-          </div>
-          <?php endif; ?>
-        </div>
+      <?php endif; ?>
       <div class="col-md-12">
         <h3 id="server-log">Server Action Log</h3>
         <a name="server-log"></a>

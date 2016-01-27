@@ -91,48 +91,8 @@ function xs_permission() {
 function xs_menu() {
   $items = array();
 
-  $items['admin/structure/xs'] = array(
-    'title' => 'XenServer',
-    'access arguments' => array('administer xs_snapshot_policy types'),
-    'weight' => 1,
-    'type' => MENU_NORMAL_ITEM,
-  );
-
-  $items['admin/config/services/xs'] = array(
-    'title' => 'Overview',
-    'description' => 'Xenserver pool configurationand settings.',
-    'page callback' => 'xs_settings',
-    'access arguments' => array('administer xenserver pool'),
-    'file' => 'includes/xs.pages.inc',
-  );
-
-  $items['admin/config/services/xs/default'] = array(
-    'title' => 'Overview',
-    'description' => 'Xenserver pool configurationand settings.',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-
-  $items['admin/config/services/xs/settings'] = array(
-    'title' => 'Xenserver Pools',
-    'description' => 'Xenserver Pools settings.',
-    'page callback' => 'xs_admin_pool_configuration',
-    'access arguments' => array('administer xenserver pool'),
-    'file' => 'includes/xs.pages.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
-
-  $items['admin/config/services/xs/templates'] = array(
-    'title' => 'Templates',
-    'description' => 'Templates available',
-    'page callback' => 'xs_admin_pool_templates',
-    'access arguments' => array('administer xenserver pool'),
-    'file' => 'includes/xs.pages.inc',
-    'weight' => 50,
-    'type' => MENU_LOCAL_TASK,
-  );
-
   $items['node/%node/xs-actions/%'] = array(
-    'title' => 'Perform actions on virtual server',
+    'title' => t('Confirm action'),
     'description' => 'Use to reboot the VPS gracefully',
     'page callback' => 'drupal_get_form',
     'page arguments' => array(
@@ -148,7 +108,7 @@ function xs_menu() {
   );
 
   $items['node/%node/xs-snapshots'] = array(
-    'title' => 'Snaphots',
+    'title' => t('Snaphots'),
     'description' => 'Allows browsing and actions with server snapshots',
     'page callback' => 'xs_actions_snapshots_callback',
     'page arguments' => array(1),
@@ -159,8 +119,18 @@ function xs_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items['user-vps'] = array(
+    'title' => t('Servers'),
+    'description' => 'Browse user VPS.',
+    'page callback' => 'xs_user_vps_callback',
+    'access arguments' => array('perform own vm actions'),
+    'weight' => 60,
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'user-menu',
+  );
+
   $items['node/%node/xs-snapshots/%/%'] = array(
-    'title' => 'Confirm Snapshot Action',
+    'title' => t('Confirm Action'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('xs_actions_confirm_snapshots_form', 1, 3, 4),
     'access callback' => 'xs_actions_access_callback',
@@ -170,21 +140,19 @@ function xs_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  // @todo: Review if this is needed.
-  $items['node/%node/xs-snapshots/create'] = array(
-    'title' => 'Create a Snapshot of the server',
-    'title callback' => 'xs_snapshots_create_snapshot_title_callback',
-    'title arguments' => array(1),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('xs_snapshots_create_snapshot_form', 1),
-    'access callback' => 'xs_actions_access_callback',
-    'access arguments' => array(1, TRUE),
-    'file' => 'includes/xs.snapshots.inc',
-    'weight' => 60,
-    'type' => MENU_CALLBACK,
-  );
-
   return $items;
+}
+
+/**
+ * Callback for user-vms URL.
+ *
+ * @return string
+ *   HTML.
+ */
+function xs_user_vps_callback() {
+  global $user;
+
+  return views_embed_view('xs_user_vms', 'block', $user->uid);
 }
 
 /**
@@ -197,38 +165,14 @@ function xs_menu() {
  *   XenApi reference string of the matching UUID.
  */
 function xs_vm_uuid_load($vm_uuid) {
-  return xs_api_get_vm_ref_by_uuid($vm_uuid);
-}
-
-/**
- * Gets all VPS nodes for the $account.
- *
- * @param object $account
- *   Drupal user object.
- *
- * @return bool|mixed
- *   Array of node objects or FALSE.
- */
-function _xs_get_user_vps($account, $limit = FALSE) {
-  $query = new EntityFieldQuery();
-  $query
-    ->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'xs_vps')
-    ->propertyCondition('status', 1)
-    ->propertyCondition('uid', $account->uid)
-    ->fieldCondition('field_xs_vps_owner', 'target_id', $account->uid)
-    ->propertyOrderBy('nid', 'ASC');
-  if ($limit) {
-    $query->range(0, $limit);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
   }
 
-  $result = $query->execute();
-
-  if (!empty($result['node'])) {
-    return $result;
-  }
-
-  return FALSE;
+  return $xs_vm->ref;
 }
 
 /**
@@ -240,6 +184,20 @@ function xs_node_load($nodes, $types) {
       $access = xs_actions_access_callback($node);
       if (!$access) {
         drupal_not_found();
+      }
+
+      $xs = new stdClass();
+      $node->xs = $xs;
+      $vm_uuid = xs_get_vm_uuid_by_node($node);
+      try {
+        $xs_vm = new XsVm($vm_uuid);
+      }
+      catch (Exception $e) {
+        xs_log($e);
+      }
+
+      if (!empty($xs_vm)) {
+        $node->xs->vm = $xs_vm->getData();
       }
     }
   }
@@ -277,7 +235,6 @@ function xs_theme($existing, $type, $theme, $path) {
       'template' => 'node--xs_vps',
       'path' => drupal_get_path('module', 'xs') . '/templates',
     ),
-
     'xs_actions_snapshots_output' => array(
       'template' => 'templates/xs-actions-snapshots-output',
       'file' => 'theme/xs_theme.inc',
@@ -289,14 +246,42 @@ function xs_theme($existing, $type, $theme, $path) {
     'xs_links_dropdown' => array(
       'file' => 'theme/xs_theme.inc',
       'function' => 'xs_links_dropdown_theme',
-      'variables' => array('links' => NULL),
+      'variables' => array('links' => NULL, 'label' => NULL, 'size' => NULL),
     ),
     'xs_snapshot_title_cell_theme' => array(
       'file' => 'theme/xs_theme.inc',
       'function' => 'xs_snapshot_title_cell_theme',
       'variables' => array('snapshot' => NULL),
     ),
+    'xs_server_navigation' => array(
+      'file' => 'theme/xs_theme.inc',
+      'function' => 'xs_server_navigation_theme',
+    ),
+    'xs_user_navigation' => array(
+      'file' => 'theme/xs_theme.inc',
+      'function' => 'xs_user_navigation_theme',
+    ),
+    'xs_server_thumbs_navigation' => array(
+      'file' => 'theme/xs_theme.inc',
+      'template' => 'templates/xs-server-thumbs-navigation-block',
+    ),
+    'views_view_field__xs_user_vms__nid3' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-field--xs-user-vms--nid-3',
+      'original hook' => 'views_view_field',
+      'path' => drupal_get_path('module', 'xs') . '/themes',
+    ),
   );
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function xs_preprocess_html(&$variables) {
+  if (drupal_is_front_page()) {
+    drupal_set_title();
+  }
+  drupal_add_css('https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css', array('type' => 'external'));
 }
 
 /**
@@ -310,7 +295,17 @@ function xs_preprocess_node(&$variables) {
 
     $variables['xs_action_log'] = views_embed_view('xs_action_log', 'page_user_actions', $variables['node']->nid);
 
-    $vm = xs_get_vm_by_node($variables['node']);
+    $vm_uuid = xs_get_vm_uuid_by_node($variables['node']);
+    try {
+      $xs_vm = new XsVm($vm_uuid);
+    }
+    catch (Exception $e) {
+      xs_log($e);
+    }
+
+    if (!empty($xs_vm)) {
+      $vm = $xs_vm->getData();
+    }
 
     // If VM is not available, we were unable to connect to any of XS hosts.
     // Instead of displaying the confusing content, show the status message
@@ -323,22 +318,19 @@ function xs_preprocess_node(&$variables) {
     }
 
     // VM metrics.
-    $vm_metrics = xs_api_get_vm_metrics($vm);
+    $vm_metrics = $xs_vm->getMetrics();
 
     // Guest metrics.
-    $vm_guest_metrix = xs_api_get_vm_guest_metrix($vm);
-
-    // Virtual interfaces VIF.
-    $vifs = xs_get_vifs($vm);
+    $vm_guest_metrix = $xs_vm->getGuestMetrics();
 
     // VBDs.
-    $disk_size = xs_api_get_disk_space($vm['VBDs']);
+    $disk_size = $xs_vm->getDiskSpace($vm['VBDs']);
     $variables['disk_size'] = $disk_size / 1024 / 1024 / 1024;
 
     // Get individual disk device data.
     $variables['vbds'] = array();
     foreach ($vm['VBDs'] as $vbd_ref) {
-      $vbd = xs_api_get_vdi_by_vbd($vbd_ref);
+      $vbd = $xs_vm->getVdiByVbd($vbd_ref);
       if (empty($vbd)) {
         continue;
       }
@@ -347,31 +339,15 @@ function xs_preprocess_node(&$variables) {
       $variables['vbds'][$vbd['uuid']]['percent_physical_utilisation'] = (float) number_format($vbd['physical_utilisation'] / $vbd['virtual_size'] * 100, 1) . '%';
       $variables['vbds'][$vbd['uuid']]['name_label'] = $vbd['name_label'];
       $variables['vbds'][$vbd['uuid']]['type'] = $vbd['type'];
+      $variables['vbds_size'][] = '<span class="label label-primary">' . $variables['vbds'][$vbd['uuid']]['virtual_size'] . '</span> GB';
     }
-
-    // Add actions to the VM.
-    module_load_include('inc', 'xs', 'includes/xs.actions');
-    $variables['actions_form'] = drupal_get_form('xs_actions_action_form', $variables['node']->nid, $vm['allowed_operations']);
-    $links = xs_actions_get_links($variables['node']->nid, $vm['allowed_operations']);
-    $variables['action_links_dropdown'] = theme('xs_links_dropdown', array(
-      'links' => $links,
-      'label' => t('Server Actions')
-    ));
 
     $variables['vm_name'] = !empty($vm['name_label']) ? $vm['name_label'] : XS_API_ERROR;
     $variables['vm_description'] = !empty($vm['name_description']) ? $vm['name_description'] : XS_API_ERROR;
     $variables['vm_last_shutdown_time'] = !empty($vm['other_config']['last_shutdown_time']) ? date("d/m/Y h:iA", strtotime($vm['other_config']['last_shutdown_time'])) : XS_API_ERROR;
     $variables['vm_nics'] = !empty($vm['VIFs']) ? count($vm['VIFs']) : XS_API_ERROR;
 
-    if (!empty($vm)) {
-      foreach ($vifs as $key => $vif) {
-        $variables['vm_vifs'][$key]['device'] = 'eth' . $vif['device'];
-        $variables['vm_vifs'][$key]['mac'] = $vif['MAC'];
-      }
-    }
-
     $variables['vm_power_state'] = !empty($vm['power_state']) ? $vm['power_state'] : XS_API_ERROR;
-    $variables['vm_power_state_class'] = !empty($vm['power_state']) ? strtolower($vm['power_state']) : 'error';
   }
 
   $variables['vm_cpu'] = $vm_metrics['VCPUs_number'];
@@ -391,9 +367,6 @@ function xs_preprocess_node(&$variables) {
   // Operating System.
   $variables['os']['version'] = !empty($vm_guest_metrix['os_version']['name']) ? $vm_guest_metrix['os_version']['name'] : 'N/A';
   $variables['os']['kernel'] = !empty($vm_guest_metrix['os_version']['uname']) ? $vm_guest_metrix['os_version']['uname'] : 'N/A';
-  $variables['os']['distro'] = !empty($vm_guest_metrix['os_version']['distro']) ? $vm_guest_metrix['os_version']['distro'] : 'N/A';
-  $variables['os']['major'] = !empty($vm_guest_metrix['os_version']['major']) ? $vm_guest_metrix['os_version']['major'] : 'N/A';
-  $variables['os']['minor'] = !empty($vm_guest_metrix['os_version']['minor']) ? $vm_guest_metrix['os_version']['minor'] : 'x';
 
   $variables['virtualization_state'] = !empty($vm_guest_metrix['PV_drivers_version']['minor']) ? $vm_guest_metrix['PV_drivers_version']['major'] . '.' . $vm_guest_metrix['PV_drivers_version']['minor'] : 'N/A';
   $variables['virtualization_uptodate'] = empty($vm_guest_metrix['PV_drivers_up_to_date']) ? '<span class="red">' . t('Tools out of date') . '</span>' : '<span class="green">' . t('Tools up to date') . '</span>';
@@ -425,45 +398,6 @@ function xs_seconds2human($seconds) {
 }
 
 /**
- * Get VM by UUID, stored against $node.
- *
- * @param object $node
- *   Drupal node.
- *
- * @return bool|mixed
- */
-function xs_get_vm_by_node($node) {
-  $response = &drupal_static(__FUNCTION__ . '-' . $node->nid);
-  if (!empty($response)) {
-    return $response;
-  }
-
-  if (is_numeric($node)) {
-    $node = node_load($node);
-  }
-
-  if (empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
-    drupal_set_message(t('No pool or VPS uuid provided for the !vps. Exiting.', array('!vps' => $node->title)));
-
-    return FALSE;
-  }
-
-  $response = NULL;
-
-  try {
-    $response = xs_api_get_vm_by_uuid($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value']);
-  }
-  catch (Exception $e) {
-    watchdog('XS', 'Unable to retrieve server from node !title uuid: !uuid', array(
-      '!title' => $node->title,
-      '!uuid' => $node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'],
-    ), WATCHDOG_CRITICAL);
-  }
-
-  return $response;
-}
-
-/**
  * Get VM UUID from $node object.
  *
  * @param object $node
@@ -473,31 +407,15 @@ function xs_get_vm_by_node($node) {
  *   UUID of the VM or FALSE.
  */
 function xs_get_vm_uuid_by_node($node) {
+  if (is_numeric($node)) {
+    $node = node_load($node);
+  }
+
   if (!empty($node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'])) {
     return $node->field_xs_vps_uuid[LANGUAGE_NONE][0]['value'];
   }
 
   return FALSE;
-}
-
-/**
- * Gets VIFs of a $vm via XAPI.
- *
- * @param array $vm
- *   XAPI VM object.
- *
- * @return array
- *   Array of XAPI VIFs arrays.
- */
-function xs_get_vifs($vm) {
-  $vifs = array();
-  if (!empty($vm['VIFs'])) {
-    foreach ($vm['VIFs'] as $vif_ref) {
-      $vifs[] = xs_api_get_vif($vif_ref);
-    }
-  }
-
-  return $vifs;
 }
 
 /**
@@ -745,31 +663,11 @@ function xs_access($op, $xs_action_log, $account = NULL, $entity_type = NULL) {
  *   Machine name of the message in a freeform way, max 32 characters.
  */
 function xs_action_log_write($message, $type) {
-  $log = entity_create('xs_action_log', array('log' => $message, 'type' => $type));
+  $log = entity_create('xs_action_log', array(
+    'log' => $message,
+    'type' => $type
+  ));
   $log->save();
-}
-
-function xs_get_console_url_by_node($node) {
-  $vm_uuid = xs_get_vm_uuid_by_node($node);
-  $vm_ref = xs_api_get_vm_ref_by_uuid($vm_uuid);
-  $consoles = xs_api_get_console_by_ref($vm_ref);
-  $url = xs_api_get_console_url($consoles);
-
-  return $url;
-}
-
-/**
- * Checks if the server power state is Running.
- *
- * @param object $node
- *   Drupal node object.
- *
- * @return bool
- */
-function xs_vm_is_running($node) {
-  $vm = xs_get_vm_by_node($node);
-
-  return $vm['power_state'] == 'Running';
 }
 
 /**
@@ -782,7 +680,17 @@ function xs_vm_is_running($node) {
  *   The number of CPUs.
  */
 function xs_get_vm_cpus_by_node($node) {
-  $vm = xs_get_vm_by_node($node);
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  if (!empty($xs_vm)) {
+    $vm = $xs_vm->getData();
+  }
 
   return $vm['VCPUs_max'];
 }
@@ -797,16 +705,15 @@ function xs_get_vm_cpus_by_node($node) {
  *   The number of CPUs.
  */
 function xs_get_vm_networks_by_node($node) {
-  $vm = xs_get_vm_by_node($node);
-
-  $vifs = array();
-  if (!empty($vm['VIFs'])) {
-    foreach ($vm['VIFs'] as $vif_ref) {
-      $vifs[] = xs_api_get_vif($vif_ref);
-    }
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
   }
 
-  return $vifs;
+  return !empty($xs_vm) ? $xs_vm->getVifs() : array();
 }
 
 /**
@@ -819,18 +726,15 @@ function xs_get_vm_networks_by_node($node) {
  *   The number of CPUs.
  */
 function xs_get_vm_disks_by_node($node) {
-  $vm = xs_get_vm_by_node($node);
-
-  $vbds = array();
-  foreach ($vm['VBDs'] as $vbd_ref) {
-    $vbd = xs_api_get_vbd($vbd_ref);
-    if (empty($vbd) || $vbd['type'] != 'Disk') {
-      continue;
-    }
-    $vbds[] = $vbd;
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
   }
 
-  return $vbds;
+  return !empty($xs_vm) ? $xs_vm->getVbds() : array();
 }
 
 /**
@@ -907,15 +811,241 @@ function xs_get_all_active_server_nids() {
  *   Power state.
  */
 function xs_get_vm_power_status($node) {
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
   try {
-    $vm = xs_get_vm_by_node($node);
+    $xs_vm = new XsVm($vm_uuid);
   }
   catch (Exception $e) {
-    watchdog('XS', 'Unable to load server node !title. The error was: !message', array(
-      '!title' => $node->title,
-      '!message' => $e->getMessage(),
-    ), WATCHDOG_ERROR);
+    xs_log($e);
   }
 
-  return $vm['power_state'];
+  if (!empty($xs_vm)) {
+    $vm = $xs_vm->getData();
+  }
+
+  return !empty($vm) ? $vm['power_state'] : 'Unkown';
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function xs_block_info() {
+  $block['xs-server-navigation'] = array(
+    'info' => t('XS: Server Navigation'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+
+  $block['xs-server-thumbs-navigation'] = array(
+    'info' => t('XS: Server Thumbnail Navigation'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+
+  $block['xs-server-action-links'] = array(
+    'info' => t('XS: Server Action Links'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+
+  $block['xs-user-links'] = array(
+    'info' => t('XS: User Links'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+
+  return $block;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function xs_block_view($delta = '') {
+  $node = xs_is_vm_context();
+
+  if ($delta == 'xs-server-navigation' && !user_is_anonymous()) {
+    return array(
+      'subject' => '',
+      'content' => theme('xs_server_navigation'),
+    );
+  }
+
+  if ($delta == 'xs-server-thumbs-navigation' && !user_is_anonymous() && !empty($node)) {
+    return array(
+      'subject' => '',
+      'content' => theme('xs_server_thumbs_navigation'),
+    );
+  }
+
+  if ($delta == 'xs-server-action-links' && !user_is_anonymous() && !empty($node)) {
+    module_load_include('inc', 'xs', 'includes/xs.actions');
+    if (!empty($node)) {
+      $vm = xs_get_vm_by_node($node);
+      if (empty($vm)) {
+        return array(
+          'subject' => '',
+          'content' => '',
+        );
+      }
+
+      $links = xs_actions_get_links($node->nid, $vm['allowed_operations']);
+
+      return array(
+        'subject' => '',
+        'content' => theme('xs_links_dropdown', array(
+            'links' => $links,
+            'label' => t('Server Actions'),
+            'size' => 'default',
+            'classes' => 'hidden-xs',
+          )
+        ),
+      );
+    }
+  }
+
+  if ($delta == 'xs-user-links' && !user_is_anonymous()) {
+    return array(
+      'subject' => '',
+      'content' => theme('xs_user_navigation'),
+    );
+  }
+}
+
+/**
+ * Checks if the URL belongs to VM context.
+ *
+ * @return object|false
+ *   Returns loaded node object of VM or FALSE;
+ */
+function xs_is_vm_context() {
+  if (arg(0) == 'node' && is_numeric(arg(1))) {
+    $node = node_load(arg(1));
+  }
+  if (!empty($node) && $node->type == XS_API_VPS_CONTENT_TYPE) {
+    return $node;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Gets XS VM by node.
+ *
+ * @param object $node
+ *   VM node.
+ *
+ * @return bool|mixed
+ */
+function xs_get_vm_by_node($node) {
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  if (!empty($xs_vm)) {
+    $vm = $xs_vm->getData();
+  }
+
+  return !empty($vm) ? $vm : FALSE;
+}
+
+/**
+ * Gets server up/down/unknown status by nid.
+ *
+ * @param int $nid
+ *   Drupal nid.
+ *
+ * @return array
+ */
+function xs_get_server_status_html($nid) {
+  $vm_uuid = xs_get_vm_uuid_by_node($nid);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+    $color = 'yellow';
+    $title = t('Unable to retrieve status');
+  }
+
+  if (!empty($xs_vm)) {
+    $vm = $xs_vm->getData();
+  }
+
+  if (empty($color) && (empty($vm) || $xs_vm->getStatus() != 'Running')) {
+    $color = 'red';
+    $title = t('The server is not running');
+  }
+  elseif (!empty($vm)) {
+    $color = 'green';
+    $title = t('The server is running');
+  }
+
+  return array(
+    'color' => $color,
+    'title' => $title,
+  );
+}
+
+/**
+ * Creates definition for user navigation links.
+ *
+ * @param string $destination
+ *   Destination definition, same as url().
+ *
+ * @return array
+ */
+function xs_actions_get_user_navigation_links($destination = '') {
+  global $user;
+
+  // Prepare user link.
+  $links['update_profile'] = l(t('Update profile'), 'user/' . $user->uid . '/edit', array('destination' => $destination));
+  if (module_exists('password_policy_password_tab')) {
+    $links['password'] = l(t('Change Password'), 'user/' . $user->uid . '/password', array(
+      'query' => !empty($destination) ? array('destination' => $destination) : array(),
+      'attributes' => array('class' => array('xs-glyphicon-link'))
+    ));
+  }
+
+  if (module_exists('login_notify')) {
+    $links['security'] = l(t('Security'), 'user/' . $user->uid . '/browsers', array(
+      'query' => !empty($destination) ? array('destination' => $destination) : array(),
+      'attributes' => array('class' => array('xs-glyphicon-link'))
+    ));
+  }
+
+  if (module_exists('tfa_basic') && user_access('setup own tfa')) {
+    $links['tfa'] = l(t('2 Factor Auth'), 'user/' . $user->uid . '/security/tfa', array(
+      'query' => !empty($destination) ? array('destination' => $destination) : array(),
+      'attributes' => array('class' => array('xs-glyphicon-link'))
+    ));
+  }
+
+  $links['logout'] = l(t('Log out'), 'user/logout', array(
+    'query' => !empty($destination) ? array('destination' => $destination) : array(),
+    'attributes' => array('class' => array('xs-glyphicon-link'))
+  ));
+
+  return $links;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function xs_form_user_login_alter(&$form, &$form_state, $form_id) {
+  if (user_is_anonymous()) {
+    drupal_set_title(t('Login'));
+  }
+
+  $form['actions']['submit']['#attributes']['class'] = array('btn btn-success');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function xs_form_user_pass_alter(&$form, &$form_state, $form_id) {
+  if (user_is_anonymous()) {
+    drupal_set_title(t('Password reset'));
+  }
+
+  $form['actions']['submit']['#attributes']['class'] = array('btn btn-success');
 }
