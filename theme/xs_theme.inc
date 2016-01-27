@@ -172,7 +172,7 @@ function xs_snapshot_title_cell_theme($variables) {
           'data-placement' => 'bottom',
           'title' => $tooltip_text,
         ),
-        '#value' => $variables['snapshot']->data['name_label'],
+        '#value' => check_plain($variables['snapshot']->data['name_label']),
       ),
     )
   );

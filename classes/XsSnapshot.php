@@ -40,7 +40,7 @@ class XsSnapshot extends XsApi {
 
     $this->data = $snapshot;
 
-    return $this->clear($snapshot);
+    return $snapshot;
   }
 
   /**
@@ -52,7 +52,7 @@ class XsSnapshot extends XsApi {
     }
 
     try {
-      $this->ref = $this->clear($this->xsApi->VM_get_by_uuid($this->uuid));
+      $this->ref = $this->xsApi->VM_get_by_uuid($this->uuid);
     }
     catch (Exception $e) {
       xs_log($e);
@@ -114,7 +114,7 @@ class XsSnapshot extends XsApi {
       xs_log($e);
     }
 
-    return $this->clear($vbd);
+    return $vbd;
   }
 
   /**

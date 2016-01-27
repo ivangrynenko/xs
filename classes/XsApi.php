@@ -213,37 +213,7 @@ class XsApi {
       xs_log($e);
     }
 
-    return $this->clear($xs_host);
-  }
-
-  /**
-   * Clears objects pulled via XenApi.
-   *
-   * @param mixed $object
-   *   Object or array, string or number received via XenApi.
-   *
-   * @return object|string
-   *   Cleared value in the same variable type.
-   */
-  protected function clear($object) {
-    if (is_string($object) || is_numeric($object)) {
-      return check_plain($object);
-    }
-    elseif (is_array($object)) {
-      foreach ($object as $key => $value) {
-        $new_object[$this->clear($key)] = $this->clear($value);
-      }
-    }
-    elseif (is_object($object)) {
-      $new_object = $this->clear((array) $object);
-
-      $new_object = (object) $new_object;
-    }
-    else {
-      return $object;
-    }
-
-    return $new_object;
+    return $xs_host;
   }
 
   /**
@@ -286,6 +256,6 @@ class XsApi {
       xs_log($e);
     }
 
-    return $this->clear($master);
+    return $master;
   }
 }
