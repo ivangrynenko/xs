@@ -29,9 +29,21 @@ function xs_snapshot_policy_cron() {
     }
 
     $vm_node = node_load($policy->target_id);
+    $vm_uuid = xs_get_vm_uuid_by_node($vm_node);
+    try {
+      $xs_vm = new XsVm($vm_uuid);
+    }
+    catch (Exception $e) {
+      xs_log($e);
+    }
+
     // Do not run further checks if the VM is down.
-    $vm = xs_get_vm_by_node($vm_node);
-    if (!empty($vm) && !preg_match('/running/i', $vm['power_state'])) {
+    $vm = $xs_vm->getData();
+    if (empty($vm)) {
+      continue;
+    }
+
+    if (!preg_match('/running/i', $xs_vm->getStatus())) {
       xs_snapshot_policy_log_write($policy->spid, t('Skipping snapshots for !policy_title (!type). The server is not running. Could only take a snapshot of a running server.', array(
         '!policy_title' => $policy->title,
         '!type' => $policy_type->label,
@@ -45,7 +57,7 @@ function xs_snapshot_policy_cron() {
 
     // Check if the policy maximum snapshots could be satisfied.
     // Load all automated snapshots for the VM.
-    $server_snapshots = xs_get_vm_snapshots_from_node($vm_node);
+    $server_snapshots = $xs_vm->getSnapshots();
     $automated_snapshots = xs_snapshot_policy_filter_automated_snapshots($server_snapshots);
 
     // Count the number of snapshots for the VM.
@@ -53,16 +65,17 @@ function xs_snapshot_policy_cron() {
     foreach ($automated_snapshots as $automated_snapshot) {
       if ($automated_snapshots_count >= $policy->snapshots) {
         try {
-          xs_actions_snapshot_destroy($automated_snapshot['ref']);
+          $xs_snapshot = new XsSnapshot($automated_snapshot->uuid);
+          $xs_snapshot->destroy();
 
           xs_snapshot_policy_log_write($policy->spid, t('Deleted snapshot !name for !policy_title policy (!type)', array(
-            '!name' => $automated_snapshot['name_label'],
+            '!name' => $automated_snapshot->data['name_label'],
             '!policy_title' => $policy->title,
             '!type' => $policy_type->label,
           )), 'delete');
         }
         catch (Exception $e) {
-          watchdog('XS_SNAPSHOT_POLICY', 'Unable to delete snapshot !title', array('!title' => $automated_snapshot['name_label']), WATCHDOG_ERROR);
+          watchdog('XS_SNAPSHOT_POLICY', 'Unable to delete snapshot !title', array('!title' => $automated_snapshot->data['name_label']), WATCHDOG_ERROR);
         }
         $automated_snapshots_count--;
       }
@@ -73,14 +86,11 @@ function xs_snapshot_policy_cron() {
       '!tag' => XS_SNAPSHOT_NAME_LABEL,
       '!policy_name' => $policy->title,
       '!policy_type' => $policy_type->label,
-      '!time' => date(DATE_ISO8601, REQUEST_TIME),
+      '!time' => date(XS_DATE_FORMAT, REQUEST_TIME),
     ));
 
     try {
-      $uuid = xs_get_vm_uuid_by_node($vm_node);
-      $vm_ref = xs_api_get_vm_ref_by_uuid($uuid);
-
-      xs_snapshot_create_snapshot($vm_ref, $snapshot_title);
+      $xs_vm->createSnapshot($snapshot_title);
 
       xs_snapshot_policy_log_write($policy->spid, t('Created new snapshot !title for !policy_title policy (!type)', array(
         '!title' => $snapshot_title,
@@ -118,7 +128,7 @@ function xs_snapshot_policy_cron() {
 function xs_snapshot_policy_is_automated_snapshot($server_snapshot) {
   $label = XS_SNAPSHOT_NAME_LABEL;
   $length = strlen($label);
-  if (substr($server_snapshot['name_label'], 0, $length) == $label) {
+  if (substr($server_snapshot->data['name_label'], 0, $length) == $label) {
     return TRUE;
   }
 
@@ -393,7 +403,18 @@ function xs_snapshot_policy_form_validate($form, &$form_state) {
     return form_set_error(NULL, 'Validation error. You cannot add policy for this server.');
   }
 
-  $vm = xs_get_vm_by_node($linked_node);
+  $vm_uuid = xs_get_vm_uuid_by_node($linked_node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  if (!empty($xs_vm)) {
+    $vm = $xs_vm->getData();
+  }
+
   if (empty($vm)) {
     return form_set_error(NULL, '339: Validation error. Unable to create automation policy.');
   }
@@ -503,7 +524,19 @@ function xs_snapshot_policy_get_snapshots_max_for_policy($nid) {
 
   // Make snapshots limit for policy as half of the total snapshots for the
   // server.
-  $server_snapshots = xs_get_vm_snapshots_from_node($node);
+  $vm_uuid = xs_get_vm_uuid_by_node($node);
+  try {
+    $xs_vm = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
+
+  if (empty($xs_vm)) {
+    return;
+  }
+  $server_snapshots = $xs_vm->getSnapshots();
+
   $snapshots_count = 0;
   if (!empty($server_snapshots)) {
     foreach ($server_snapshots as $server_snapshot) {
@@ -529,8 +562,6 @@ function xs_snapshot_policy_get_snapshots_max_for_policy($nid) {
  *   Array of snapshots, created by an automated policy.
  */
 function xs_snapshot_policy_filter_automated_snapshots($snapshots, $reorder = TRUE) {
-  $snapshots = $reorder ? xs_snapshots_reorder($snapshots, TRUE) : $snapshots;
-
   $auto_snapshots = array();
   foreach ($snapshots as $snapshot) {
     // Only count snapshots not created by a policy.

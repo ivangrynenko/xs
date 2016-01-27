@@ -17,7 +17,7 @@ function xs_rrd_menu() {
   $intervals = xs_rrd_get_graph_steps();
 
   $items['node/%node/xs-performance'] = array(
-    'title' => 'VPS Performance',
+    'title' => 'Graphs',
     'description' => 'Access server performance metrics',
     'page callback' => 'xs_rrd_performance_callback',
     'page arguments' => array(1),
@@ -82,6 +82,7 @@ function xs_rrd_theme($existing, $type, $theme, $path) {
  * Implements hook_preprocess_HOOK().
  */
 function xs_rrd_preprocess_xs_rrd(&$variables) {
+  drupal_page_is_cacheable(FALSE);
   $vm_power_status = xs_get_vm_power_status($variables['node']);
 
   if ($vm_power_status != 'Running') {
@@ -135,6 +136,33 @@ function xs_rrd_preprocess_xs_rrd(&$variables) {
 }
 
 /**
+ * Gets the flag of whether to serve the data from existing RRD file.
+ *
+ * @param object $node
+ *   Drupal node object.
+ * @param string $type
+ *   Metrics type.
+ *
+ * @return bool
+ *   TRUE if the cached data expired.
+ */
+function xs_rrd_cache_expired($node, $type) {
+  if (variable_get('xs_rrd_skip_cache', 0)) {
+    return TRUE;
+  }
+  // Avoid fetching RRD database on every page load.
+  $last_updated = xs_rrd_get_last_updated_timestamp($node);
+  $steps = xs_rrd_get_graph_steps();
+  foreach ($steps as $key => $step) {
+    if ($type == $key && (REQUEST_TIME - $last_updated) < $step['ttl']) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
+
+/**
  * Retrieves RRD data from xenserver pool master.
  *
  * @param object $node
@@ -145,21 +173,24 @@ function xs_rrd_preprocess_xs_rrd(&$variables) {
  * @throws \Exception
  */
 function xs_rrd_get_all_data($node, $type) {
-  // Avoid fetching RRD database on every page load.
-  $last_updated = xs_rrd_get_last_updated_timestamp($node);
-  $steps = xs_rrd_get_graph_steps();
-  foreach ($steps as $key => $step) {
-    if ($type == $key && (REQUEST_TIME - $last_updated) < $step['ttl']) {
-      return;
-    }
+  if (!xs_rrd_cache_expired($node, $type)) {
+    return;
   }
 
   $vm_uuid = xs_get_vm_uuid_by_node($node);
   // field_xs_vps_last_rrd_update
-  $xs_api = xs_get_xs_api();
+  try {
+    $xs = new XsVm($vm_uuid);
+  }
+  catch (Exception $e) {
+    xs_log($e);
+  }
 
-  $url = $xs_api->getUrl();
-  $session_id = $xs_api->getSessionId();
+  if (!empty($xs)) {
+    $url = $xs->xsApi->getUrl();
+
+    $session_id = $xs->xsApi->getSessionId();
+  }
 
   $url_suffix = 'vm_rrd';
   $query = array(
@@ -490,6 +521,8 @@ function xs_rrd_create_graph($node, $output_file, $start, $title, $params = arra
     'now',
     '--title=' . $title,
     '--vertical-label=' . $params['vertical_label'],
+    '--step',
+    5,
   );
 
   // Define 17 colours.

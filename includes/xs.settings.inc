@@ -8,8 +8,6 @@
 // Reister custom XS API autoloader.
 spl_autoload_register('xs_autoloader', TRUE, TRUE);
 
-require_once __DIR__ . '/xs.api.inc';
-
 /**
  * SPL autoloader.
  *
