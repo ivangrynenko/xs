@@ -164,10 +164,6 @@
   content: "";
 }
 
-#block-system-user-menu ul.menu ul.menu {
-  display: none;
-}
-
 .node-snapshots .table-responsive {
   overflow: visible;
 }
@@ -222,6 +218,10 @@
 .region-navigation #block-xs-xs-user-links,
 .region-navigation #block-xs-xs-server-action-links {
   float: right;
+}
+
+.region-navigation #block-xs-xs-server-action-links {
+  margin: 10px;
 }
 
 #block-xs-xs-server-navigation .btn-default,
@@ -284,7 +284,6 @@
 }
 
 .front .main-container h1.page-header,
-.logged-in.page-user ul.tabs--primary,
 h2.element-invisible {
   display: none;
   visibility: hidden;
@@ -322,11 +321,11 @@ h2.element-invisible {
 }
 
 .server-icon .icon a.inactive {
-  color: #337ab7;
+  color: #2b91af;
 }
 
 .server-icon .icon a.active {
-  color: #2a68af;
+  color: #0f3e68;
 }
 
 .server-icons-navigation {

@@ -37,7 +37,6 @@ function xs_init() {
   global $user, $theme, $theme_key;
 
   $allowed_themes = array(
-    'startupgrowth',
     'bootstrap',
   );
   if (in_array($GLOBALS['theme_key'], $allowed_themes)) {
@@ -51,6 +50,7 @@ function xs_init() {
     if (arg(0) == 'user') {
       $theme = 'bootstrap';
       $theme_key = 'bootstrap';
+      drupal_js_defaults(drupal_get_path('module', 'jquery_update') . '/replace/jquery/1.10/jquery.min.js');
     }
   }
 }

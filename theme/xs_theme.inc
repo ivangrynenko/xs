@@ -352,18 +352,18 @@ function xs_preprocess_xs_server_thumbs_navigation(&$variables) {
   $path = current_path();
 
   $variables['link_href_overview'] = url('node/' . $node->nid);
-  $variables['link_class_active_overview'] = $path == 'node/' . $node->nid ? 'text-danger' : 'text-info';
+  $variables['link_class_active_overview'] = $path == 'node/' . $node->nid ? 'active' : 'text-info';
 
   if (module_exists('xs_rrd')) {
     $variables['link_href_graphs'] = url('node/' . $node->nid . '/xs-performance');
-    $variables['link_class_active_graphs'] = strstr($path, 'node/' . $node->nid . '/xs-performance') ? 'text-danger' : 'text-info';
+    $variables['link_class_active_graphs'] = strstr($path, 'node/' . $node->nid . '/xs-performance') ? 'active' : 'text-info';
   }
 
   $variables['link_href_snapshots'] = url('node/' . $node->nid . '/xs-snapshots');
-  $variables['link_class_active_snapshots'] = strstr($path, 'node/' . $node->nid . '/xs-snapshots') ? 'text-danger' : 'text-info';
+  $variables['link_class_active_snapshots'] = strstr($path, 'node/' . $node->nid . '/xs-snapshots') ? 'active' : 'text-info';
 
   if (module_exists('xs_snapshot_policy')) {
     $variables['link_href_snapshot_policy'] = url('node/' . $node->nid . '/xs-snapshot-policy');
-    $variables['link_class_active_snapshot_policy'] = strstr($path, 'node/' . $node->nid . '/xs-snapshot-policy') ? 'text-danger' : 'text-info';
+    $variables['link_class_active_snapshot_policy'] = strstr($path, 'node/' . $node->nid . '/xs-snapshot-policy') ? 'active' : 'text-info';
   }
 }
