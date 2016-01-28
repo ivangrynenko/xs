@@ -280,7 +280,7 @@ function xs_server_navigation_theme() {
       <div class="collapse navbar-collapse" id="bs-navbar-collapse-2">
         <ul class="nav navbar-nav">
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Select a server <span class="caret"></span></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">' . $title . ' <span class="caret"></span></a>
             <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu2">';
 
   $return .= implode("\n", $options);

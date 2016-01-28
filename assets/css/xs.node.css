@@ -230,6 +230,10 @@
   border-color: transparent;
 }
 
+#block-xs-xs-server-navigation .dropdown-toggle i {
+  margin-right: 5px;
+}
+
 .main-container.container {
   position: relative;
   top: 85px;
