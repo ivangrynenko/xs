@@ -57,7 +57,7 @@ function xs_snapshot_policy_cron() {
 
     // Check if the policy maximum snapshots could be satisfied.
     // Load all automated snapshots for the VM.
-    $server_snapshots = $xs_vm->getSnapshots();
+    $server_snapshots = $xs_vm->getSnapshots(TRUE);
     $automated_snapshots = xs_snapshot_policy_filter_automated_snapshots($server_snapshots);
 
     // Count the number of snapshots for the VM.
