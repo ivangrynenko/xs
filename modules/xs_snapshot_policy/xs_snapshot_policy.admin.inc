@@ -74,14 +74,14 @@ function xs_snapshot_policy_type_form_submit(&$form, &$form_state) {
   xs_snapshot_policy_type_save($snapshot_policy_type);
 
   // Redirect user back to list of snapshot-policy types.
-  $form_state['redirect'] = 'admin/structure/xs/snapshot-policy-types';
+  $form_state['redirect'] = 'admin/xs/snapshot-policy-types';
 }
 
 /**
  * Deletes snapshot policy.
  */
 function xs_snapshot_policy_type_form_submit_delete(&$form, &$form_state) {
-  $form_state['redirect'] = 'admin/structure/xs/snapshot-policy-types/' . $form_state['xs_snapshot_policy_type']->type . '/delete';
+  $form_state['redirect'] = 'admin/xs/snapshot-policy-types/' . $form_state['xs_snapshot_policy_type']->type . '/delete';
 }
 
 /**
@@ -107,7 +107,7 @@ function xs_snapshot_policy_type_form_delete_confirm($form, &$form_state, $snaps
  * Snapshot Policy type delete form validate handler.
  */
 function xs_snapshot_policy_type_form_delete_confirm_validate($form, &$form_state) {
-  
+
 }
 
 /**
@@ -126,5 +126,5 @@ function xs_snapshot_policy_type_form_delete_confirm_submit($form, &$form_state)
     '%title' => $snapshot_policy_type->label,
   )));
 
-  $form_state['redirect'] = 'admin/structure/xs/snapshot-policy-types';
+  $form_state['redirect'] = 'admin/xs/snapshot-policy-types';
 }

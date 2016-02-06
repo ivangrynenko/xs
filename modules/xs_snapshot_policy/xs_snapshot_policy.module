@@ -57,7 +57,7 @@ function xs_snapshot_policy_cron() {
 
     // Check if the policy maximum snapshots could be satisfied.
     // Load all automated snapshots for the VM.
-    $server_snapshots = $xs_vm->getSnapshots();
+    $server_snapshots = $xs_vm->getSnapshots(TRUE);
     $automated_snapshots = xs_snapshot_policy_filter_automated_snapshots($server_snapshots);
 
     // Count the number of snapshots for the VM.
@@ -663,7 +663,7 @@ function xs_snapshot_policy_entity_info() {
     'module' => 'xs_snapshot_policy',
     // Enable the entity API's admin UI.
     'admin ui' => array(
-      'path' => 'admin/structure/xs/snapshot-policy-types',
+      'path' => 'admin/xs/snapshot-policy-types',
       'file' => 'xs_snapshot_policy.admin.inc',
       'controller class' => 'SnapshotPolicyTypeUIController',
     ),
@@ -695,8 +695,8 @@ function xs_snapshot_policy_entity_info_alter(&$entity_info) {
     $entity_info['xs_snapshot_policy']['bundles'][$type] = array(
       'label' => $info->label,
       'admin' => array(
-        'path' => 'admin/structure/xs/snapshot-policy-types/manage/%xs_snapshot_policy_type',
-        'real path' => 'admin/structure/xs/snapshot-policy-types/manage/' . $type,
+        'path' => 'admin/xs/snapshot-policy-types/manage/%xs_snapshot_policy_type',
+        'real path' => 'admin/xs/snapshot-policy-types/manage/' . $type,
         'bundle argument' => 4,
       ),
     );
@@ -709,7 +709,7 @@ function xs_snapshot_policy_entity_info_alter(&$entity_info) {
 function xs_snapshot_policy_menu() {
   $items = array();
 
-  $items['admin/structure/xs/snapshot-policy-types/%xs_snapshot_policy_type/delete'] = array(
+  $items['admin/xs/snapshot-policy-types/%xs_snapshot_policy_type/delete'] = array(
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('xs_snapshot_policy_type_form_delete_confirm', 4),

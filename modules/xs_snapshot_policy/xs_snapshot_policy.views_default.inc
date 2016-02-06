@@ -161,7 +161,7 @@ function xs_snapshot_policy_views_default_views() {
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
-  $handler->display->display_options['path'] = 'admin/structure/xs/snapshot-policy';
+  $handler->display->display_options['path'] = 'admin/xs/snapshot-policy';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Policies';
   $handler->display->display_options['menu']['weight'] = '0';

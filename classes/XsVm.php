@@ -442,7 +442,7 @@ class XsVm extends XsApi {
    * @return array
    *   Snapshot array.
    */
-  protected function setSnapshots() {
+  protected function setSnapshots($reorder_asc) {
     $this->getData();
 
     if (!empty($this->data['snapshots'])) {
@@ -457,11 +457,19 @@ class XsVm extends XsApi {
       }
     }
 
-    $this->snapshots = $this->snapshotsReorder($full_snapshots);
+    $this->snapshots = $this->snapshotsReorder($full_snapshots, $reorder_asc);
   }
 
-  public function getSnapshots() {
-    $this->setSnapshots();
+  /**
+   * Gets snapshots via XenApi.
+   *
+   * @param bool $reorder_asc
+   *   Reorder snapshots ascending.
+   *
+   * @return mixed
+   */
+  public function getSnapshots($reorder_asc = FALSE) {
+    $this->setSnapshots($reorder_asc);
 
     return $this->snapshots;
   }
@@ -476,7 +484,7 @@ class XsVm extends XsApi {
    * @return array
    *   Reordered snapshots.
    */
-  protected function snapshotsReorder($snapshots, $ascending = FALSE) {
+  public function snapshotsReorder($snapshots, $ascending = FALSE) {
     if (empty($snapshots)) {
       return $snapshots;
     };

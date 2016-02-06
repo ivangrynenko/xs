@@ -140,20 +140,20 @@ class XenServerSnapshotPolicyTestCase extends XenServerTestCase {
     ));
     $this->drupalLogin($user);
 
-    $this->drupalGet('admin/structure/xs/snapshot-policy-types/add');
+    $this->drupalGet('admin/xs/snapshot-policy-types/add');
     $this->verbose($this->drupalGetContent());
     $this->assertResponse(403);
 
     foreach ($this->policyTypes as $i => $type) {
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $type->type . '/delete');
+      $this->drupalGet('admin/xs/snapshot-policy-types/' . $type->type . '/delete');
       $this->verbose($this->drupalGetContent());
       $this->assertResponse(403);
 
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $type->type . '/edit');
+      $this->drupalGet('admin/xs/snapshot-policy-types/' . $type->type . '/edit');
       $this->verbose($this->drupalGetContent());
       $this->assertResponse(403);
 
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types/' . $type->type . '/clone');
+      $this->drupalGet('admin/xs/snapshot-policy-types/' . $type->type . '/clone');
       $this->verbose($this->drupalGetContent());
       $this->assertResponse(403);
     }

@@ -548,7 +548,7 @@ function xs_views_default_views() {
     3 => 0,
     4 => 0,
   );
-  $handler->display->display_options['path'] = 'admin/structure/xs/action-log';
+  $handler->display->display_options['path'] = 'admin/xs/action-log';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Action Log';
   $handler->display->display_options['menu']['weight'] = '0';
@@ -902,7 +902,7 @@ function xs_views_default_views() {
   $handler->display->display_options['fields']['created']['date_format'] = 'today time ago';
   $handler->display->display_options['fields']['created']['second_date_format'] = 'medium';
   $handler->display->display_options['defaults']['arguments'] = FALSE;
-  $handler->display->display_options['path'] = 'admin/structure/xs/policy-log';
+  $handler->display->display_options['path'] = 'admin/xs/policy-log';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Policies log';
   $handler->display->display_options['menu']['weight'] = '0';
