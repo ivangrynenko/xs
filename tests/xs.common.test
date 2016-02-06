@@ -51,9 +51,9 @@ abstract class XenServerTestCase extends DrupalWebTestCase {
       $edit[$i]['time'] = ($i + 1) * 3600;
       $edit[$i]['type'] = ($i + 1) . '_hourly';
 
-      $this->drupalPost('admin/structure/xs/snapshot-policy-types/add', $edit[$i], 'Save');
+      $this->drupalPost('admin/xs/snapshot-policy-types/add', $edit[$i], 'Save');
       $this->verbose($this->drupalGetContent());
-      $this->drupalGet('admin/structure/xs/snapshot-policy-types');
+      $this->drupalGet('admin/xs/snapshot-policy-types');
       $this->assertResponse(200);
       $this->assertText($edit[$i]['label']);
       $this->assertLink('edit', $i);
